@@ -3,7 +3,7 @@ A Matlab toolbox for fitting and forecasting epidemic trajectories using the ens
 
 It carries out the following tasks:
 
-    * [](#heading-2 fitting models to time series data,)
+    *[](#heading-2 fitting models to time series data,)
     estimation of parameters with quantified uncertainty,
     plotting the fits of the top-ranked models,
     plotting the AICc values of the top-ranked models,
