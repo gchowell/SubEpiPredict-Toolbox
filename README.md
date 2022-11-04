@@ -1,14 +1,15 @@
 # ensemble_n-subepidemic_framework
 A Matlab toolbox for fitting and forecasting epidemic trajectories using the ensemble n-subepidemic framework
 
-It carries out the following tasks:
-
+<p> It carries out the following tasks: </p> 
+<ul>
     <li>fitting models to time series data,</li>
     <li>estimation of parameters with quantified uncertainty,</li>
     <li>plotting the fits of the top-ranked models,</li>
     <li>plotting the AICc values of the top-ranked models,</li>
     <li>generates forecasts of the top-ranked models</li>
     <li>gnerates ensemble forecasts based on the top-ranked models.</li>
+</ul>
 
 Additional features include:
 
