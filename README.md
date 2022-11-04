@@ -52,7 +52,7 @@ After fitting the model to your data, you can use the toolbox to plot the model 
 After fitting the model to your data, you can use the toolbox to plot the subepidemic profiles and AICc values as follows:
 
 <ul>
-    <li>define the model parameter values and time series parameters by editing options.m</li>
+    <li>define the model parameter values and time series parameters by editing <code>options.m</code></li>
     <li>run the function <code>plotRankings_subepidemicFramework.m</code></li>
 </ul>
     
@@ -61,7 +61,7 @@ After fitting the model to your data, you can use the toolbox to plot the subepi
 After fitting the model to your data, you can use the toolbox to plot forecasts derived from the top-ranked and ensemble subepidemic models as follows:
 
 <ul>
-    <li>define the model parameter values and time series parameters by editing options.m and options_forecast.m</li>
+    <li>define the model parameter values and time series parameters by editing <code>options.m</code> and <code>options_forecast.m</code></li>
     <li>run the function <code>plotRankings_subepidemicFramework.m</code> </li>
 </ul>
     
