@@ -52,7 +52,14 @@ After fitting the model to your data, you can use the toolbox to plot forecasts 
     define the model parameter values and time series parameters by editing options.m and options_forecast.m
     run the function plotRankings_subepidemicFramework.m
 
+# Publications
 
-   
-   
+Chowell, G., Tariq, A., & Hyman, J. M. (2019). A novel sub-epidemic modeling framework for short-term forecasting epidemic waves. BMC medicine, 17(1), 1-18.
 
+Chowell, G., Dahal, S., Tariq, A., Roosa, K., Hyman, J. M., & Luo, R. (2022). An ensemble n-sub-epidemic modeling framework for short-term forecasting epidemic trajectories: Application to the COVID-19 pandemic in the USA. PLOS Computational Biology, 18(10), e1010602.
+
+Chowell, G., Rothenberg, R., Roosa, K., Tariq, A., Hyman, J. M., & Luo, R. (2022). Sub-epidemic Model Forecasts During the First Wave of the COVID-19 Pandemic in the USA and European Hotspots. In Mathematics of Public Health (pp. 85-137). Springer, Cham.
+
+
+
+  
