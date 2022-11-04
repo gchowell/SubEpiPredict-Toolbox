@@ -3,12 +3,12 @@ A Matlab toolbox for fitting and forecasting epidemic trajectories using the ens
 
 It carries out the following tasks:
 
-    fitting models to time series data,)
-    estimation of parameters with quantified uncertainty,
-    plotting the fits of the top-ranked models,
-    plotting the AICc values of the top-ranked models,
-    generates forecasts of the top-ranked models
-    gnerates ensemble forecasts based on the top-ranked models.
+    <li>fitting models to time series data,</li>
+    <li>estimation of parameters with quantified uncertainty,</li>
+    <li>plotting the fits of the top-ranked models,</li>
+    <li>plotting the AICc values of the top-ranked models,</li>
+    <li>generates forecasts of the top-ranked models</li>
+    <li>gnerates ensemble forecasts based on the top-ranked models.</li>
 
 Additional features include:
 
@@ -31,28 +31,28 @@ To use the toolbox to fit the ensemble n-subepidemic framework to your data, you
     create output folder where the output files will be stored   
     open a MATLAB session
     define the model parameter values and time series parameters by editing options.m
-    run the function Run_subepidemicFramework.m
+    run the function <code>Run_subepidemicFramework.m</code>
     
 # Plotting the fits of the top-ranked models and parameter estimates
 
 After fitting the model to your data, you can use the toolbox to plot the model fits and parameter estimates as follows:
 
     define the model parameter values and time series parameters by editing options.m
-    run the function plotFit_subepidemicFramework.m
+    run the function <code>plotFit_subepidemicFramework.m</code>
    
 # Plotting the top-ranked subepidemic model profiles and the corresponding AIC values
 
 After fitting the model to your data, you can use the toolbox to plot the subepidemic profiles and AICc values as follows:
 
     define the model parameter values and time series parameters by editing options.m
-    run the function plotRankings_subepidemicFramework.m
+    run the function <code>plotRankings_subepidemicFramework.m</code>
 
 # Generating and plotting forecasts of the top-ranked and ensemble subepidemic models
 
 After fitting the model to your data, you can use the toolbox to plot forecasts derived from the top-ranked and ensemble subepidemic models as follows:
 
     define the model parameter values and time series parameters by editing options.m and options_forecast.m
-    run the function plotRankings_subepidemicFramework.m
+    run the function <code>plotRankings_subepidemicFramework.m</code>
 
 # Publications
 
