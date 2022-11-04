@@ -27,6 +27,8 @@ The n-subepidemic framework toolbox requires a MATLAB installation.
 To use the toolbox to fit the ensemble n-subepidemic framework to your data, you just need to:
 
     download the code
+    create input folder where your time series data is located
+    create output folder where the output files will be stored   
     open a MATLAB session
     define the model parameter values and time series parameters by editing options.m
     run the function Run_subepidemicFramework.m
