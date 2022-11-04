@@ -690,7 +690,7 @@ if length(topmodels1)>1
     
     ylabel('COVID-19 deaths')
     
-    title(strcat('Ensemble Model-', {' '},getUSstateName(outbreakx),{' '},'- Reported by ',{' '},caddate1))
+    title('Ensemble Model-')
     
     set(gca,'FontSize',24)
     set(gcf,'color','white')

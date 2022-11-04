@@ -1,4 +1,8 @@
 
+clear
+clear all
+close all
+
 % <============================================================================>
 % <=================== Declare global variables ===============================>
 % <============================================================================>
@@ -46,11 +50,13 @@ elseif DT==7
 end
 
 % Name of the file containing the cumulative time series data (rows=time, cols=regions)
-% datafilename1=strcat('cumulative-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-',caddate1,'.txt'); %data file with all time series across areas/regions
+
+datafilename1=datafilename1_INP;
 
 % Name of the file for the adjusted incidence data file for a specific region and
 % after removing early zeros.
-% datafilename2=strcat(cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-state-',num2str(outbreakx),'-',caddate1,'.txt'); % specific adjusted data file for a given region/area
+
+datafilename2=strcat(cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-state-',num2str(outbreakx),'-',caddate1,'.txt'); % specific adjusted data file for a given region/area
 
 datevecfirst1=datevecfirst1_INP; % date corresponding to the first data point in time series data
 
