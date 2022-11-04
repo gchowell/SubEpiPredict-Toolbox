@@ -62,7 +62,7 @@ After fitting the model to your data, you can use the toolbox to plot forecasts 
 
 <ul>
     <li>define the model parameter values and time series parameters by editing <code>options.m</code> and <code>options_forecast.m</code></li>
-    <li>run the function <code>plotRankings_subepidemicFramework.m</code> </li>
+    <li>run the function <code>plotForecast_subepidemicFramework.m</code></li>
 </ul>
     
 # Publications
