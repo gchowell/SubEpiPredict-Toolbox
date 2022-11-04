@@ -1,7 +1,5 @@
 
-clear
-clear all
-close all
+function Run_subepidemicFramework(outbreakx_pass)
 
 % <============================================================================>
 % <=================== Declare global variables ===============================>
@@ -24,14 +22,21 @@ global calibrationperiod1
 % <================== Load the parameter values ===============================>
 % <============================================================================>
 
-[outbreakx_INP, caddate1_INP, cadregion_INP, caddisease_INP, datatype_INP, DT_INP, datafilename1_INP, datevecfirst1_INP, numstartpoints_INP, topmodelsx_INP, M_INP, flag1_INP]=options
+[outbreakx_INP, caddate1_INP, cadregion_INP, caddisease_INP, datatype_INP, DT_INP, datafilename1_INP, datevecfirst1_INP, datevecend1_INP, numstartpoints_INP, topmodelsx_INP, M_INP, flag1_INP]=options
 
 
 % <============================================================================>
 % <================================ Datasets properties =======================>
 % <============================================================================>
 
-outbreakx=outbreakx_INP;
+if length(outbreakx_pass)>0
+
+    outbreakx=outbreakx_pass;
+else
+    outbreakx=outbreakx_INP;
+
+end
+
 
 caddate1=caddate1_INP;
 
@@ -128,9 +133,13 @@ LM=3;   % 3 = LM
 RICH=4; % 4 = Richards
 
 flag1=flag1_INP; % Sequence of subepidemic growth models considered in epidemic trajectory
+
 %flag1=[RICH RICH];
 
 onset_fixed=0; % flag to indicate if the onset timing of subepidemics fixed at time 0 (onset_fixed=1) or not (onset_fixed=0).
+
+flag1
+
 
 % <==============================================================================>
 % <============ Load data and proceed to parameter estimation ===================>

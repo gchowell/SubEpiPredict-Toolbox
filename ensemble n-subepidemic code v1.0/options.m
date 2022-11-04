@@ -1,5 +1,5 @@
 
-function [outbreakx, caddate1, cadregion, caddisease, datatype, DT, datafilename1, datevecfirst1, numstartpoints, topmodelsx, M, flag1]=options
+function [outbreakx, caddate1, cadregion, caddisease, datatype, DT, datafilename1, datevecfirst1, datevecend1,numstartpoints, topmodelsx, M, flag1]=options
 
 % last uppdated: 11/03/22
 % <============================================================================>
@@ -12,7 +12,7 @@ global npatches_fixed
 
 global onset_fixed
 
-global dist1
+global dist1 
 global factor1
 global smoothfactor1
 
@@ -22,7 +22,7 @@ global calibrationperiod1
 % <================================ Datasets properties =======================>
 % <============================================================================>
 
-outbreakx=52;
+outbreakx=52;  % identified for spatial area
 
 caddate1='05-11-20';
 
@@ -44,6 +44,8 @@ end
 datafilename1=strcat('cumulative-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-',caddate1,'.txt'); %data file with all time series across areas/regions
 
 datevecfirst1=[2020 02 27]; % date corresponding to the first data point in time series data
+
+datevecend1=[2022 05 09]; % date of the most recent data file which is accessed to assess forecast performance.
 
 % <============================================================================>
 % <============================Adjustments to data ============================>
