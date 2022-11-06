@@ -35,7 +35,7 @@ To use the toolbox to fit the ensemble n-subepidemic framework to your data, you
     <li>create output folder where the output files will be stored</li>   
     <li>open a MATLAB session </li>
     <li>define the model parameter values and time series parameters by editing <code>options.m</code> </li>
-    <li>run the function <code>Run_subepidemicFramework.m</code> </li>
+    <li>run the function <code>Run_Fit_subepidemicFramework.m</code> </li>
 </ul>
   
 # Plotting the fits of the top-ranked models and parameter estimates
