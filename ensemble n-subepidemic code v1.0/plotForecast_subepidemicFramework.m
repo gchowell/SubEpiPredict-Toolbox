@@ -23,7 +23,7 @@ global calibrationperiod1
 % <================== Load the parameter values ===============================>
 % <============================================================================>
 
-[outbreakx_INP, caddate1_INP, cadregion_INP, caddisease_INP, datatype_INP, DT_INP, datafilename1_INP, datevecfirst1_INP, numstartpoints_INP, topmodelsx_INP, M_INP, flag1_INP]=options
+[outbreakx_INP, caddate1_INP, cadregion_INP, caddisease_INP, datatype_INP, DT_INP, datafilename1_INP, datevecfirst1_INP, datevecend1_INP, numstartpoints_INP, topmodelsx_INP, M_INP, flag1_INP]=options
 
 [getperformance_INP, deletetempfiles_INP, forecastingperiod_INP, printscreen1_INP, weight_type1_INP]=options_forecast
 
@@ -41,6 +41,11 @@ cadregion=cadregion_INP;
 caddisease=caddisease_INP;
 
 datatype=datatype_INP;
+
+datevecfirst1=datevecfirst1_INP;
+
+datevecend1=datevecend1_INP;
+
 
 DT=DT_INP; % temporal resolution in days (1=daily data, 7=weekly data).
 
@@ -181,7 +186,7 @@ for run_id=-1
     run_id
     
     if run_id==-1
-        outbreakx=52;
+        %outbreakx=52;
         
         run_id=0;
         
@@ -190,7 +195,7 @@ for run_id=-1
         %caddate1='05-31-20';
         
         %caddate1='04-20-20';
-        caddate1='05-11-20'; % for paper practical use
+        %caddate1='05-11-20'; % for paper practical use
 
         %caddate1='06-29-20';
         %caddate1='07-20-20';
@@ -540,7 +545,7 @@ for run_id=-1
         % <================================ Save short-term forecast results ==================================>
         % <=========================================================================================>
         
-        save(strcat('./output/Forecast-modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-0-smoothing-',num2str(smoothfactor1),'-',cadfilename2,'-flag1-',num2str(flag1(1)),'-flag1-',num2str(flag1(2)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-forecastingperiod-',num2str(forecastingperiod),'-rank-',num2str(rankx),'.mat'),'curvesforecasts1','curvesforecasts2','datevecfirst1','timevect2','timelags','cadtemporal')
+        save(strcat('./output/Forecast-modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-0-smoothing-',num2str(smoothfactor1),'-',cadfilename2,'-flag1-',num2str(flag1(1)),'-flag1-',num2str(flag1(2)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-forecastingperiod-',num2str(forecastingperiod),'-rank-',num2str(rankx),'.mat'),'curvesforecasts1','curvesforecasts2','datevecfirst1','datevecend1','timevect2','timelags','cadtemporal')
         
         % <=============================================================================================>
         % <=================== Plot data for the forecast period (if getperformance=1) ===================================>
@@ -553,11 +558,10 @@ for run_id=-1
         
         if getperformance & forecastingperiod>0
             
-            data2=getCOVIDData_USA_Deaths(cadtemporal,datevec(datenum1),outbreak1,forecastingperiod);
-            
+            data2=getData(cadtemporal,datevecfirst1,datevecend1,datevec(datenum1),outbreak1,forecastingperiod);
+                        
             timevect2=(data1(end,1)+1:(data1(end,1)+1+forecastingperiod-1))*DT;
-            
-            
+                        
             if printscreen1
                 
                 line2=plot(timevect2,data2,'ro')
@@ -572,6 +576,7 @@ for run_id=-1
             
         end
         
+
         datalatest2=[data1;[timevect2' data2]];
         
         
@@ -626,9 +631,9 @@ for run_id=-1
         if rankx>1
             
             if run_id==0
-                [RMSECS_model1 MSECS_model1 MAECS_model1  PICS_model1 MISCS_model1 WISC RMSEFS_model1 MSEFS_model1 MAEFS_model1 PIFS_model1 MISFS_model1 WISFS forecast1 quantilesc quantilesf]=getensemblesubepidemics_Deaths(cadfilename2,datevecfirst1,npatches_fixed,onset_fixed,smoothfactor1,outbreakx,cadregion,caddate1,flag1,method1,dist1,calibrationperiod1,1:rankx,forecastingperiod,getperformance,weight_type1,WISC_hash,WISC_hash,printscreen1);
+                [RMSECS_model1 MSECS_model1 MAECS_model1  PICS_model1 MISCS_model1 WISC RMSEFS_model1 MSEFS_model1 MAEFS_model1 PIFS_model1 MISFS_model1 WISFS forecast1 quantilesc quantilesf]=getensemblesubepidemicmodels(cadfilename2,datevecfirst1,npatches_fixed,onset_fixed,smoothfactor1,outbreakx,cadregion,caddate1,flag1,method1,dist1,calibrationperiod1,1:rankx,forecastingperiod,getperformance,weight_type1,WISC_hash,WISC_hash,printscreen1);
             else
-                [RMSECS_model1 MSECS_model1 MAECS_model1  PICS_model1 MISCS_model1 WISC RMSEFS_model1 MSEFS_model1 MAEFS_model1 PIFS_model1 MISFS_model1 WISFS forecast1 quantilesc quantilesf]=getensemblesubepidemics_Deaths(cadfilename2,datevecfirst1,npatches_fixed,onset_fixed,smoothfactor1,outbreakx,cadregion,caddate1,flag1,method1,dist1,calibrationperiod1,1:rankx,forecastingperiod,getperformance,weight_type1,WISC_hash,WISF_hash(:,run_id),printscreen1);
+                [RMSECS_model1 MSECS_model1 MAECS_model1  PICS_model1 MISCS_model1 WISC RMSEFS_model1 MSEFS_model1 MAEFS_model1 PIFS_model1 MISFS_model1 WISFS forecast1 quantilesc quantilesf]=getensemblesubepidemicmodels(cadfilename2,datevecfirst1,npatches_fixed,onset_fixed,smoothfactor1,outbreakx,cadregion,caddate1,flag1,method1,dist1,calibrationperiod1,1:rankx,forecastingperiod,getperformance,weight_type1,WISC_hash,WISF_hash(:,run_id),printscreen1);
             end
 
             quantilescs=[quantilescs;quantilesc];

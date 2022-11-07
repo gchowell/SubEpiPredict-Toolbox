@@ -22,9 +22,9 @@ global calibrationperiod1
 % <================================ Datasets properties =======================>
 % <============================================================================>
 
-outbreakx=52;  % identified for spatial area
+outbreakx=52;  % identifier for spatial area
 
-caddate1='05-11-20';
+caddate1='05-11-20';  % data file time stamp
 
 cadregion='USA'; % string indicating the region of the time series (USA, Chile, Mexico, Nepal, etc)
 

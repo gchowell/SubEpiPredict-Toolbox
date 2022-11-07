@@ -26,7 +26,7 @@ global calibrationperiod1
 % <================== Load the parameter values ===============================>
 % <============================================================================>
 
-[outbreakx_INP, caddate1_INP, cadregion_INP, caddisease_INP, datatype_INP, DT_INP, datafilename1_INP, datevecfirst1_INP, numstartpoints_INP, topmodelsx_INP, M_INP, flag1_INP]=options
+[outbreakx_INP, caddate1_INP, cadregion_INP, caddisease_INP, datatype_INP, DT_INP, datafilename1_INP, datevecfirst1_INP, datevecend1_INP, numstartpoints_INP, topmodelsx_INP, M_INP, flag1_INP]=options
 
 
 % <============================================================================>
@@ -42,6 +42,10 @@ cadregion=cadregion_INP; % string indicating the region of the time series (USA,
 caddisease=caddisease_INP;
 
 datatype=datatype_INP;
+
+datevecfirst1=datevecfirst1_INP;
+
+datevecend1=datevecend1_INP;
 
 DT=DT_INP; % temporal resolution in days (1=daily data, 7=weekly data).
 

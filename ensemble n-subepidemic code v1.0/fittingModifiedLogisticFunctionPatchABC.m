@@ -367,7 +367,7 @@ AICc_best=RMSES(index1,3);
 % We can set an alpha (e.g., 0.05), drop the models with exp((AICmin − AICi)/2) smaller than alpha, 
 % and combine other models with weighted average, 
 % where the weight is proportional to exp((AICmin − AICi)/2). This is another way to assign weights,
-% compared to 1/SSE. What do you think?
+% compared to 1/SSE. 
 
 
 AICmin=RMSES(1,3);
