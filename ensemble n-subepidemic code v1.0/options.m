@@ -21,16 +21,16 @@ global calibrationperiod1
 % <============================================================================>
 % <================================ Datasets properties =======================>
 % <============================================================================>
-% The time series data file can contain one or more time series (one per
-% column in the file). Each column could correspond to different geographic areas so that rows correspond to time points and columns 
-% correspond to spatial areas. For instance, each column could correspond to different states in
+% The time series data file can contain one or more cumulative incidence curves (one per
+% column in the file). Each column corresponds to the cumulative number of new cases for each epidemic. 
+% For instance, each column could correspond to different states in
 % the U.S or countries in the world.
 
 % The name of the time series data file follows the following format:
 
 % 'cumulative-<cadtemporal>-<caddisease>-<datatype>-<cadregion>-<caddate1>.txt');
 %  For example: 'cumulative-daily-coronavirus-deaths-USA-05-31-20.txt'
-% where:
+
 
 outbreakx=52;  % identifier for the spatial area of interest
 
