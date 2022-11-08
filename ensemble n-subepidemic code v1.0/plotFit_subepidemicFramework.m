@@ -281,7 +281,7 @@ for rank1=topmodels1
     
     
     xlabel('Time (days)')
-    ylabel('COVID-19 deaths')
+    ylabel(strcat(caddisease,{' '},datatype))
 
     axis([timevect(1) timevect(end)+1 0 max(data(:,2))*1.3])
 
@@ -370,8 +370,8 @@ for rank1=topmodels1
         
     end
     
-    xlabel('\fontsize{16}Time (days)');
-    ylabel('\fontsize{16}COVID-19 deaths')
+    xlabel('Time (days)');
+    ylabel(strcat(caddisease,{' '},datatype))
     
     line1=plot(data(:,1)*DT,data(:,2),'ko')
     set(line1,'LineWidth',2)
@@ -692,7 +692,7 @@ if length(topmodels1)>1
     xticklabel_rotate;
     
     
-    ylabel('COVID-19 deaths')
+    ylabel(strcat(caddisease,{' '},datatype))
     
     title('Ensemble Model-')
     
