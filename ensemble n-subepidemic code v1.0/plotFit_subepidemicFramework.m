@@ -1,5 +1,5 @@
 
-%% Plot model fits and derive performance metrics during the calibration period for the best fitting models
+% Plot model fits and derive performance metrics during the calibration period for the best fitting models
 
 clear
 clear global

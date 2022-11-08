@@ -518,7 +518,7 @@ plot(timevect,totinc,'r')
 hold on
 plot(timevect,data,'bo')
 xlabel('Time (days)');
-ylabel('Data and best SIR fit')
+ylabel('Incidence')
 
 title('best fit')
 [npatches onset_thr]
