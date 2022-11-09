@@ -188,7 +188,7 @@ forecastdata=[str2num(datestr((datenumIni:1:datenumEnd)','mm')) str2num(datestr(
 T = array2table(forecastdata);
 T.Properties.VariableNames(1:6) = {'month','day','data','median','LB','UB'};
 
-writetable(T,strcat('Ensemble(',num2str(topmodels1(end)),')-',cadregion,'-',caddate1,'.csv'))
+writetable(T,strcat('Ensemble(',num2str(topmodels1(end)),')-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
 
 
 if getperformance

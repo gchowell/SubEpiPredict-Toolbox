@@ -1,5 +1,5 @@
 
-function Run_subepidemicFramework(outbreakx_pass)
+function Run_Fit_subepidemicFramework(outbreakx_pass)
 
 % <============================================================================>
 % <=================== Declare global variables ===============================>
