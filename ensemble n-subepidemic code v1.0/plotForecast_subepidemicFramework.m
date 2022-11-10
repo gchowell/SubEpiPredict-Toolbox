@@ -456,7 +456,7 @@ for run_id=-1
 
         T = array2table(forecastdata);
         T.Properties.VariableNames(1:6) = {'month','day','data','median','LB','UB'};
-        writetable(T,strcat('ranked-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'-',num2str(rank1),'.csv'))
+        writetable(T,strcat('ranked(', num2str(rank1),')-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
 
 
     
