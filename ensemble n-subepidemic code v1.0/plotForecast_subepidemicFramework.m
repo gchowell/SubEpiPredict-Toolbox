@@ -435,36 +435,19 @@ for run_id=-1
 
         end
 
-
         LB1=quantile(curvesforecasts2',0.025);
         LB1=(LB1>=0).*LB1;
 
         UB1=quantile(curvesforecasts2',0.975);
         UB1=(UB1>=0).*UB1;
-
-        if rank1==1 %top model
-            %store forecast for best model
-            forecasts_best=[forecasts_best;[median(curvesforecasts2(end-forecastingperiod+1:end,:),2) LB1(end-forecastingperiod+1:end)' UB1(end-forecastingperiod+1:end)']];
-        end
-
-
-        % <=============================================================================================>
-        % <============================== Save file with forecast ======================================>
-        % <=============================================================================================>
-
-        forecastdata=[str2num(datestr((datenumIni:1:datenumEnd)','mm')) str2num(datestr((datenumIni:1:datenumEnd)','dd')) [data1(:,2);zeros(forecastingperiod,1)+NaN] median(curvesforecasts2,2) LB1' UB1'];
-
-        T = array2table(forecastdata);
-        T.Properties.VariableNames(1:6) = {'month','day','data','median','LB','UB'};
-        writetable(T,strcat('ranked(', num2str(rank1),')-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
-
-
-    
+ 
         if rank1==1 %top model
             %store forecast for top-ranking subepidemic model
             forecasts_best=[forecasts_best;[median(curvesforecasts2(end-forecastingperiod+1:end,:),2) LB1(end-forecastingperiod+1:end)' UB1(end-forecastingperiod+1:end)']];
         end
         
+
+
         if printscreen1
             
             figure(11)
@@ -550,40 +533,58 @@ for run_id=-1
         % <=============================================================================================>
         % <=================== Plot data for the forecast period (if getperformance=1) ===================================>
         % <=============================================================================================>
-        
+
         datenum1=datenum([str2num(caddate1(7:8))+2000 str2num(caddate1(1:2)) str2num(caddate1(4:5))]);
-        
+
         datenum1=datenum1+1;
-        
-        
+
+
         if getperformance & forecastingperiod>0
-            
+
             data2=getData(cadtemporal,datevecfirst1,datevecend1,datevec(datenum1),outbreak1,forecastingperiod);
-                        
+
             timevect2=(data1(end,1)+1:(data1(end,1)+1+forecastingperiod-1))*DT;
-                        
+
             if printscreen1
-                
+
                 line2=plot(timevect2,data2,'ro')
                 set(line2,'LineWidth',2)
-                
+
             end
+
+            % <=============================================================================================>
+            % <============================== Save file with forecast ======================================>
+            % <=============================================================================================>
+
+            forecastdata=[str2num(datestr((datenumIni:1:datenumEnd)','mm')) str2num(datestr((datenumIni:1:datenumEnd)','dd')) [data1(:,2);data2] median(curvesforecasts2,2) LB1' UB1'];
+
+            T = array2table(forecastdata);
+            T.Properties.VariableNames(1:6) = {'month','day','data','median','LB','UB'};
+            writetable(T,strcat('./output/ranked(', num2str(rank1),')-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
+
         else
-            
+
             timevect2=[];
-            
+
             data2=[];
-            
+
+            % <=============================================================================================>
+            % <============================== Save file with forecast ======================================>
+            % <=============================================================================================>
+
+            forecastdata=[str2num(datestr((datenumIni:1:datenumEnd)','mm')) str2num(datestr((datenumIni:1:datenumEnd)','dd')) [data1(:,2);zeros(forecastingperiod,1)+NaN] median(curvesforecasts2,2) LB1' UB1'];
+
+            T = array2table(forecastdata);
+            T.Properties.VariableNames(1:6) = {'month','day','data','median','LB','UB'};
+            writetable(T,strcat('./output/ranked(', num2str(rank1),')-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
+
         end
-        
 
         datalatest2=[data1;[timevect2' data2]];
-        
         
         % <==================================================================================================>
         % <========== Get forecast performance metrics for the model (if getperformance=1) =====================================>
         % <==================================================================================================>
-
 
         if getperformance
 

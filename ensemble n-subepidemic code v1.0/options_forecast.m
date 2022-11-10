@@ -6,11 +6,11 @@ function [getperformance, deletetempfiles, forecastingperiod, printscreen1, weig
 % <========================== Forecasting parameters ===================================>
 % <==============================================================================>
 
-getperformance=1; % flag or indicator variable (1/0) to calculate forecasting performance or not
+getperformance=0; % flag or indicator variable (1/0) to calculate forecasting performance or not
 
 deletetempfiles=1; %flag or indicator variable (1/0) to delete Forecast..mat files after use
 
-forecastingperiod=30; %forecast horizon (number of data points ahead)
+forecastingperiod=10; %forecast horizon (number of data points ahead)
 
 printscreen1=1;  % print plots with the results
 
