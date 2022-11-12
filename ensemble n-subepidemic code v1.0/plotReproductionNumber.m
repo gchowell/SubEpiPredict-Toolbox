@@ -30,6 +30,8 @@ global calibrationperiod1
 
 [getperformance_INP, deletetempfiles_INP, forecastingperiod_INP, printscreen1_INP, weight_type1_INP]=options_forecast
 
+[type_GId1_INP,mean_GI1_INP,var_GI1_INP]=options_Rt
+
 
 % <============================================================================>
 % <================================ Dataset ===================================>
@@ -139,6 +141,19 @@ weight_type1=weight_type1_INP; % -1= equally weighted from the top models, 0=bas
 WISC_hash=zeros(length(topmodels1),1); % vector that saves the WISC based on calibration to be used with weight_type1=2
 
 WISF_hash=zeros(length(topmodels1),200); % vector that saves the WISF based on prior forecasting performance to be used with weight_type1=2
+
+
+% <=======================================================================================>
+% <========================== Reproduction number number parameters =======================>
+% <========================================================================================>
+
+type_GId1=type_GId1_INP; % type of GI distribution 1=Gamma, 2=Exponential, 3=Delta
+
+mean_GI1=mean_GI1_INP;  % mean of the generation interval distribution
+
+var_GI1=var_GI1_INP; % variance of the generation interval distribution
+
+
 
 
 RMSES=[];
@@ -286,11 +301,8 @@ for run_id=-1
             % <=========================================================================================>
             % <================================ Estimate R_t ===========================================>
             % <=========================================================================================>
-            
-            % type of GI distribution 1=Gamma, 2=Exponential, 3=Delta
-            type_GId1=1;
-            
-            [Rs,ts]=get_Rt(timevect2,totinc,type_GId1,4.41,(3.17)^2);
+   
+            [Rs,ts]=get_Rt(timevect2,totinc,type_GId1,mean_GI1,var_GI1);
             
             Rss=[Rss Rs];
             
@@ -306,9 +318,7 @@ for run_id=-1
         line1=plot(data1(:,1)*DT,data1(:,2),'ko')
         set(line1,'LineWidth',2)
         
-        
-        %title(getUSstateName(outbreak2))
-        
+               
         
         axis([0 length(timevect2)-1 0 max(data1(:,2))*2])
         
@@ -404,7 +414,7 @@ for run_id=-1
         % <================================ Save most recent R estimate =======================>
         % <=========================================================================================>
         
-        param_Rt=[param_Rt;[ts(end) mean(Rss(end,:)) quantile(Rss(end,:),0.025) quantile(Rss(end,:),0.975) std(Rss(end,:))]];
+        param_Rt=[param_Rt;[ts(end) median(Rss(end,:)) quantile(Rss(end,:),0.025) quantile(Rss(end,:),0.975) std(Rss(end,:))]];
         
         
         
@@ -432,7 +442,7 @@ for run_id=-1
         
         %line1=plot(timevect2,quantile(curvesforecasts2',0.5),'r-')
         
-        line1=plot(timevect2,mean(curvesforecasts2,2),'r-')
+        line1=plot(timevect2,median(curvesforecasts2,2),'r-')
         
         set(line1,'LineWidth',2)
         
