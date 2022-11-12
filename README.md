@@ -66,7 +66,15 @@ After fitting the model to your data, you can use the toolbox to plot forecasts 
     <li>define the model parameter values and time series parameters by editing <code>options.m</code> and <code>options_forecast.m</code></li>
     <li>run the function <code>plotForecast_subepidemicFramework.m</code></li>
 </ul>
-    
+
+# Generating and plotting reproduction number forecasts from the top-ranked models
+
+After generating forecasts from top-ranked models, you can use the toolbox to generate and plot forecasts of the effective reproduction number from the top-ranked models as follows:
+
+<ul>
+    <li>run the function <code>plotReproductionNumber.m</code></li>
+</ul>
+
 # Publications
 
 <ul>
