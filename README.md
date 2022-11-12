@@ -8,7 +8,9 @@ A Matlab toolbox for fitting and forecasting epidemic trajectories using the ens
     <li>plotting the fits of the top-ranked models,</li>
     <li>plotting the AICc values of the top-ranked models,</li>
     <li>generates forecasts of the top-ranked models</li>
-    <li>gnerates ensemble forecasts based on the top-ranked models.</li>
+    <li>gnerates ensemble forecasts based on the top-ranked models</li>
+    <li>plotting the effective reproduction number derived from the top-ranked models.</li>
+    
 </ul>
 
 <p> Additional features include:</p>
