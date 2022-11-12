@@ -72,6 +72,7 @@ After fitting the model to your data, you can use the toolbox to plot forecasts 
 After generating forecasts from top-ranked models, you can use the toolbox to generate and plot forecasts of the effective reproduction number from the top-ranked models as follows:
 
 <ul>
+    <li>define the generation interval parameters by editing the function <code>options_rt.m</code></li>
     <li>run the function <code>plotReproductionNumber.m</code></li>
 </ul>
 
