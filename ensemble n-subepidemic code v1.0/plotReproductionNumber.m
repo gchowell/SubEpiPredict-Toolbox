@@ -26,12 +26,14 @@ global calibrationperiod1
 % <================== Load the parameter values ===============================>
 % <============================================================================>
 
+% options.m
 [outbreakx_INP, caddate1_INP, cadregion_INP, caddisease_INP, datatype_INP, DT_INP, datafilename1_INP, datevecfirst1_INP, datevecend1_INP, numstartpoints_INP, topmodelsx_INP, M_INP, flag1_INP]=options
 
+% options_forecast.m
 [getperformance_INP, deletetempfiles_INP, forecastingperiod_INP, printscreen1_INP, weight_type1_INP]=options_forecast
 
+%options_Rt.m
 [type_GId1_INP,mean_GI1_INP,var_GI1_INP]=options_Rt
-
 
 % <============================================================================>
 % <================================ Dataset ===================================>

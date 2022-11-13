@@ -1,4 +1,4 @@
-%% generate short-term forecasts using best fitting models and derive ensemble model
+% generate short-term forecasts using best fitting models and derive ensemble model
 
 clear
 close all
@@ -23,8 +23,10 @@ global calibrationperiod1
 % <================== Load the parameter values ===============================>
 % <============================================================================>
 
+% options.m
 [outbreakx_INP, caddate1_INP, cadregion_INP, caddisease_INP, datatype_INP, DT_INP, datafilename1_INP, datevecfirst1_INP, datevecend1_INP, numstartpoints_INP, topmodelsx_INP, M_INP, flag1_INP]=options
 
+% options_forecast.m
 [getperformance_INP, deletetempfiles_INP, forecastingperiod_INP, printscreen1_INP, weight_type1_INP]=options_forecast
 
 
@@ -123,8 +125,6 @@ deletetempfiles=deletetempfiles_INP; %flag or indicator variable (1/0) to delete
 
 forecastingperiod=forecastingperiod_INP; %forecast horizon (number of data points ahead)
 
-%caddatex=[2020 04 20];
-%ndays=2;
 printscreen1=printscreen1_INP;  % print plots with the results
 
 % <==============================================================================>
@@ -170,70 +170,15 @@ forecasts_ENS4=[];
 
 %for run_id=0:1:52*ndays-1
 for run_id=-1
-%for run_id=0:1:97
-    %for run_id=86
-    %for run_id=0
-    
+
     cc1=1;
-    
+
     close all
-    
-    %i=(run_id)*30+1;
-    %ARIMA_mean1=ARIMAforecasts(i:1:i+forecastingperiod-1,1);
-    %ARIMA_lb1=ARIMAforecasts(i:1:i+forecastingperiod-1,11);
-    %ARIMA_ub1=ARIMAforecasts(i:1:i+forecastingperiod-1,end-1);
-    
-    run_id
-    
-    if run_id==-1
-        %outbreakx=52;
-        
-        run_id=0;
-        
-        %caddate1='11-15-21';
-        %caddate1='06-22-20';
-        %caddate1='05-31-20';
-        
-        %caddate1='04-20-20';
-        %caddate1='05-11-20'; % for paper practical use
 
-        %caddate1='06-29-20';
-        %caddate1='07-20-20';
+    run_id=0;
 
-        %caddate1='09-28-20';
-        %caddate1='03-22-21';
-        
-        %caddate1='01-24-22';
-        
-        cadfilename2=strcat(cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-state-',num2str(outbreakx),'-',caddate1);
-       
-        
-    else
-        
-        %
-        
-        datenum1=datenum(caddatex);
-        
-        %state_id = rem(run_id,52)+1;
-        state_id = 52;
-        
-        nm=fix(run_id/52);
-        %date_id = datetime(caddatex) + caldays(nm);
-        date_id = datetime(caddatex) + run_id*7;
-        
-        date=datestr(date_id,'mm-dd-yy');
-        
-        outbreakx=state_id;
-        
-        caddate1=date;
-        
-        cadfilename2=strcat(cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-state-',num2str(outbreakx),'-',caddate1);
-                
-        
-        %
-    end
-    
-    
+    cadfilename2=strcat(cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-state-',num2str(outbreakx),'-',caddate1);
+
     for rankx=topmodels1
         
         rankx

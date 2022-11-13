@@ -26,8 +26,8 @@ global calibrationperiod1
 % <================== Load the parameter values ===============================>
 % <============================================================================>
 
+% options.m
 [outbreakx_INP, caddate1_INP, cadregion_INP, caddisease_INP, datatype_INP, DT_INP, datafilename1_INP, datevecfirst1_INP, datevecend1_INP, numstartpoints_INP, topmodelsx_INP, M_INP, flag1_INP]=options
-
 
 % <============================================================================>
 % <================================ Dataset ======================================>
@@ -500,8 +500,9 @@ ylabel('WIS')
 set(gca,'FontSize', 16);
 set(gcf,'color','white')
 
-
-%% compute ensemble model from top fitting models and evaluate performance metrics
+% <==================================================================================>
+% <========== compute ensemble model from top fitting models and evaluate performance metrics ============>
+% <==================================================================================>
 
 if length(topmodels1)>1
     
