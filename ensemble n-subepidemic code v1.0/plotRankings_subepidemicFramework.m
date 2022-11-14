@@ -141,7 +141,7 @@ for run_id=-1
         
         set(line1,'LineWidth',2)
         
-        xlabel('Model i')
+        xlabel('i_{th} Ranked Model')
         ylabel('AICc')
         set(gca,'FontSize', 24);
         set(gcf,'color','white')
@@ -153,7 +153,7 @@ for run_id=-1
         
         set(line1,'LineWidth',2)
         
-        xlabel('Model i')
+        xlabel('i_{th} Ranked Model')
         ylabel('Relative likelihood')
         set(gca,'FontSize', 24);
         set(gcf,'color','white')
@@ -167,7 +167,7 @@ for run_id=-1
         
         set(line1,'LineWidth',2)
         
-        xlabel('Model i')
+        xlabel('i_{th} Ranked Model')
         ylabel('Evidence ratio')
         set(gca,'FontSize', 24);
         set(gcf,'color','white')
@@ -383,7 +383,7 @@ end
 for j=1:cols
     
 subplot(rows,cols,topmodelsx(end-j+1))
-xlabel('Time (days)');
+xlabel('Time');
 
 end
 

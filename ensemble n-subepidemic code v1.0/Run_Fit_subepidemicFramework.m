@@ -6,17 +6,12 @@ function Run_Fit_subepidemicFramework(outbreakx_pass)
 % <============================================================================>
 
 global method1 %Parameter estimation method - LSQ=0, MLE Poisson=1, Pearson chi-squared=2, MLE (Neg Binomial)=3,MLE (Neg Binomial)=4, MLE (Neg Binomial)=5
-
 global npatches_fixed
-
 global onset_fixed
-
 global dist1
 global factor1
 global smoothfactor1
-
 global calibrationperiod1
-
 
 % <============================================================================>
 % <================== Load the parameter values ===============================>
@@ -64,6 +59,8 @@ datafilename1=datafilename1_INP;
 datafilename2=strcat(cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-state-',num2str(outbreakx),'-',caddate1,'.txt'); % specific adjusted data file for a given region/area
 
 datevecfirst1=datevecfirst1_INP; % date corresponding to the first data point in time series data
+
+datevecend1=datevecend1_INP;
 
 % <============================================================================>
 % <============================Adjustments to data ============================>

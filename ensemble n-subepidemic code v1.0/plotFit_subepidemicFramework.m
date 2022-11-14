@@ -88,7 +88,7 @@ RICH=4; % 4 = Richards
 flagss2=flag1_INP; % Sequence of subepidemic growth models considered in epidemic trajectory
 
 % <==============================================================================>
-% <======== Number of best fitting models used to generate ensemble model =======>
+% <======== Number of best fitting models used to generate ensemble model ========================>
 % <==============================================================================>
 
 topmodels1=1:topmodelsx_INP;
@@ -97,6 +97,10 @@ if npatchess2==1
     topmodels1=1;
 end
 
+
+% <=======================================================================================>
+% <========== Initialize variables to store results across top-ranked models ===========================>
+% <=======================================================================================>
 
 RMSES=[];
 MAES=[];
@@ -111,7 +115,15 @@ AICc_bests=[];
 
 quantilescs=[];
 
-quantilesfs=[];
+param_rs=[];
+param_ps=[];
+param_as=[];
+param_K0s=[];
+param_qs=[];
+param_alphas=[];
+param_ds=[];
+
+
 
 for rank1=topmodels1
     
@@ -199,8 +211,7 @@ for rank1=topmodels1
         line1=plot(line2(:,1),line2(:,2),'r--')
         set(line1,'LineWidth',2)
         
-        
-        
+
         subplot(npatches,4,i+1)
         hist(ps(:,j))
         hold on
@@ -389,13 +400,13 @@ for rank1=topmodels1
     
     title(strcat(num2ordinal(rank1),' Ranked Model'))
     
+    % <========================================================================================>
+    % <================================ Store model fit quantiles ======================================>
+    % <========================================================================================>
     
     [quantilesc,quantilesf]=computeQuantiles(data1,curves,0);
-
     quantilescs=[quantilescs; quantilesc];
     
-    quantilesfs=[quantilesfs; quantilesf];
-
     % <========================================================================================>
     % <================================ Plot residuals ========================================>
     % <========================================================================================>
@@ -451,51 +462,45 @@ for rank1=topmodels1
     
 end
 
-% <==============================================================================================>
-% <================================ Plot performance metrics ====================================>
-% <==============================================================================================>
+% <============================================================================>
+% <=================plot calibration performance metrics for the top-ranked models ==============>
+% <============================================================================>
 
-figure(300+topmodels1(end)+2)
+figure(400)
 
 subplot(2,2,1)
-line1=plot(MAES,'b-o')
+line1=plot(MAES,'-o')
 set(line1,'linewidth',2)
-xlabel('Top-ranked subepidemic models')
+xlabel('i_{th}Ranked Model')
 ylabel('MAE')
 
 set(gca,'FontSize', 16);
 set(gcf,'color','white')
 
 subplot(2,2,2)
-line1=plot(MSES,'b-o')
+line1=plot(MSES,'-o')
 set(line1,'linewidth',2)
-xlabel('Top-ranked subepidemic models')
+xlabel('i_{th}Ranked Model')
 ylabel('MSE')
 
 set(gca,'FontSize', 16);
 set(gcf,'color','white')
 
 subplot(2,2,3)
-line1=plot(PIS,'b-o')
+line1=plot(PIS,'-o')
 set(line1,'linewidth',2)
-xlabel('Top-ranked subepidemic models')
-ylabel('PI')
+xlabel('i_{th}Ranked Model')
+ylabel('Coverage of the 95% PI')
 
 set(gca,'FontSize', 16);
 set(gcf,'color','white')
 
 subplot(2,2,4)
 
-line1=plot(WISS,'b-o')
+line1=plot(WISS,'-o')
 set(line1,'linewidth',2)
-xlabel('Top-ranked subepidemic models')
+xlabel('i_{th}Ranked Model')
 ylabel('WIS')
-
-
-%line1=plot(MISS,'b-o')
-%set(line1,'linewidth',2)
-%xlabel('Top models')
-%ylabel('MIS')
 
 set(gca,'FontSize', 16);
 set(gcf,'color','white')
@@ -612,7 +617,6 @@ if length(topmodels1)>1
         
         
     end
-    
     
     curvesforecasts1=curvesforecasts1ens;
     

@@ -24,7 +24,7 @@ global calibrationperiod1
 % The name of the time series data file follows the following format:
 
 % 'cumulative-<cadtemporal>-<caddisease>-<datatype>-<cadregion>-<caddate1>.txt');
-%  For example: 'cumulative-daily-coronavirus-deaths-USA-05-31-20.txt'
+%  For example: 'cumulative-daily-coronavirus-deaths-USA-05-11-20.txt'
 
 outbreakx=52;  % identifier for the spatial area of interest
 
