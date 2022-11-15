@@ -105,7 +105,7 @@ factors=factor(length(topmodels1));
 if length(factors)==1
     rows=factors;
     cols=1;
-    
+
 elseif length(factors)==3
     rows=factors(1)*factors(2);
     cols=factors(3);
@@ -114,7 +114,7 @@ else
     cols=factors(2);
 end
 
-            
+
 % <==============================================================================>
 % <========================== Forecasting parameters ===================================>
 % <==============================================================================>
@@ -180,129 +180,129 @@ for run_id=-1
     cadfilename2=strcat(cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-state-',num2str(outbreakx),'-',caddate1);
 
     for rankx=topmodels1
-        
+
         rankx
-        
+
         npatches=npatches_fixed;
-        
+
         %caddate1='04-05-21';
-        
+
         % <========================================================================================>
         % <================================ Load model results ==========================================>
         % <========================================================================================>
-        
-        
+
+
         load (strcat('./output/modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-0-smoothing-',num2str(smoothfactor1),'-',cadfilename2,'-flag1-',num2str(flagx(1)),'-flag1-',num2str(flagx(2)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-rank-',num2str(rankx),'.mat'))
-        
-        
+
+
         d_hat=1;
-        
+
         cc3=1;
-        
+
         % <========================================================================================>
         % <================================ Compute short-term forecast ===================================>
         % <========================================================================================>
-        
+
         timevect=(data1(:,1))*DT;
-        
+
         timevect2=(0:t_window(end)-1+forecastingperiod)*DT;
-        
+
         % vector to store forecast mean curves
         curvesforecasts1=[];
-        
+
         % vector to store forecast prediction curves
         curvesforecasts2=[];
-        
+
         color1=['r-';'b-';'g-';'m-';'c-';'k-';'y-';'r-';'b-';'g-';'m-';'c-';'k-';'y-';'r-';'b-';'g-';'m-';'c-';'k-';'y-';'r-';'b-';'g-';'m-';'c-';'k-';'y-';'r-';'b-';'g-';'m-';'c-';'k-';'y-';];
-        
-        
+
+
         if printscreen1
             figure(10)
             %subplot(1,length(topmodels1),cc1)
-            
+
             subplot(rows,cols,cc1)
-            
+
         end
-        
+
         % generate forecast curves from each bootstrap realization
         for realization=1:M
-            
+
             rs_hat=Phatss(realization,1:npatches);
             ps_hat=Phatss(realization,npatches+1:2*npatches);
             as_hat=Phatss(realization,2*npatches+1:3*npatches);
             Ks_hat=Phatss(realization,3*npatches+1:4*npatches);
-            
-            
+
+
             IC=zeros(npatches,1);
-            
-            
+
+
             if method1>=3
                 factor1=Phatss(realization,end-1);
             end
-            
+
             if method1==5
                 d_hat=Phatss(realization,end);
             end
-            
-            
+
+
             if onset_thr>0
                 IC(1,1)=data1(1,2);
                 IC(2:end,1)=1;
-                
+
                 invasions=zeros(npatches,1);
                 timeinvasions=zeros(npatches,1);
                 Cinvasions=zeros(npatches,1);
-                
+
                 invasions(1)=1;
                 timeinvasions(1)=0;
                 Cinvasions(1)=0;
             else
                 IC(1:end,1)=data1(1,2)./length(IC(1:end,1));
-                
+
                 invasions=zeros(npatches,1);
                 timeinvasions=zeros(npatches,1);
                 Cinvasions=zeros(npatches,1);
-                
+
                 invasions(1:end)=1;
                 timeinvasions(1:end)=0;
                 Cinvasions(1:end)=0;
             end
-            
-            
+
+
             [~,x]=ode15s(@modifiedLogisticGrowthPatch,timevect2,IC,[],rs_hat,ps_hat,as_hat,Ks_hat,npatches,onset_thr,flag1);
-            
-            
+
+
             for j=1:npatches
-                
+
                 incidence1=[x(1,j);diff(x(:,j))];
-                
+
                 if printscreen1
                     plot(timevect2,incidence1,color1(j,:))
                     hold on
                 end
-                
+
             end
-            
+
             y=sum(x,2);
-            
+
             totinc=[y(1,1);diff(y(:,1))];
-            
+
             totinc(1)=totinc(1)-(npatches-1);
-            
+
             bestfit=totinc;
-            
+
             gray1=gray(10);
-            
+
             if printscreen1
                 plot(timevect2,totinc,'color',gray1(7,:))
-                
+
             end
-            
-            
+
+
             curvesforecasts1=[curvesforecasts1 totinc];
-            
+
             forecasts2=AddPoissonError(cumsum(totinc),20,dist1,factor1,d_hat);
-            
+
             curvesforecasts2=[curvesforecasts2 forecasts2];
 
         end
@@ -318,61 +318,61 @@ for run_id=-1
         % <==============================================================================================>
         % <================================ Plot short-term forecast ============================================>
         % <==============================================================================================>
-        
-        
+
+
         if printscreen1
-            
+
             title(strcat(num2ordinal(rank1),' Ranked Model'))
-            
+
             line1=plot(data1(:,1)*DT,data1(:,2),'ko')
             set(line1,'LineWidth',2)
-            
-            
+
+
             %title(getUSstateName(outbreak2))
-            
-            
+
+
             axis([0 length(timevect2)-1 0 max(data1(:,2))*2])
-            
-            
+
+
             line2=[timevect(end) 0;timevect(end) max(data1(:,2))*2];
-            
-            
+
+
             line1=plot(line2(:,1),line2(:,2),'k--')
             set(line1,'LineWidth',2)
-            
-            
+
+
             %wave=[2020 2 27 2020 9 08];
-            
+
             %caddate1=caddate1(6:end);
-            
+
             datenum1=datenum([str2num(caddate1(7:8))+2000 str2num(caddate1(1:2)) str2num(caddate1(4:5))]);
-            
+
             datevec1=datevec(datenum1+forecastingperiod);
-            
+
             wave=[datevecfirst1 datevec1(1:3)];
-            
-            
-            
+
+
+
             % plot dates in x axis
             'day='
             datenum1=datenum(wave(1:3))+timelags; % start of fall wave (reference date)
             datestr(datenum1)
-            
+
             datenumIni=datenum1;
             datenumEnd=datenum(wave(4:6))
-            
+
             dates1=datestr(datenumIni:1:datenumEnd,'mm-dd');
-            
+
             set(gca, 'XTick', 0:3:length(dates1(:,1))-1);
             set(gca, 'XTickLabel', strcat('\fontsize{14}',dates1(1:3:end,:)));
             xticklabel_rotate;
-            
-            
+
+
             line1=plot(line2(:,1),line2(:,2),'k--')
             set(line1,'LineWidth',2)
-            
+
             ylabel(strcat(caddisease,{' '},datatype))
-            
+
             %title(strcat('Sub-epidemic Model Forecast',{' '},getUSstateName(outbreakx),{' '},'- Reported by',{' '},caddate1))
 
             set(gca,'FontSize',24)
@@ -385,96 +385,85 @@ for run_id=-1
 
         UB1=quantile(curvesforecasts2',0.975);
         UB1=(UB1>=0).*UB1;
- 
+
         if rank1==1 %top model
             %store forecast for top-ranking subepidemic model
             forecasts_best=[forecasts_best;[median(curvesforecasts2(end-forecastingperiod+1:end,:),2) LB1(end-forecastingperiod+1:end)' UB1(end-forecastingperiod+1:end)']];
         end
-        
-
 
         if printscreen1
-            
+
             figure(11)
             %subplot(1,length(topmodels1),cc1)
             subplot(rows,cols,cc1)
-            
-            
+
+
             hold on
-            
+
             h=area(timevect2',[LB1' UB1'-LB1'])
             hold on
-            
+
             h(1).FaceColor = [1 1 1];
             h(2).FaceColor = [0.8 0.8 0.8];
-            
-            %line1=plot(timevect2,quantile(curvesforecasts2',0.5),'r-')
-            
+
             line1=plot(timevect2,median(curvesforecasts2,2),'r-')
-            
+
             set(line1,'LineWidth',2)
-            
-            if  1
-                line1=plot(timevect2,quantile(curvesforecasts2',0.025),'k--')
-                set(line1,'LineWidth',2)
-                
-                line1=plot(timevect2,quantile(curvesforecasts2',0.975),'k--')
-                set(line1,'LineWidth',2)
-            end
-            
-            
-            
-            gray1=gray(10);
-            
+
+            line1=plot(timevect2,LB1,'k--')
+            set(line1,'LineWidth',2)
+
+            line1=plot(timevect2,UB1,'k--')
+            set(line1,'LineWidth',2)
+
             % plot time series datalatest
             line1=plot(data1(:,1)*DT,data1(:,2),'ko')
             set(line1,'LineWidth',2)
-            
-            
-            axis([0 length(timevect2)-1 0 max(quantile(curvesforecasts2',0.975))*1.2])
-            
-            line2=[timevect(end) 0;timevect(end) max(quantile(curvesforecasts2',0.975))*1.20];
-            
+
+            axis([0 length(timevect2)-1 0 max(UB1)*1.2])
+
+            line2=[timevect(end) 0;timevect(end) max(UB1)*1.20];
+
             box on
-            
+
             line1=plot(line2(:,1),line2(:,2),'k--')
             set(line1,'LineWidth',2)
-            
-            
+
+
             % plot dates in x axis
             'day='
             datenum1=datenum(wave(1:3))+timelags; % start of fall wave (reference date)
             datestr(datenum1)
-            
+
             datenumIni=datenum1;
             datenumEnd=datenum(wave(4:6))
-            
+
             dates1=datestr(datenumIni:1:datenumEnd,'mm-dd');
-            
+
             set(gca, 'XTick', 0:3:length(dates1(:,1))-1);
             set(gca, 'XTickLabel', strcat('\fontsize{14}',dates1(1:3:end,:)));
             xticklabel_rotate;
-            
+
             line1=plot(line2(:,1),line2(:,2),'k--')
             set(line1,'LineWidth',2)
-            
+
             ylabel(strcat(caddisease,{' '},datatype))
-            
+
             title(strcat(num2ordinal(rank1),' Ranked Model'))
-            
+
             %title(strcat('Sub-epidemic Model Forecast-',{' '},getUSstateName(outbreakx),{' '},'- Reported by',{' '},caddate1))
-            
+
             set(gca,'FontSize',24)
             set(gcf,'color','white')
-            
+
         end
-        
+
         % <=========================================================================================>
         % <================================ Save short-term forecast results ==================================>
         % <=========================================================================================>
-        
+
         save(strcat('./output/Forecast-modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-0-smoothing-',num2str(smoothfactor1),'-',cadfilename2,'-flag1-',num2str(flag1(1)),'-flag1-',num2str(flag1(2)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-forecastingperiod-',num2str(forecastingperiod),'-rank-',num2str(rankx),'.mat'),'curvesforecasts1','curvesforecasts2','datevecfirst1','datevecend1','timevect2','timelags','cadtemporal')
-        
+
         % <=============================================================================================>
         % <=================== Plot data for the forecast period (if getperformance=1) ===================================>
         % <=============================================================================================>
@@ -526,7 +515,7 @@ for run_id=-1
         end
 
         datalatest2=[data1;[timevect2' data2]];
-        
+
         % <==================================================================================================>
         % <========== Get forecast performance metrics for the model (if getperformance=1) =====================================>
         % <==================================================================================================>
@@ -540,42 +529,40 @@ for run_id=-1
             WISC_hash(rankx,1)=WISC;  %save WISC for the model to be used to weight the models in the ensemble in function getensemblesubepidemics
 
             WISF_hash(rankx,run_id+1)=WISFS(end,end);  %save WISF for the model to be used to weight the models in the ensemble in function getensemblesubepidemics
-            
+
             % store metrics for calibration
             RMSECSS=[RMSECSS;[rankx outbreakx datenum(caddate1) RMSECS_model1(end,end)]];
             MSECSS=[MSECSS;[rankx outbreakx datenum(caddate1) MSECS_model1(end,end)]];
             MAECSS=[MAECSS;[rankx outbreakx datenum(caddate1) MAECS_model1(end,end)]];
             PICSS=[PICSS;[rankx outbreakx datenum(caddate1) PICS_model1(end,end)]];
             MISCSS=[MISCSS;[rankx outbreakx datenum(caddate1) MISCS_model1(end,end)]];
-            
+
             WISCSS=[WISCSS;[rankx outbreakx datenum(caddate1) WISC(end,end)]];
-            
-            
+
+
             % store metrics for short-term forecasts
             if forecastingperiod>0
-                
+
                 RMSEFSS=[RMSEFSS;[rankx outbreakx datenum(caddate1) RMSEFS_model1(end,end)]];
                 MSEFSS=[MSEFSS;[rankx outbreakx datenum(caddate1) MSEFS_model1(end,end)]];
                 MAEFSS=[MAEFSS;[rankx outbreakx datenum(caddate1) MAEFS_model1(end,end)]];
                 PIFSS=[PIFSS;[rankx outbreakx datenum(caddate1) PIFS_model1(end,end)]];
                 MISFSS=[MISFSS;[rankx outbreakx datenum(caddate1) MISFS_model1(end,end)]];
-                
+
                 WISFSS=[WISFSS;[rankx outbreakx datenum(caddate1) WISFS(end,end)]];
-                
+
             end
-            
+
+            cc1=cc1+1;
+
         end
-        
-        cc1=cc1+1;
-        
-        %end
-        
+
         % <=============================================================================================>
         % <=================== Get performance metrics for ensemble model, Ensemble(K) ===============================>
         % <=============================================================================================>
-        
+
         if rankx>1
-            
+
             if run_id==0
                 [RMSECS_model1 MSECS_model1 MAECS_model1  PICS_model1 MISCS_model1 WISC RMSEFS_model1 MSEFS_model1 MAEFS_model1 PIFS_model1 MISFS_model1 WISFS forecast1 quantilesc quantilesf]=getensemblesubepidemicmodels(cadfilename2,datevecfirst1,npatches_fixed,onset_fixed,smoothfactor1,outbreakx,cadregion,caddate1,caddisease,datatype,flag1,method1,dist1,calibrationperiod1,1:rankx,forecastingperiod,getperformance,weight_type1,WISC_hash,WISC_hash,printscreen1);
             else
@@ -593,52 +580,161 @@ for run_id=-1
             MAECSS=[MAECSS;[100+rankx outbreakx datenum(caddate1) MAECS_model1(end,end)]];
             PICSS=[PICSS;[100+rankx outbreakx datenum(caddate1) PICS_model1(end,end)]];
             MISCSS=[MISCSS;[100+rankx outbreakx datenum(caddate1) MISCS_model1(end,end)]];
-            
+
             WISCSS=[WISCSS;[100+rankx outbreakx datenum(caddate1) WISC(end,end)]];
-            
- 
+
+
             if forecastingperiod>0
-                
+
                 %store metrics for short-term forecasts
                 RMSEFSS=[RMSEFSS;[100+rankx outbreakx datenum(caddate1) RMSEFS_model1(end,end)]];
                 MSEFSS=[MSEFSS;[100+rankx outbreakx datenum(caddate1) MSEFS_model1(end,end)]];
                 MAEFSS=[MAEFSS;[100+rankx outbreakx datenum(caddate1) MAEFS_model1(end,end)]];
                 PIFSS=[PIFSS;[100+rankx outbreakx datenum(caddate1) PIFS_model1(end,end)]];
                 MISFSS=[MISFSS;[100+rankx outbreakx datenum(caddate1) MISFS_model1(end,end)]];
-                
+
                 WISFSS=[WISFSS;[100+rankx outbreakx datenum(caddate1) WISFS(end,end)]];
             end
-            
-            
+
+
             % store the first 3 ensemble forecasts including the 95% Prediction interval.
             switch rankx
                 case 2
                     forecasts_ENS2=[forecasts_ENS2;[forecast1(end-forecastingperiod+1:end,:)]];
-                    
+
                 case 3
                     forecasts_ENS3=[forecasts_ENS3;[forecast1(end-forecastingperiod+1:end,:)]];
-                    
+
                 case 4
                     forecasts_ENS4=[forecasts_ENS4;[forecast1(end-forecastingperiod+1:end,:)]];
-                    
+
             end
-            
+
         end
-        
+
     end
-    
+
     if deletetempfiles %flag or indicator variable (1/0) to delete Forecast..mat files after use
         for j=topmodels1
-            
+
             delete(strcat('./output/Forecast-modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-0-smoothing-',num2str(smoothfactor1),'-',cadfilename2,'-flag1-',num2str(flag1(1)),'-flag1-',num2str(flag1(2)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-forecastingperiod-',num2str(forecastingperiod),'-rank-',num2str(j),'.mat'))
         end
     end
-    
+
     %pause
-    
+
 end
 
-if run_id>=0
-    % save(strcat('./output/performStats-run_id-0-97-weight_type-',num2str(weight_type1),'-modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-0-smoothing-',num2str(smoothfactor1),'-',caddisease,'-',datatype,'-',cadregion,'-state-',num2str(outbreakx),'-dateini-',datestr(datenum(caddatex),'mm-dd-yy'),'-ndays-',num2str(ndays),'-flag1-',num2str(flag1(1)),'-flag1-',num2str(flag1(2)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-forecastingperiod-',num2str(forecastingperiod),'-topmodels-',num2str(topmodels1(end)),'.mat'))
+if getperformance
+
+    % <============================================================================>
+    % <=================plot forecasting performance metrics for the top-ranked models ==============>
+    % <============================================================================>
+
+    index1=find(MAEFSS(:,1)>=100);
+
+    index2=setdiff(1:length(MAEFSS(:,1)),index1);
+
+    figure(400)
+
+    subplot(2,2,1)
+    line1=plot(MAEFSS(index2,1),MAEFSS(index2,4),'k-o')
+    set(line1,'linewidth',2)
+    xlabel('i_{th}Ranked Model')
+    ylabel('MAE')
+
+    set(gca,'FontSize', 16);
+    set(gcf,'color','white')
+
+    subplot(2,2,2)
+    line1=plot(MSEFSS(index2,1),MSEFSS(index2,4),'k-o')
+    set(line1,'linewidth',2)
+    xlabel('i_{th}Ranked Model')
+    ylabel('MSE')
+
+    set(gca,'FontSize', 16);
+    set(gcf,'color','white')
+
+    subplot(2,2,3)
+    line1=plot(PIFSS(index2,1),PIFSS(index2,4),'k-o')
+    set(line1,'linewidth',2)
+    xlabel('i_{th}Ranked Model')
+    ylabel('Coverage of the 95% PI')
+
+    set(gca,'FontSize', 16);
+    set(gcf,'color','white')
+
+    subplot(2,2,4)
+
+    line1=plot(WISFSS(index2,1),WISFSS(index2,4),'k-o')
+    set(line1,'linewidth',2)
+    xlabel('i_{th}Ranked Model')
+    ylabel('WIS')
+
+    set(gca,'FontSize', 16);
+    set(gcf,'color','white')
+
+    % <=============================================================================================>
+    % <============================== Save file with top-ranked models' performance metrics =======================>
+    % <=============================================================================================>
+
+    performance=[topmodels1' MAEFSS(index2,4) MSEFSS(index2,4) PIFSS(index2,4) WISFSS(index2,4)];
+
+    T = array2table(performance);
+    T.Properties.VariableNames(1:5) = {'i_th-ranked model','MAE','MSE','Coverage 95%PI','WIS'};
+    writetable(T,strcat('./output/performance-forecasting-topRanked-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
+
+    % <============================================================================>
+    % <=================plot forecasting performance metrics of the ensemble models ==============>
+    % <============================================================================>
+
+    figure(401)
+
+    subplot(2,2,1)
+    line1=plot(1:length(index1),MAEFSS(index1,4),'k-o')
+    set(line1,'linewidth',2)
+    xlabel('Ensemble(i) model')
+    ylabel('MAE')
+
+    set(gca,'FontSize', 16);
+    set(gcf,'color','white')
+
+    subplot(2,2,2)
+    line1=plot(1:length(index1),MSEFSS(index1,4),'k-o')
+    set(line1,'linewidth',2)
+    xlabel('Ensemble(i) model')
+    ylabel('MSE')
+
+    set(gca,'FontSize', 16);
+    set(gcf,'color','white')
+
+    subplot(2,2,3)
+    line1=plot(1:length(index1),PIFSS(index1,4),'k-o')
+    set(line1,'linewidth',2)
+    xlabel('Ensemble(i) model')
+    ylabel('Coverage of the 95% PI')
+
+    set(gca,'FontSize', 16);
+    set(gcf,'color','white')
+
+    subplot(2,2,4)
+
+    line1=plot(1:length(index1),WISFSS(index1,4),'k-o')
+    set(line1,'linewidth',2)
+    xlabel('Ensemble(i) model')
+    ylabel('WIS')
+
+    set(gca,'FontSize', 16);
+    set(gcf,'color','white')
+
+    % <=============================================================================================>
+    % <============================== Save file with ensemble performance metrics ==============================>
+    % <=============================================================================================>
+
+    performance=[(1:length(index1))' MAEFSS(index1,4) MSEFSS(index1,4) PIFSS(index1,4) WISFSS(index1,4)];
+
+    T = array2table(performance);
+    T.Properties.VariableNames(1:5) = {'Ensemble(i) model','MAE','MSE','Coverage 95%PI','WIS'};
+    writetable(T,strcat('./output/performance-forecasting-Ensemble-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
 
 end

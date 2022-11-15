@@ -509,6 +509,16 @@ ylabel('WIS')
 set(gca,'FontSize', 16);
 set(gcf,'color','white')
 
+% <=============================================================================================>
+% <============================== Save file with top-ranked performance metrics (calibration) ====================>
+% <=============================================================================================>
+
+performance=[MAES MSES PIS WISS];
+
+T = array2table(performance);
+T.Properties.VariableNames(1:4) = {'MAE','MSE','Coverage 95%PI','WIS'};
+writetable(T,strcat('./output/performance-calibration-topRanked-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
+
 
 %%
 % <==================================================================================>
@@ -630,7 +640,6 @@ if length(topmodels1)>1
     % <================================ Plot ensemble model fit ====================================>
     % <========================================================================================>
 
-
     datenum1=datenum([str2num(caddate1(7:8))+2000 str2num(caddate1(1:2)) str2num(caddate1(4:5))]);
 
     datevec1=datevec(datenum1+forecastingperiod);
@@ -663,7 +672,6 @@ if length(topmodels1)>1
     line1=plot(timevect,UB1,'r--')
     set(line1,'LineWidth',2)
 
-    gray1=gray(10);
 
     % plot time series datalatest
     line1=plot(data1(:,1)*DT,data1(:,2),'ko')
