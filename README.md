@@ -5,8 +5,10 @@ A Matlab toolbox for fitting and forecasting epidemic trajectories using the ens
 <ul>
     <li>fitting models to time series data,</li>
     <li>estimation of parameters with quantified uncertainty,</li>
-    <li>plotting the fits of the top-ranked models,</li>
-    <li>plotting the AICc values of the top-ranked models,</li>
+    <li>plotting the model fits, sub-epidemic profiles, and residuals of the top-ranked models,</li>
+    <li>plotting the empirical distributions of the model parameters associated with each sub-epidemic</li>
+    <li>plotting the calibration performance metrics of the top-ranked models, </li>    
+    <li>plotting the AICc values, relative likelihood, and evidence ratio of the top-ranked models,</li>
     <li>generates forecasts of the top-ranked models</li>
     <li>gnerates ensemble forecasts based on the top-ranked models</li>
     <li>plotting the effective reproduction number derived from the top-ranked models.</li>
