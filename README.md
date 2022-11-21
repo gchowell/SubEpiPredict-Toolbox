@@ -36,7 +36,7 @@ To use the toolbox to fit the ensemble n-subepidemic framework to your data, you
 <ul>
     <li>download the code </li>
     <li>create 'input' folder in your working directory where your data is located </li>
-    <li>create 'output' folder in your working directory where the output files will be stored</li>   >   
+    <li>create 'output' folder in your working directory where the output files will be stored</li>   
     <li>open a MATLAB session </li>
     <li>define the model parameter values and time series parameters by editing <code>options.m</code> </li>
     <li>run the function <code>Run_Fit_subepidemicFramework.m</code> </li>
@@ -47,7 +47,6 @@ To use the toolbox to fit the ensemble n-subepidemic framework to your data, you
 After fitting the model to your data, you can use the toolbox to plot the model fits and parameter estimates as follows:
 
 <ul>
-    <li>define the model parameter values and time series parameters by editing <code>options.m</code></li>
     <li>run the function <code>plotFit_subepidemicFramework.m</code> </li>
 </ul>
     
@@ -56,7 +55,6 @@ After fitting the model to your data, you can use the toolbox to plot the model 
 After fitting the model to your data, you can use the toolbox to plot the subepidemic profiles and AICc values as follows:
 
 <ul>
-    <li>define the model parameter values and time series parameters by editing <code>options.m</code></li>
     <li>run the function <code>plotRankings_subepidemicFramework.m</code></li>
 </ul>
     
@@ -65,7 +63,7 @@ After fitting the model to your data, you can use the toolbox to plot the subepi
 After fitting the model to your data, you can use the toolbox to plot forecasts derived from the top-ranked and ensemble subepidemic models as follows:
 
 <ul>
-    <li>define the model parameter values and time series parameters by editing <code>options.m</code> and <code>options_forecast.m</code></li>
+    <li>define the forecasting parameters by editing <code>options_forecast.m</code></li>
     <li>run the function <code>plotForecast_subepidemicFramework.m</code></li>
 </ul>
 
