@@ -49,6 +49,7 @@ datevecfirst1=datevecfirst1_INP;
 datevecend1=datevecend1_INP;
 
 
+
 DT=DT_INP; % temporal resolution in days (1=daily data, 7=weekly data).
 
 if DT==1
@@ -195,6 +196,7 @@ for run_id=-1
         load (strcat('./output/modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-0-smoothing-',num2str(smoothfactor1),'-',cadfilename2,'-flag1-',num2str(flagx(1)),'-flag1-',num2str(flagx(2)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-rank-',num2str(rankx),'.mat'))
 
 
+
         d_hat=1;
 
         cc3=1;
@@ -203,9 +205,9 @@ for run_id=-1
         % <================================ Compute short-term forecast ===================================>
         % <========================================================================================>
 
-        timevect=(data1(:,1))*DT;
+        timevect=(data1(:,1));
 
-        timevect2=(0:t_window(end)-1+forecastingperiod)*DT;
+        timevect2=(0:t_window(end)-1+forecastingperiod);
 
         % vector to store forecast mean curves
         curvesforecasts1=[];
@@ -324,7 +326,7 @@ for run_id=-1
 
             title(strcat(num2ordinal(rank1),' Ranked Model'))
 
-            line1=plot(data1(:,1)*DT,data1(:,2),'ko')
+            line1=plot(data1(:,1),data1(:,2),'ko')
             set(line1,'LineWidth',2)
 
 
@@ -347,36 +349,45 @@ for run_id=-1
 
             datenum1=datenum([str2num(caddate1(7:8))+2000 str2num(caddate1(1:2)) str2num(caddate1(4:5))]);
 
-            datevec1=datevec(datenum1+forecastingperiod);
+            datevec1=datevec(datenum1+forecastingperiod*DT);
 
             wave=[datevecfirst1 datevec1(1:3)];
 
 
-
             % plot dates in x axis
             'day='
-            datenum1=datenum(wave(1:3))+timelags; % start of fall wave (reference date)
+            datenum1=datenum(wave(1:3))+timelags*DT; % start of fall wave (reference date)
             datestr(datenum1)
 
             datenumIni=datenum1;
             datenumEnd=datenum(wave(4:6))
 
-            dates1=datestr(datenumIni:1:datenumEnd,'mm-dd');
+            dates1=datestr(datenumIni:DT:datenumEnd,'mm-dd');
 
-            set(gca, 'XTick', 0:3:length(dates1(:,1))-1);
-            set(gca, 'XTickLabel', strcat('\fontsize{14}',dates1(1:3:end,:)));
+            if DT==1
+
+                set(gca, 'XTick', 0:3:length(dates1(:,1))-1);
+                set(gca, 'XTickLabel', strcat('\fontsize{14}',dates1(1:3:end,:)));
+            else
+
+                set(gca, 'XTick', 0:2:length(dates1(:,1))-1);
+                set(gca, 'XTickLabel', strcat('\fontsize{14}',dates1(1:2:end,:)));
+
+            end
+
             xticklabel_rotate;
-
 
             line1=plot(line2(:,1),line2(:,2),'k--')
             set(line1,'LineWidth',2)
 
+            
             ylabel(strcat(caddisease,{' '},datatype))
 
             %title(strcat('Sub-epidemic Model Forecast',{' '},getUSstateName(outbreakx),{' '},'- Reported by',{' '},caddate1))
 
             set(gca,'FontSize',24)
             set(gcf,'color','white')
+
 
         end
 
@@ -417,7 +428,7 @@ for run_id=-1
             set(line1,'LineWidth',2)
 
             % plot time series datalatest
-            line1=plot(data1(:,1)*DT,data1(:,2),'ko')
+            line1=plot(data1(:,1),data1(:,2),'ko')
             set(line1,'LineWidth',2)
 
             axis([0 length(timevect2)-1 0 max(UB1)*1.2])
@@ -432,16 +443,25 @@ for run_id=-1
 
             % plot dates in x axis
             'day='
-            datenum1=datenum(wave(1:3))+timelags; % start of fall wave (reference date)
+            datenum1=datenum(wave(1:3))+timelags*DT; % start of fall wave (reference date)
             datestr(datenum1)
 
             datenumIni=datenum1;
             datenumEnd=datenum(wave(4:6))
 
-            dates1=datestr(datenumIni:1:datenumEnd,'mm-dd');
+            dates1=datestr(datenumIni:DT:datenumEnd,'mm-dd');
 
-            set(gca, 'XTick', 0:3:length(dates1(:,1))-1);
-            set(gca, 'XTickLabel', strcat('\fontsize{14}',dates1(1:3:end,:)));
+            if DT==1
+
+                set(gca, 'XTick', 0:3:length(dates1(:,1))-1);
+                set(gca, 'XTickLabel', strcat('\fontsize{14}',dates1(1:3:end,:)));
+            else
+
+                set(gca, 'XTick', 0:2:length(dates1(:,1))-1);
+                set(gca, 'XTickLabel', strcat('\fontsize{14}',dates1(1:2:end,:)));
+
+            end
+
             xticklabel_rotate;
 
             line1=plot(line2(:,1),line2(:,2),'k--')
@@ -470,14 +490,15 @@ for run_id=-1
 
         datenum1=datenum([str2num(caddate1(7:8))+2000 str2num(caddate1(1:2)) str2num(caddate1(4:5))]);
 
-        datenum1=datenum1+1;
+        datenum1=datenum1+DT;
 
 
         if getperformance & forecastingperiod>0
 
-            data2=getData(cadtemporal,datevecfirst1,datevecend1,datevec(datenum1),outbreak1,forecastingperiod);
+            data2=getData(cadtemporal,caddisease,datatype,cadregion,DT,datevecfirst1,datevecend1,datevec(datenum1),calibrationperiod1,outbreak1,forecastingperiod);
 
-            timevect2=(data1(end,1)+1:(data1(end,1)+1+forecastingperiod-1))*DT;
+
+            timevect2=(data1(end,1)+1:(data1(end,1)+1+forecastingperiod-1));
 
             if printscreen1
 
@@ -490,7 +511,8 @@ for run_id=-1
             % <============================== Save file with forecast ======================================>
             % <=============================================================================================>
 
-            forecastdata=[str2num(datestr((datenumIni:1:datenumEnd)','mm')) str2num(datestr((datenumIni:1:datenumEnd)','dd')) [data1(:,2);data2] median(curvesforecasts2,2) LB1' UB1'];
+            forecastdata=[str2num(datestr((datenumIni:DT:datenumEnd)','mm')) str2num(datestr((datenumIni:DT:datenumEnd)','dd')) [data1(:,2);data2] median(curvesforecasts2,2) LB1' UB1'];
+
 
             T = array2table(forecastdata);
             T.Properties.VariableNames(1:6) = {'month','day','data','median','LB','UB'};
@@ -506,7 +528,7 @@ for run_id=-1
             % <============================== Save file with forecast ======================================>
             % <=============================================================================================>
 
-            forecastdata=[str2num(datestr((datenumIni:1:datenumEnd)','mm')) str2num(datestr((datenumIni:1:datenumEnd)','dd')) [data1(:,2);zeros(forecastingperiod,1)+NaN] median(curvesforecasts2,2) LB1' UB1'];
+            forecastdata=[str2num(datestr((datenumIni:DT:datenumEnd)','mm')) str2num(datestr((datenumIni:DT:datenumEnd)','dd')) [data1(:,2);zeros(forecastingperiod,1)+NaN] median(curvesforecasts2,2) LB1' UB1'];
 
             T = array2table(forecastdata);
             T.Properties.VariableNames(1:6) = {'month','day','data','median','LB','UB'};
@@ -553,9 +575,11 @@ for run_id=-1
 
             end
 
-            cc1=cc1+1;
-
         end
+
+
+        cc1=cc1+1;
+
 
         % <=============================================================================================>
         % <=================== Get performance metrics for ensemble model, Ensemble(K) ===============================>

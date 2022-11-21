@@ -5,6 +5,8 @@ function Run_Fit_subepidemicFramework(outbreakx_pass)
 % <=================== Declare global variables ===============================>
 % <============================================================================>
 
+clear global
+
 global method1 %Parameter estimation method - LSQ=0, MLE Poisson=1, Pearson chi-squared=2, MLE (Neg Binomial)=3,MLE (Neg Binomial)=4, MLE (Neg Binomial)=5
 global npatches_fixed
 global onset_fixed

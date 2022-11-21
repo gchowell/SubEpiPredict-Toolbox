@@ -73,7 +73,7 @@ data=data1(:,2);
 % <============ Set time vector (timevect) and initial condition (I0) ===========>
 % <==============================================================================>
 
-timevect=(data1(:,1))*DT;
+timevect=(data1(:,1));
 
 I0=data(1); % initial condition
 
