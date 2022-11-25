@@ -709,9 +709,7 @@ if length(topmodels1)>1
 
     elseif DT==365
 
-        %years1=1:1:length(dates1(:,1));
-        years1=wave(1)+timelags:wave(4);
-
+        years1=wave(1)+timelags:wave(1)+timelags+length(dates1(:,1))-1;
 
         set(gca,'XTick',0:1:length(years1)-1);
 

@@ -380,7 +380,7 @@ for run_id=-1
 
             elseif DT==365
 
-                years1=wave(1)+timelags:wave(4);
+                years1=wave(1)+timelags:wave(1)+timelags+length(dates1(:,1))-1;
 
                 set(gca,'XTick',0:1:length(years1)-1);
                 set(gca, 'XTickLabel', strcat('\fontsize{14}',num2str(years1')));
@@ -478,7 +478,9 @@ for run_id=-1
 
             elseif DT==365
 
-                years1=wave(1)+timelags:wave(4);
+                %years1=wave(1)+timelags:wave(4);
+
+                years1=wave(1)+timelags:wave(1)+timelags+length(dates1(:,1))-1;
 
                 set(gca,'XTick',0:1:length(years1)-1);
                 set(gca, 'XTickLabel', strcat('\fontsize{14}',num2str(years1')));
