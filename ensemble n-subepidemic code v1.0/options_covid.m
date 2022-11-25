@@ -26,33 +26,38 @@ global calibrationperiod1
 % 'cumulative-<cadtemporal>-<caddisease>-<datatype>-<cadregion>-<caddate1>.txt');
 %  For example: 'cumulative-daily-coronavirus-deaths-USA-05-11-2020.txt'
 
-outbreakx=1;  % identifier for the spatial area of interest
+outbreakx=52;  % identifier for the spatial area of interest
 
-caddate1='11-16-2022';  % data file time stamp in format: mm-dd-yyyy
+caddate1='05-11-2020';  % data file time stamp in format: mm-dd-yyyy
 
 cadregion='USA'; % string indicating the geographic region of the time series contained in the file (Georgia, USA, World, Asia, Africa, etc.)
 
-caddisease='monkeypox'; % string indicating the name of the disease related to the time series data
+caddisease='coronavirus'; % string indicating the name of the disease related to the time series data
 
-datatype='cases'; % string indicating the nature of the data (cases, deaths, hospitalizations, etc)
+datatype='deaths'; % string indicating the nature of the data (cases, deaths, hospitalizations, etc)
 
-DT=7; % temporal resolution in days (1=daily data, 7=weekly data, 365=yearly data).
+DT=1; % temporal resolution in days (1=daily data, 7=weekly data).
 
+if DT==1
+    cadtemporal='daily'; % string indicating the temporal resolution of the data
+elseif DT==7
+    cadtemporal='weekly';
+end
 
 % Name of the file containing the cumulative time series data (rows=time, cols=regions)
-%datafilename1=strcat('cumulative-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-',caddate1,'.txt'); %data file with all time series across areas/regions
+datafilename1=strcat('cumulative-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-',caddate1,'.txt'); %data file with all time series across areas/regions
 
-datevecfirst1=[2022 05 10]; % date corresponding to the first data point in time series data in format [year_number month_number day_number]
+datevecfirst1=[2020 02 27]; % date corresponding to the first data point in time series data in format [year_number month_number day_number]
 
-datevecend1=[2023 07 20]; % date of the most recent data file in format [year_number month_number day_number]. This data file is accessed to assess forecast performance
+datevecend1=[2022 05 09]; % date of the most recent data file in format [year_number month_number day_number]. This data file is accessed to assess forecast performance
 
 % <============================================================================>
 % <============================Adjustments to data =================================>
 % <============================================================================>
 
-smoothfactor1=1; % <smoothfactor1>-day rolling average smoothing of the case series (smoothfactor1=1 indicates no smoothing)
+smoothfactor1=7; % <smoothfactor1>-day rolling average smoothing of the case series (smoothfactor1=1 indicates no smoothing)
 
-calibrationperiod1=10; % calibrates model using the most recent <calibrationperiod1> data points where <calibrationperiod> does not exceed the length of the time series data otherwise it will use the maximum length of the data
+calibrationperiod1=90; % calibrates model using the most recent <calibrationperiod1> data points where <calibrationperiod> does not exceed the length of the time series data otherwise it will use the maximum length of the data
 
 % <=============================================================================>
 % <=========================== Statistical method ==============================>
@@ -77,7 +82,7 @@ dist1=0; % Define dist1 which is the type of error structure. See below:
 
 numstartpoints=10; % Number of initial guesses for parameter estimation procedure using MultiStart
 
-topmodelsx=2; % Number of best fitting models (based on AICc) that will be generated to derive ensemble models
+topmodelsx=4; % Number of best fitting models (based on AICc) that will be generated to derive ensemble models
 
 M=300; % number of bootstrap realizations to characterize parameter uncertainty
 

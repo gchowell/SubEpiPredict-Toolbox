@@ -25,7 +25,7 @@ global smoothfactor1 calibrationperiod1
 % <============================================================================>
 
 % options.m
-[outbreakx_INP, caddate1_INP, cadregion_INP, caddisease_INP, datatype_INP, DT_INP, datafilename1_INP, datevecfirst1_INP, datevecend1_INP, numstartpoints_INP, topmodelsx_INP, M_INP, flag1_INP]=options
+[outbreakx_INP, caddate1_INP, cadregion_INP, caddisease_INP, datatype_INP, DT_INP, datevecfirst1_INP, datevecend1_INP, numstartpoints_INP, topmodelsx_INP, M_INP, flag1_INP]=options
 
 % <============================================================================>
 % <================================ Dataset ====================================>
@@ -47,7 +47,10 @@ if DT==1
     cadtemporal='daily';
 elseif DT==7
     cadtemporal='weekly';
+elseif DT==365
+    cadtemporal='yearly';
 end
+
 
 cadfilename1=strcat(cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-state-',num2str(outbreakx),'-',caddate1);
 

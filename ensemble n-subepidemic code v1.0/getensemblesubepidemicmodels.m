@@ -98,7 +98,7 @@ if printscreen1
     figure(500)
     subplot(1,3,topmodels1(end)-1)
 
-    datenum1=datenum([str2num(caddate1(7:8))+2000 str2num(caddate1(1:2)) str2num(caddate1(4:5))]);
+    datenum1=datenum([str2num(caddate1(7:10)) str2num(caddate1(1:2)) str2num(caddate1(4:5))]);
 
     datevec1=datevec(datenum1+forecastingperiod*DT);
 
@@ -170,12 +170,21 @@ if printscreen1
 
         set(gca, 'XTick', 0:3:length(dates1(:,1))-1);
         set(gca, 'XTickLabel', strcat('\fontsize{14}',dates1(1:3:end,:)));
-    else
+        
+    elseif DT==7
 
         set(gca, 'XTick', 0:2:length(dates1(:,1))-1);
         set(gca, 'XTickLabel', strcat('\fontsize{14}',dates1(1:2:end,:)));
 
+    elseif DT==365
+
+        years1=wave(1)+timelags:wave(4);
+
+        set(gca,'XTick',0:1:length(years1)-1);
+        set(gca, 'XTickLabel', strcat('\fontsize{14}',num2str(years1')));
+
     end
+
     xticklabel_rotate;
 
     ylabel(strcat(caddisease,{' '},datatype))
@@ -193,11 +202,15 @@ if getperformance & forecastingperiod>0
 
     % plot most recent data
 
-    datenum1=datenum([str2num(caddate1(7:8))+2000 str2num(caddate1(1:2)) str2num(caddate1(4:5))]);
+    datenum1=datenum([str2num(caddate1(7:10)) str2num(caddate1(1:2)) str2num(caddate1(4:5))]);
 
-    datenum1=datenum1+DT;
+    if (DT~=365)
 
-    data2=getData(cadtemporal,caddisease,datatype,cadregion,DT,datevecfirst1,datevecend1,datevec(datenum1),calibrationperiod1,outbreakx,forecastingperiod)
+        datenum1=datenum1+DT;
+
+    end
+
+    data2=getData(cadtemporal,caddisease,datatype,cadregion,DT,datevecfirst1,datevecend1,datevec(datenum1),outbreakx,forecastingperiod)
 
     timevect2=(data1(end,1)+1:(data1(end,1)+1+forecastingperiod-1));
 
@@ -211,10 +224,10 @@ if getperformance & forecastingperiod>0
     % <=============================================================================================>
     % <============================== Save file with forecast ======================================>
     % <=============================================================================================>
-    forecastdata=[str2num(datestr((datenumIni:DT:datenumEnd)','mm')) str2num(datestr((datenumIni:DT:datenumEnd)','dd')) [data1(:,2);data2] median(curvesforecasts2,2) LB1' UB1'];
+    forecastdata=[str2num(datestr((datenumIni:DT:datenumEnd)','yyyy')) str2num(datestr((datenumIni:DT:datenumEnd)','mm')) str2num(datestr((datenumIni:DT:datenumEnd)','dd')) [data1(:,2);data2] median(curvesforecasts2,2) LB1' UB1'];
 
     T = array2table(forecastdata);
-    T.Properties.VariableNames(1:6) = {'month','day','data','median','LB','UB'};
+    T.Properties.VariableNames(1:7) = {'year','month','day','data','median','LB','UB'};
 
     writetable(T,strcat('./output/Ensemble(',num2str(topmodels1(end)),')-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
 
@@ -237,11 +250,11 @@ else
     % <=============================================================================================>
     % <============================== Save file with forecast ======================================>
     % <=============================================================================================>
-    forecastdata=[str2num(datestr((datenumIni:DT:datenumEnd)','mm')) str2num(datestr((datenumIni:DT:datenumEnd)','dd')) [data1(:,2);zeros(forecastingperiod,1)+NaN] median(curvesforecasts2,2) LB1' UB1'];
+    forecastdata=[str2num(datestr((datenumIni:DT:datenumEnd)','yyyy')) str2num(datestr((datenumIni:DT:datenumEnd)','mm')) str2num(datestr((datenumIni:DT:datenumEnd)','dd')) [data1(:,2);zeros(forecastingperiod,1)+NaN] median(curvesforecasts2,2) LB1' UB1'];
 
 
     T = array2table(forecastdata);
-    T.Properties.VariableNames(1:6) = {'month','day','data','median','LB','UB'};
+    T.Properties.VariableNames(1:7) = {'year','month','day','data','median','LB','UB'};
 
     writetable(T,strcat('./output/Ensemble(',num2str(topmodels1(end)),')-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
 

@@ -28,7 +28,7 @@ global calibrationperiod1
 
 outbreakx=1;  % identifier for the spatial area of interest
 
-caddate1='11-16-2022';  % data file time stamp in format: mm-dd-yyyy
+caddate1='11-16-2049';  % data file time stamp in format: mm-dd-yyyy
 
 cadregion='USA'; % string indicating the geographic region of the time series contained in the file (Georgia, USA, World, Asia, Africa, etc.)
 
@@ -36,7 +36,7 @@ caddisease='monkeypox'; % string indicating the name of the disease related to t
 
 datatype='cases'; % string indicating the nature of the data (cases, deaths, hospitalizations, etc)
 
-DT=7; % temporal resolution in days (1=daily data, 7=weekly data, 365=yearly data).
+DT=365; % temporal resolution in days (1=daily data, 7=weekly data, 365=yearly data).
 
 
 % Name of the file containing the cumulative time series data (rows=time, cols=regions)
@@ -44,7 +44,7 @@ DT=7; % temporal resolution in days (1=daily data, 7=weekly data, 365=yearly dat
 
 datevecfirst1=[2022 05 10]; % date corresponding to the first data point in time series data in format [year_number month_number day_number]
 
-datevecend1=[2023 07 20]; % date of the most recent data file in format [year_number month_number day_number]. This data file is accessed to assess forecast performance
+datevecend1=[2079 07 20]; % date of the most recent data file in format [year_number month_number day_number]. This data file is accessed to assess forecast performance
 
 % <============================================================================>
 % <============================Adjustments to data =================================>

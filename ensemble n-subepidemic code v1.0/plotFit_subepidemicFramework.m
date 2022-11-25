@@ -27,7 +27,7 @@ global calibrationperiod1
 % <============================================================================>
 
 % options.m
-[outbreakx_INP, caddate1_INP, cadregion_INP, caddisease_INP, datatype_INP, DT_INP, datafilename1_INP, datevecfirst1_INP, datevecend1_INP, numstartpoints_INP, topmodelsx_INP, M_INP, flag1_INP]=options
+[outbreakx_INP, caddate1_INP, cadregion_INP, caddisease_INP, datatype_INP, DT_INP, datevecfirst1_INP, datevecend1_INP, numstartpoints_INP, topmodelsx_INP, M_INP, flag1_INP]=options
 
 % <============================================================================>
 % <================================ Dataset ======================================>
@@ -53,6 +53,8 @@ if DT==1
     cadtemporal='daily';
 elseif DT==7
     cadtemporal='weekly';
+elseif DT==365
+    cadtemporal='yearly';
 end
 
 cadfilename2=strcat(cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-state-',num2str(outbreakx),'-',caddate1);
@@ -418,7 +420,6 @@ for rank1=topmodels1
     stem(timevect,resid1,'b')
     hold on
 
-
     xlabel('Time (days)')
     ylabel('Residuals')
 
@@ -640,7 +641,7 @@ if length(topmodels1)>1
     % <================================ Plot ensemble model fit ====================================>
     % <========================================================================================>
 
-    datenum1=datenum([str2num(caddate1(7:8))+2000 str2num(caddate1(1:2)) str2num(caddate1(4:5))]);
+    datenum1=datenum([str2num(caddate1(7:10)) str2num(caddate1(1:2)) str2num(caddate1(4:5))]);
 
     datevec1=datevec(datenum1+forecastingperiod*DT);
 
@@ -695,16 +696,29 @@ if length(topmodels1)>1
 
     dates1=datestr(datenumIni:DT:datenumEnd,'mm-dd');
 
+
     if DT==1
 
         set(gca, 'XTick', 0:3:length(dates1(:,1))-1);
         set(gca, 'XTickLabel', strcat('\fontsize{14}',dates1(1:3:end,:)));
-    else
+
+    elseif DT==7
 
         set(gca, 'XTick', 0:2:length(dates1(:,1))-1);
         set(gca, 'XTickLabel', strcat('\fontsize{14}',dates1(1:2:end,:)));
 
+    elseif DT==365
+
+        %years1=1:1:length(dates1(:,1));
+        years1=wave(1)+timelags:wave(4);
+
+
+        set(gca,'XTick',0:1:length(years1)-1);
+
+        set(gca, 'XTickLabel', strcat('\fontsize{14}',num2str(years1')));
+
     end
+
 
     xticklabel_rotate;
 

@@ -24,7 +24,7 @@ global calibrationperiod1
 % <============================================================================>
 
 % options.m
-[outbreakx_INP, caddate1_INP, cadregion_INP, caddisease_INP, datatype_INP, DT_INP, datafilename1_INP, datevecfirst1_INP, datevecend1_INP, numstartpoints_INP, topmodelsx_INP, M_INP, flag1_INP]=options
+[outbreakx_INP, caddate1_INP, cadregion_INP, caddisease_INP, datatype_INP, DT_INP, datevecfirst1_INP, datevecend1_INP, numstartpoints_INP, topmodelsx_INP, M_INP, flag1_INP]=options
 
 % options_forecast.m
 [getperformance_INP, deletetempfiles_INP, forecastingperiod_INP, printscreen1_INP, weight_type1_INP]=options_forecast
@@ -49,14 +49,16 @@ datevecfirst1=datevecfirst1_INP;
 datevecend1=datevecend1_INP;
 
 
-
-DT=DT_INP; % temporal resolution in days (1=daily data, 7=weekly data).
+DT=DT_INP; % temporal resolution in days (1=daily data, 7=weekly data, 365=yearly data).
 
 if DT==1
     cadtemporal='daily';
 elseif DT==7
     cadtemporal='weekly';
+elseif DT==365
+    cadtemporal='yearly';
 end
+
 
 % <============================================================================>
 % <============================Adjustments to data ============================>
@@ -192,9 +194,7 @@ for run_id=-1
         % <================================ Load model results ==========================================>
         % <========================================================================================>
 
-
         load (strcat('./output/modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-0-smoothing-',num2str(smoothfactor1),'-',cadfilename2,'-flag1-',num2str(flagx(1)),'-flag1-',num2str(flagx(2)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-rank-',num2str(rankx),'.mat'))
-
 
 
         d_hat=1;
@@ -347,7 +347,7 @@ for run_id=-1
 
             %caddate1=caddate1(6:end);
 
-            datenum1=datenum([str2num(caddate1(7:8))+2000 str2num(caddate1(1:2)) str2num(caddate1(4:5))]);
+            datenum1=datenum([str2num(caddate1(7:10)) str2num(caddate1(1:2)) str2num(caddate1(4:5))]);
 
             datevec1=datevec(datenum1+forecastingperiod*DT);
 
@@ -368,19 +368,30 @@ for run_id=-1
 
                 set(gca, 'XTick', 0:3:length(dates1(:,1))-1);
                 set(gca, 'XTickLabel', strcat('\fontsize{14}',dates1(1:3:end,:)));
-            else
+
+                xticklabel_rotate;
+
+            elseif DT==7
 
                 set(gca, 'XTick', 0:2:length(dates1(:,1))-1);
                 set(gca, 'XTickLabel', strcat('\fontsize{14}',dates1(1:2:end,:)));
 
+                xticklabel_rotate;
+
+            elseif DT==365
+
+                years1=wave(1)+timelags:wave(4);
+
+                set(gca,'XTick',0:1:length(years1)-1);
+                set(gca, 'XTickLabel', strcat('\fontsize{14}',num2str(years1')));
+
             end
 
-            xticklabel_rotate;
 
             line1=plot(line2(:,1),line2(:,2),'k--')
             set(line1,'LineWidth',2)
 
-            
+
             ylabel(strcat(caddisease,{' '},datatype))
 
             %title(strcat('Sub-epidemic Model Forecast',{' '},getUSstateName(outbreakx),{' '},'- Reported by',{' '},caddate1))
@@ -455,14 +466,25 @@ for run_id=-1
 
                 set(gca, 'XTick', 0:3:length(dates1(:,1))-1);
                 set(gca, 'XTickLabel', strcat('\fontsize{14}',dates1(1:3:end,:)));
-            else
+
+                xticklabel_rotate;
+
+            elseif DT==7
 
                 set(gca, 'XTick', 0:2:length(dates1(:,1))-1);
                 set(gca, 'XTickLabel', strcat('\fontsize{14}',dates1(1:2:end,:)));
 
+               xticklabel_rotate;
+
+            elseif DT==365
+
+                years1=wave(1)+timelags:wave(4);
+
+                set(gca,'XTick',0:1:length(years1)-1);
+                set(gca, 'XTickLabel', strcat('\fontsize{14}',num2str(years1')));
+
             end
 
-            xticklabel_rotate;
 
             line1=plot(line2(:,1),line2(:,2),'k--')
             set(line1,'LineWidth',2)
@@ -488,15 +510,18 @@ for run_id=-1
         % <=================== Plot data for the forecast period (if getperformance=1) ===================================>
         % <=============================================================================================>
 
-        datenum1=datenum([str2num(caddate1(7:8))+2000 str2num(caddate1(1:2)) str2num(caddate1(4:5))]);
+        datenum1=datenum([str2num(caddate1(7:10)) str2num(caddate1(1:2)) str2num(caddate1(4:5))]);
+
+       if (DT~=365)
 
         datenum1=datenum1+DT;
+
+       end
 
 
         if getperformance & forecastingperiod>0
 
-            data2=getData(cadtemporal,caddisease,datatype,cadregion,DT,datevecfirst1,datevecend1,datevec(datenum1),calibrationperiod1,outbreak1,forecastingperiod);
-
+            data2=getData(cadtemporal,caddisease,datatype,cadregion,DT,datevecfirst1,datevecend1,datevec(datenum1),outbreak1,forecastingperiod);
 
             timevect2=(data1(end,1)+1:(data1(end,1)+1+forecastingperiod-1));
 
@@ -511,12 +536,25 @@ for run_id=-1
             % <============================== Save file with forecast ======================================>
             % <=============================================================================================>
 
-            forecastdata=[str2num(datestr((datenumIni:DT:datenumEnd)','mm')) str2num(datestr((datenumIni:DT:datenumEnd)','dd')) [data1(:,2);data2] median(curvesforecasts2,2) LB1' UB1'];
+            if DT==365
+
+               forecastdata=[(1:1:length([data1(:,2);data2]))' [data1(:,2);data2] median(curvesforecasts2,2) LB1' UB1'];
+
+                T = array2table(forecastdata);
+                T.Properties.VariableNames(1:5) = {'year','data','median','LB','UB'};
+                writetable(T,strcat('./output/ranked(', num2str(rank1),')-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
 
 
-            T = array2table(forecastdata);
-            T.Properties.VariableNames(1:6) = {'month','day','data','median','LB','UB'};
-            writetable(T,strcat('./output/ranked(', num2str(rank1),')-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
+            else
+                forecastdata=[str2num(datestr((datenumIni:DT:datenumEnd)','yyyy')) str2num(datestr((datenumIni:DT:datenumEnd)','mm')) str2num(datestr((datenumIni:DT:datenumEnd)','dd')) [data1(:,2);data2] median(curvesforecasts2,2) LB1' UB1'];
+
+
+                T = array2table(forecastdata);
+                T.Properties.VariableNames(1:7) = {'year','month','day','data','median','LB','UB'};
+                writetable(T,strcat('./output/ranked(', num2str(rank1),')-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
+
+            end
+
 
         else
 
@@ -528,11 +566,23 @@ for run_id=-1
             % <============================== Save file with forecast ======================================>
             % <=============================================================================================>
 
-            forecastdata=[str2num(datestr((datenumIni:DT:datenumEnd)','mm')) str2num(datestr((datenumIni:DT:datenumEnd)','dd')) [data1(:,2);zeros(forecastingperiod,1)+NaN] median(curvesforecasts2,2) LB1' UB1'];
+            if DT==365
 
-            T = array2table(forecastdata);
-            T.Properties.VariableNames(1:6) = {'month','day','data','median','LB','UB'};
-            writetable(T,strcat('./output/ranked(', num2str(rank1),')-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
+                forecastdata=[(1:1:length([data1(:,2);zeros(forecastingperiod,1)+NaN]))' [data1(:,2);zeros(forecastingperiod,1)+NaN] median(curvesforecasts2,2) LB1' UB1'];
+
+                T = array2table(forecastdata);
+                T.Properties.VariableNames(1:5) = {'year','data','median','LB','UB'};
+                writetable(T,strcat('./output/ranked(', num2str(rank1),')-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
+
+
+            else
+
+                forecastdata=[str2num(datestr((datenumIni:DT:datenumEnd)','yyyy')) str2num(datestr((datenumIni:DT:datenumEnd)','mm')) str2num(datestr((datenumIni:DT:datenumEnd)','dd')) [data1(:,2);zeros(forecastingperiod,1)+NaN] median(curvesforecasts2,2) LB1' UB1'];
+
+                T = array2table(forecastdata);
+                T.Properties.VariableNames(1:7) = {'year','month','day','data','median','LB','UB'};
+                writetable(T,strcat('./output/ranked(', num2str(rank1),')-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
+            end
 
         end
 
