@@ -121,7 +121,7 @@ M=M_INP; % number of bootstrap realizations to characterize parameter uncertaint
 % <========================= Mathematical model ======================================>
 % <==============================================================================>
 
-npatches_fixed=2; % maximum number of subepidemics considered in epidemic trajectory fit
+%npatches_fixed=2; % maximum number of subepidemics considered in epidemic trajectory fit
 
 if npatches_fixed==1
     topmodelsx=1;
@@ -137,10 +137,9 @@ flag1=flag1_INP; % Sequence of subepidemic growth models considered in epidemic 
 
 %flag1=[RICH RICH];
 
-onset_fixed=0; % flag to indicate if the onset timing of subepidemics fixed at time 0 (onset_fixed=1) or not (onset_fixed=0).
+%onset_fixed=0; % flag to indicate if the onset timing of subepidemics fixed at time 0 (onset_fixed=1) or not (onset_fixed=0).
 
 flag1
-
 
 % <==============================================================================>
 % <============ Load data and proceed to parameter estimation ===================>
