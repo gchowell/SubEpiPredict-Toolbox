@@ -47,7 +47,7 @@ datevecfirst1=datevecfirst1_INP;
 
 datevecend1=datevecend1_INP;
 
-DT=DT_INP; % temporal resolution in days (1=daily data, 7=weekly data).
+DT=DT_INP; % temporal resolution in days (1=daily data, 7=weekly data, 365=yearly data).
 
 if DT==1
     cadtemporal='daily';
@@ -209,6 +209,7 @@ for rank1=topmodels1
         line1=plot(line2(:,1),line2(:,2),'r--')
         set(line1,'LineWidth',2)
 
+        legend(strcat(num2ordinal(rank1),' Ranked Model'))
 
         subplot(npatches,4,i+1)
         hist(ps(:,j))
