@@ -1,7 +1,8 @@
+
+function plotForecast_subepidemicFramework(outbreakx_pass,caddate1_pass)
+
 % generate short-term forecasts using best fitting models and derive ensemble model
 
-clear
-close all
 
 % <============================================================================>
 % <=================== Declare global variables =======================================>
@@ -34,9 +35,22 @@ global calibrationperiod1
 % <================================ Dataset ===================================>
 % <============================================================================>
 
-outbreakx=outbreakx_INP;
+if exist('outbreakx_pass','var')==1
 
-caddate1=caddate1_INP;
+    outbreakx=outbreakx_pass;
+
+else
+    outbreakx=outbreakx_INP;
+
+end
+
+if exist('caddate1_pass','var')==1
+
+    caddate1=caddate1_pass;
+else
+    caddate1=caddate1_INP;
+
+end
 
 cadregion=cadregion_INP;
 

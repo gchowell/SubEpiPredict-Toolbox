@@ -1,10 +1,8 @@
 
+function plotRankings_subepidemicFramework(outbreakx_pass,caddate1_pass)
+
 % Plot ranked models and their AICc related values
 
-clear
-clear global
-
-close all
 
 % <============================================================================>
 % <=================== Declare global variables ===============================>
@@ -31,9 +29,23 @@ global smoothfactor1 calibrationperiod1
 % <================================ Dataset ====================================>
 % <============================================================================>
 
-outbreakx=outbreakx_INP;
 
-caddate1=caddate1_INP; % for paper practical use
+if exist('outbreakx_pass','var')==1
+
+    outbreakx=outbreakx_pass;
+
+else
+    outbreakx=outbreakx_INP;
+
+end
+
+if exist('caddate1_pass','var')==1
+
+    caddate1=caddate1_pass;
+else
+    caddate1=caddate1_INP;
+
+end
 
 cadregion=cadregion_INP;
 
