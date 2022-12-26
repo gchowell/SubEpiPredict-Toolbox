@@ -2,7 +2,7 @@
 function [RMSECS_model1 MSECS_model1 MAECS_model1  PICS_model1 MISCS_model1 WISC RMSEFS_model1 MSEFS_model1 MAEFS_model1 PIFS_model1 MISFS_model1 WISFS forecast1 quantilesc quantilesf]=getensemblesubepidemics(cadfilename1,datevecfirst1,npatches_fixed,onset_fixed,smoothfactor1,outbreakx,cadregion,caddate1,caddisease,datatype,flag1,method1,dist1,calibrationperiod1,topmodels1,forecastingperiod,getperformance,weight_type1,WISC_hash,WISF_hash,printscreen1)
 
 load(strcat('./output/ABC-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-',num2str(onset_fixed),'-smoothing-',num2str(smoothfactor1),'-',cadfilename1,'-flag1-',num2str(flag1(1)),'-flag1-',num2str(flag1(2)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'.mat'),'-mat')
-
+ 
 % remove repeated rows
 [RMSES,index1]=unique(RMSES,'rows','stable');
 PS=PS(index1,:);
@@ -61,7 +61,7 @@ topmodels1
 for rank1=topmodels1
 
 
-    load(strcat('./output/Forecast-modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-0-smoothing-',num2str(smoothfactor1),'-',cadfilename1,'-flag1-',num2str(flag1(1)),'-flag1-',num2str(flag1(2)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-forecastingperiod-',num2str(forecastingperiod),'-rank-',num2str(rank1),'.mat'))
+    load(strcat('./output/Forecast-modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-',num2str(onset_fixed),'-smoothing-',num2str(smoothfactor1),'-',cadfilename1,'-flag1-',num2str(flag1(1)),'-flag1-',num2str(flag1(2)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-forecastingperiod-',num2str(forecastingperiod),'-rank-',num2str(rank1),'.mat'))
 
     M1=length(curvesforecasts1(1,:));
 
@@ -229,7 +229,7 @@ if getperformance & forecastingperiod>0
     T = array2table(forecastdata);
     T.Properties.VariableNames(1:7) = {'year','month','day','data','median','LB','UB'};
 
-    writetable(T,strcat('./output/Ensemble(',num2str(topmodels1(end)),')-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
+    writetable(T,strcat('./output/Ensemble(',num2str(topmodels1(end)),')-onsetfixed-',num2str(onset_fixed),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
 
 
     %%  compute performance metrics
@@ -256,7 +256,7 @@ else
     T = array2table(forecastdata);
     T.Properties.VariableNames(1:7) = {'year','month','day','data','median','LB','UB'};
 
-    writetable(T,strcat('./output/Ensemble(',num2str(topmodels1(end)),')-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
+    writetable(T,strcat('./output/Ensemble(',num2str(topmodels1(end)),')-onsetfixed-',num2str(onset_fixed),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
 
 
 end

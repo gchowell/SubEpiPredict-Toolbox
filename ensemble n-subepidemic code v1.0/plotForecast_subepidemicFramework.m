@@ -208,7 +208,7 @@ for run_id=-1
         % <================================ Load model results ==========================================>
         % <========================================================================================>
 
-        load (strcat('./output/modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-0-smoothing-',num2str(smoothfactor1),'-',cadfilename2,'-flag1-',num2str(flagx(1)),'-flag1-',num2str(flagx(2)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-rank-',num2str(rankx),'.mat'))
+        load (strcat('./output/modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-',num2str(onset_fixed),'-smoothing-',num2str(smoothfactor1),'-',cadfilename2,'-flag1-',num2str(flagx(1)),'-flag1-',num2str(flagx(2)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-rank-',num2str(rankx),'.mat'))
 
 
         d_hat=1;
@@ -520,7 +520,7 @@ for run_id=-1
         % <================================ Save short-term forecast results ==================================>
         % <=========================================================================================>
 
-        save(strcat('./output/Forecast-modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-0-smoothing-',num2str(smoothfactor1),'-',cadfilename2,'-flag1-',num2str(flag1(1)),'-flag1-',num2str(flag1(2)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-forecastingperiod-',num2str(forecastingperiod),'-rank-',num2str(rankx),'.mat'),'curvesforecasts1','curvesforecasts2','datevecfirst1','datevecend1','timevect2','timelags','cadtemporal')
+        save(strcat('./output/Forecast-modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-',num2str(onset_fixed),'-smoothing-',num2str(smoothfactor1),'-',cadfilename2,'-flag1-',num2str(flag1(1)),'-flag1-',num2str(flag1(2)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-forecastingperiod-',num2str(forecastingperiod),'-rank-',num2str(rankx),'.mat'),'curvesforecasts1','curvesforecasts2','datevecfirst1','datevecend1','timevect2','timelags','cadtemporal')
 
         % <=============================================================================================>
         % <=================== Plot data for the forecast period (if getperformance=1) ===================================>
@@ -558,7 +558,7 @@ for run_id=-1
 
                 T = array2table(forecastdata);
                 T.Properties.VariableNames(1:5) = {'year','data','median','LB','UB'};
-                writetable(T,strcat('./output/ranked(', num2str(rank1),')-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
+                writetable(T,strcat('./output/ranked(', num2str(rank1),')-onsetfixed-',num2str(onset_fixed),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
 
 
             else
@@ -567,7 +567,7 @@ for run_id=-1
 
                 T = array2table(forecastdata);
                 T.Properties.VariableNames(1:7) = {'year','month','day','data','median','LB','UB'};
-                writetable(T,strcat('./output/ranked(', num2str(rank1),')-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
+                writetable(T,strcat('./output/ranked(', num2str(rank1),')-onsetfixed-',num2str(onset_fixed),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
 
             end
 
@@ -588,7 +588,7 @@ for run_id=-1
 
                 T = array2table(forecastdata);
                 T.Properties.VariableNames(1:5) = {'year','data','median','LB','UB'};
-                writetable(T,strcat('./output/ranked(', num2str(rank1),')-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
+                writetable(T,strcat('./output/ranked(', num2str(rank1),')-onsetfixed-',num2str(onset_fixed),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
 
 
             else
@@ -597,7 +597,7 @@ for run_id=-1
 
                 T = array2table(forecastdata);
                 T.Properties.VariableNames(1:7) = {'year','month','day','data','median','LB','UB'};
-                writetable(T,strcat('./output/ranked(', num2str(rank1),')-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
+                writetable(T,strcat('./output/ranked(', num2str(rank1),')-onsetfixed-',num2str(onset_fixed),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
             end
 
         end
@@ -707,7 +707,7 @@ for run_id=-1
     if deletetempfiles %flag or indicator variable (1/0) to delete Forecast..mat files after use
         for j=topmodels1
 
-            delete(strcat('./output/Forecast-modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-0-smoothing-',num2str(smoothfactor1),'-',cadfilename2,'-flag1-',num2str(flag1(1)),'-flag1-',num2str(flag1(2)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-forecastingperiod-',num2str(forecastingperiod),'-rank-',num2str(j),'.mat'))
+            delete(strcat('./output/Forecast-modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-',num2str(onset_fixed),'-smoothing-',num2str(smoothfactor1),'-',cadfilename2,'-flag1-',num2str(flag1(1)),'-flag1-',num2str(flag1(2)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-forecastingperiod-',num2str(forecastingperiod),'-rank-',num2str(j),'.mat'))
         end
     end
 
@@ -772,7 +772,7 @@ if getperformance
 
     T = array2table(performance);
     T.Properties.VariableNames(1:5) = {'i_th-ranked model','MAE','MSE','Coverage 95%PI','WIS'};
-    writetable(T,strcat('./output/performance-forecasting-topRanked-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
+    writetable(T,strcat('./output/performance-forecasting-topRanked-onsetfixed-',num2str(onset_fixed),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
 
     % <============================================================================>
     % <=================plot forecasting performance metrics of the ensemble models ==============>
@@ -825,6 +825,6 @@ if getperformance
 
     T = array2table(performance);
     T.Properties.VariableNames(1:5) = {'Ensemble(i) model','MAE','MSE','Coverage 95%PI','WIS'};
-    writetable(T,strcat('./output/performance-forecasting-Ensemble-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
+    writetable(T,strcat('./output/performance-forecasting-Ensemble-onsetfixed-',num2str(onset_fixed),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
 
 end
