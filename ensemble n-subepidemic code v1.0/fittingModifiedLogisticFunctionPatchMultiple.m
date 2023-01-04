@@ -1,3 +1,7 @@
+% <============================================================================>
+% < Author: Gerardo Chowell  ==================================================>
+% <============================================================================>
+
 function [Phatss,npatches,onset_thr,curves,bestfit,data1,P0,AICc_best,factor1,d]=fittingModifiedLogisticFunctionMultiple(RMSES,PS,data1,DT,epidemic_period,M,flagX,numstartpoints,rank1)
 
 global flag1 timevect ydata yfit calibrationperiod1

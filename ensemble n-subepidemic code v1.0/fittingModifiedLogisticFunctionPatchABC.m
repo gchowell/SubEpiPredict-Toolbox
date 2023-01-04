@@ -1,3 +1,7 @@
+% <============================================================================>
+% < Author: Gerardo Chowell  ==================================================>
+% <============================================================================>
+
 function [RMSES,PS,npatches,onset_thr,P]=fittingModifiedLogisticFunctionPatchABC(datafilename1,data1,DT,epidemic_period,M,flagX,numstartpoints)
 
 global flag1 method1 timevect ydata

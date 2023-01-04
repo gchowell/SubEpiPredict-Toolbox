@@ -1,3 +1,7 @@
+% <============================================================================>
+% < Author: Gerardo Chowell  ==================================================>
+% <============================================================================>
+
 function plotFit_subepidemicFramework(outbreakx_pass,caddate1_pass)
 
 % Plot model fits and derive performance metrics during the calibration period for the best fitting models

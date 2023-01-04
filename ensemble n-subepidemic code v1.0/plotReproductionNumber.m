@@ -1,3 +1,8 @@
+% <============================================================================>
+% < Author: Gerardo Chowell  ==================================================>
+% <============================================================================>
+
+
 % Plot model fits and effective reproduction number during the calibration
 % and forecasting periods derived from the top-ranked models
 

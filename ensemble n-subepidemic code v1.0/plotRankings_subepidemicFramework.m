@@ -1,4 +1,8 @@
 
+% <============================================================================>
+% < Author: Gerardo Chowell  ==================================================>
+% <============================================================================>
+
 function plotRankings_subepidemicFramework(outbreakx_pass,caddate1_pass)
 
 % Plot ranked models and their AICc related values
