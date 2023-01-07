@@ -83,6 +83,8 @@ After generating forecasts from top-ranked models, you can use the toolbox to ge
  <li>Chowell, G., Dahal, S., Tariq, A., Roosa, K., Hyman, J. M., & Luo, R. (2022). An ensemble n-sub-epidemic modeling framework for short-term forecasting epidemic trajectories: Application to the COVID-19 pandemic in the USA. PLOS Computational Biology, 18(10), e1010602. </li>
 
  <li>Chowell, G., Tariq, A., & Hyman, J. M. (2019). A novel sub-epidemic modeling framework for short-term forecasting epidemic waves. BMC medicine, 17(1), 1-18.  </li>
+ 
+<li>Bleichrodt, A., Dahal, S., Maloney, K., Casanova, L., Luo, R., & Chowell, G. (2022). Real-time forecasting the trajectory of monkeypox outbreaks at the national and global levels, July–October 2022. BMC Medicine (In Press). </li>
 
 </ul>
 
