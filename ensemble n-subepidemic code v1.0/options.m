@@ -17,44 +17,52 @@ global smoothfactor1
 global calibrationperiod1
 
 % <============================================================================>
-% <================================ Datasets properties =======================>
+% <================================ Parameters related to the data =======================>
 % <============================================================================>
-% The time series data file can contain one or more cumulative incidence curves (one per
-% column in the file). Each column corresponds to the cumulative number of new cases for each epidemic corresponding to a different area/group.
+% Located in the input folder, the time series data file is a text file with the extension *.txt. The data file can contain one or more cumulative incidence curves (one per
+% column in the file). Each column corresponds to the cumulative number of new cases over time for each epidemic corresponding to a different area/group.
 % For instance, each column could correspond to different states in
-% the U.S or countries in the world. A specific data column in the file can be accessed using the parameter <outbreakx> (see below).
+% the U.S or countries in the world. In the options.m file, a specific data column in the file can be accessed using the parameter <outbreakx> (see below).
 
-% The name of the time series data file follows the following format:
+% The name of the time series data file follows the format:
 
 % 'cumulative-<cadtemporal>-<caddisease>-<datatype>-<cadregion>-<caddate1>.txt');
 %  For example: 'cumulative-daily-coronavirus-deaths-USA-05-11-2020.txt'
 
-outbreakx=52;  % identifier for the spatial area of interest
+outbreakx=52;  % identifier for the spatial area/group of interest
 
-caddate1='05-11-2020';  % data file time stamp in format: mm-dd-yyyy
+caddate1='05-11-2020';  % string indicating the data file date stamp in format: mm-dd-yyyy
 
-cadregion='USA'; % string indicating the geographic region of the time series contained in the file (Georgia, USA, World, Asia, Africa, etc.)
+cadregion='USA'; % string indicating the geographic region of the time series contained in the file (e.g., Georgia, USA, World, Asia, Africa, etc.)
 
 caddisease='coronavirus'; % string indicating the name of the disease related to the time series data
 
-datatype='deaths'; % string indicating the nature of the data (cases, deaths, hospitalizations, etc)
+datatype='deaths'; % string indicating the nature of the data (e.g., cases, deaths, hospitalizations, etc)
 
-DT=1; % temporal resolution in days (1=daily data, 7=weekly data, 365=yearly data).
+DT=1; % temporal resolution in days (e.g., 1=daily data, 7=weekly data, 365=yearly data).
 
-datevecfirst1=[2020 02 27]; % date corresponding to the first data point in time series data in format [year_number month_number day_number]
+if DT==1
+    cadtemporal='daily';
+elseif DT==7
+    cadtemporal='weekly';
+elseif DT==365
+    cadtemporal='yearly';
+end
 
-datevecend1=[2022 05 09]; % date of the most recent data file in format [year_number month_number day_number]. This data file is accessed to assess forecast performance
+datevecfirst1=[2020 02 27]; % 3-value date vector that specifies the date corresponding to the first data point in time series data in format: [yyy mm dd]. 
+
+datevecend1=[2022 05 09]; % 3-value date vector that specifies the date of the most recent data file in format: [yyy mm dd].  This data file is used to assess forecast performance.
 
 % <============================================================================>
 % <============================Adjustments to data =================================>
 % <============================================================================>
 
-smoothfactor1=7; % <smoothfactor1>-day rolling average smoothing of the case series (smoothfactor1=1 indicates no smoothing)
+smoothfactor1=7; % The span of  the moving average smoothing of the case series (smoothfactor1=1 indicates no smoothing)
 
 calibrationperiod1=90; % calibrates model using the most recent <calibrationperiod1> data points where <calibrationperiod> does not exceed the length of the time series data otherwise it will use the maximum length of the data
 
 % <=============================================================================>
-% <=========================== Statistical method ==============================>
+% <======================= Parameter estimation and bootstrapping =========================>
 % <=============================================================================>
 
 method1=0; % Type of estimation method. See below:
@@ -76,15 +84,15 @@ dist1=0; % Define dist1 which is the type of error structure. See below:
 
 numstartpoints=10; % Number of initial guesses for parameter estimation procedure using MultiStart
 
-topmodelsx=4; % Number of best fitting models (based on AICc) that will be generated to derive ensemble models
-
 M=300; % number of bootstrap realizations to characterize parameter uncertainty
 
 % <==============================================================================>
-% <========================= Growth model ==========================================>
+% <========================= n-subepidemic growth model ===============================>
 % <==============================================================================>
 
 npatches_fixed=2; % maximum number of subepidemics considered in epidemic trajectory fit
+
+topmodelsx=4; % Number of best fitting sub-epidemic models (based on AICc) that will be generated to derive ensemble models
 
 if npatches_fixed==1  % if one sub-epidemic is employed, then there is only one model
     topmodelsx=1;

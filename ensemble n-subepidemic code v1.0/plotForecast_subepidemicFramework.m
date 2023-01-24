@@ -2,7 +2,7 @@
 % < Author: Gerardo Chowell  ==================================================>
 % <============================================================================>
 
-function plotForecast_subepidemicFramework(outbreakx_pass,caddate1_pass)
+function plotForecast_subepidemicFramework(outbreakx_pass,caddate1_pass,forecastingperiod_pass)
 
 % generate short-term forecasts using best fitting models and derive ensemble model
 
@@ -38,7 +38,7 @@ global calibrationperiod1
 % <================================ Dataset ===================================>
 % <============================================================================>
 
-if exist('outbreakx_pass','var')==1
+if exist('outbreakx_pass','var')==1 & isempty(outbreakx_pass)==0
 
     outbreakx=outbreakx_pass;
 
@@ -47,13 +47,14 @@ else
 
 end
 
-if exist('caddate1_pass','var')==1
+if exist('caddate1_pass','var')==1 & isempty(caddate1_pass)==0
 
     caddate1=caddate1_pass;
 else
     caddate1=caddate1_INP;
-
 end
+
+
 
 cadregion=cadregion_INP;
 
@@ -143,7 +144,11 @@ getperformance=getperformance_INP; % flag or indicator variable (1/0) to calcula
 
 deletetempfiles=deletetempfiles_INP; %flag or indicator variable (1/0) to delete Forecast..mat files after use
 
-forecastingperiod=forecastingperiod_INP; %forecast horizon (number of data points ahead)
+if exist('forecastingperiod_pass','var')==1 & isempty(forecastingperiod_pass)==0
+    forecastingperiod=forecastingperiod_pass; %forecast horizon (number of data points ahead)
+else
+    forecastingperiod=forecastingperiod_INP; %forecast horizon (number of data points ahead)
+end
 
 printscreen1=printscreen1_INP;  % print plots with the results
 
