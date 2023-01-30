@@ -28,10 +28,10 @@ global calibrationperiod1
 % <============================================================================>
 
 % options.m
-[outbreakx_INP, caddate1_INP, cadregion_INP, caddisease_INP, datatype_INP, DT_INP, datevecfirst1_INP, datevecend1_INP, numstartpoints_INP, topmodelsx_INP, M_INP, flag1_INP]=options
+[outbreakx_INP, caddate1_INP, cadregion_INP, caddisease_INP, datatype_INP, DT_INP, datevecfirst1_INP, datevecend1_INP, numstartpoints_INP, topmodelsx_INP, M_INP, flag1_INP]=options;
 
 % options_forecast.m
-[getperformance_INP, deletetempfiles_INP, forecastingperiod_INP, printscreen1_INP, weight_type1_INP]=options_forecast
+[getperformance_INP, deletetempfiles_INP, forecastingperiod_INP, printscreen1_INP, weight_type1_INP]=options_forecast;
 
 
 % <============================================================================>
@@ -789,7 +789,7 @@ if getperformance
     figure(401)
 
     subplot(2,2,1)
-    line1=plot(1:length(index1),MAEFSS(index1,4),'k-o')
+    line1=plot((1+(1:length(index1)))',MAEFSS(index1,4),'k-o')
     set(line1,'linewidth',2)
     xlabel('Ensemble(i) model')
     ylabel('MAE')
@@ -798,7 +798,7 @@ if getperformance
     set(gcf,'color','white')
 
     subplot(2,2,2)
-    line1=plot(1:length(index1),MSEFSS(index1,4),'k-o')
+    line1=plot((1+(1:length(index1)))',MSEFSS(index1,4),'k-o')
     set(line1,'linewidth',2)
     xlabel('Ensemble(i) model')
     ylabel('MSE')
@@ -807,7 +807,7 @@ if getperformance
     set(gcf,'color','white')
 
     subplot(2,2,3)
-    line1=plot(1:length(index1),PIFSS(index1,4),'k-o')
+    line1=plot((1+(1:length(index1)))',PIFSS(index1,4),'k-o')
     set(line1,'linewidth',2)
     xlabel('Ensemble(i) model')
     ylabel('Coverage of the 95% PI')
@@ -817,7 +817,7 @@ if getperformance
 
     subplot(2,2,4)
 
-    line1=plot(1:length(index1),WISFSS(index1,4),'k-o')
+    line1=plot((1+(1:length(index1)))',WISFSS(index1,4),'k-o')
     set(line1,'linewidth',2)
     xlabel('Ensemble(i) model')
     ylabel('WIS')
@@ -829,7 +829,7 @@ if getperformance
     % <============================== Save file with ensemble performance metrics ==============================>
     % <=============================================================================================>
 
-    performance=[(1:length(index1))' MAEFSS(index1,4) MSEFSS(index1,4) PIFSS(index1,4) WISFSS(index1,4)];
+    performance=[(1+(1:length(index1)))' MAEFSS(index1,4) MSEFSS(index1,4) PIFSS(index1,4) WISFSS(index1,4)];
 
     T = array2table(performance);
     T.Properties.VariableNames(1:5) = {'Ensemble(i) model','MAE','MSE','Coverage 95%PI','WIS'};
