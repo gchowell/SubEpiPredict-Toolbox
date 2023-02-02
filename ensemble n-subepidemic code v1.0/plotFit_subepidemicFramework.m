@@ -6,7 +6,6 @@ function plotFit_subepidemicFramework(outbreakx_pass,caddate1_pass)
 
 % Plot model fits and derive performance metrics during the calibration period for the best fitting models
 
-
 close all
 
 % <============================================================================>
@@ -37,7 +36,7 @@ global calibrationperiod1
 % <============================================================================>
 
 
-if exist('outbreakx_pass','var')==1
+if exist('outbreakx_pass','var')==1 & isempty(outbreakx_pass)==0
 
     outbreakx=outbreakx_pass;
 
@@ -46,7 +45,7 @@ else
 
 end
 
-if exist('caddate1_pass','var')==1
+if exist('caddate1_pass','var')==1 & isempty(caddate1_pass)==0
 
     caddate1=caddate1_pass;
 else
@@ -534,11 +533,11 @@ set(gcf,'color','white')
 % <============================== Save file with top-ranked performance metrics (calibration) ====================>
 % <=============================================================================================>
 
-performance=[MAES MSES PIS WISS];
+performance=[topmodels1' MAES MSES PIS WISS];
 
 T = array2table(performance);
-T.Properties.VariableNames(1:4) = {'MAE','MSE','Coverage 95%PI','WIS'};
-writetable(T,strcat('./output/performance-calibration-topRanked-onsetfixed-',num2str(onset_fixed),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
+T.Properties.VariableNames(1:5) = {'i_th-ranked model','MAE','MSE','Coverage 95%PI','WIS'};
+writetable(T,strcat('./output/performance-calibration-topRanked-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
 
 
 %%
