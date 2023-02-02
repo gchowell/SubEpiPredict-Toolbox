@@ -50,6 +50,8 @@ After fitting the model to your data, you can use the toolbox to plot the model 
     <li>run the function <code>plotFit_subepidemicFramework.m</code> </li>
 </ul>
     
+The function also outputs a file with the calibration performance metrics of the top-ranked models.
+    
 # Plotting the top-ranked subepidemic model profiles and the corresponding AIC values
 
 After fitting the model to your data, you can use the toolbox to plot the subepidemic profiles and AICc values as follows:
@@ -66,6 +68,8 @@ After fitting the model to your data, you can use the toolbox to plot forecasts 
     <li>define the forecasting parameters by editing <code>options_forecast.m</code></li>
     <li>run the function <code>plotForecast_subepidemicFramework.m</code></li>
 </ul>
+
+The function also outputs files with the fit and forecasts of the top-ranked and ensemble models as well as the forecasting performance metrics for the top-ranked and ensemble models.
 
 # Generating and plotting reproduction number forecasts from the top-ranked models
 
