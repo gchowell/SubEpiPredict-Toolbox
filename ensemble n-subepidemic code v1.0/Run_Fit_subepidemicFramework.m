@@ -29,7 +29,7 @@ global calibrationperiod1
 % <================================ Datasets properties =======================>
 % <============================================================================>
 
-if exist('outbreakx_pass','var')==1
+if exist('outbreakx_pass','var')==1 & isempty(outbreakx_pass)==0
 
     outbreakx=outbreakx_pass;
 
@@ -38,7 +38,7 @@ else
 
 end
 
-if exist('caddate1_pass','var')==1
+if exist('caddate1_pass','var')==1 & isempty(caddate1_pass)==0
 
     caddate1=caddate1_pass;
 else
@@ -165,11 +165,15 @@ timelags=0; % keeps track of the epidemic onset timing (nonzero case)
 for outbreak1=outbreakx
     
     close all
-    
+
     data1=dataprov(outbreak1,:)'; % Cumulative curve
-    
-    data1=[data1(1);diff(data1)]; % Incidence curve
-    
+
+    if strcmp('CUMULATIVE',upper(datafilename1(1:10)))==1
+
+        data1=[data1(1);diff(data1)]; % Incidence curve
+
+    end
+
     clear dataprov
     clear data
     

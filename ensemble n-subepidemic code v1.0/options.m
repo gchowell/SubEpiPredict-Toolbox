@@ -19,15 +19,22 @@ global calibrationperiod1
 % <============================================================================>
 % <================================ Parameters related to the data =======================>
 % <============================================================================>
-% Located in the input folder, the time series data file is a text file with the extension *.txt. The data file can contain one or more cumulative incidence curves (one per
-% column in the file). Each column corresponds to the cumulative number of new cases over time for each epidemic corresponding to a different area/group.
+% Located in the input folder, the time series data file is a text file with the extension *.txt. The data file can contain one or more incidence curves (one per
+% column in the file). Each column corresponds to the number of new cases over time for each epidemic corresponding to a different area/group.
 % For instance, each column could correspond to different states in
 % the U.S or countries in the world. In the options.m file, a specific data column in the file can be accessed using the parameter <outbreakx> (see below).
 
-% The name of the time series data file follows the format:
+% if the time series file contains cumulative incidence count data, the name of the time series data file starts with "cumulative" with the
+% following format:
 
 % 'cumulative-<cadtemporal>-<caddisease>-<datatype>-<cadregion>-<caddate1>.txt');
 %  For example: 'cumulative-daily-coronavirus-deaths-USA-05-11-2020.txt'
+
+% Otherwise, if the time series file contains incidence data, the name of the data file follows the format:
+
+% <cadtemporal>-<caddisease>-<datatype>-<cadregion>-<caddate1>.txt');
+%  For example: 'daily-coronavirus-deaths-USA-05-11-2020.txt'
+
 
 outbreakx=52;  % identifier for the spatial area/group of interest
 
