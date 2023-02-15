@@ -2,7 +2,7 @@
 % < Author: Gerardo Chowell  ==================================================>
 % <============================================================================>
 
-function plotForecast_subepidemicFramework(outbreakx_pass,caddate1_pass,forecastingperiod_pass)
+function plotForecast_subepidemicFramework(outbreakx_pass,caddate1_pass,forecastingperiod_pass,weight_type1_pass)
 
 % generate short-term forecasts using best fitting models and derive ensemble model
 
@@ -150,13 +150,21 @@ else
     forecastingperiod=forecastingperiod_INP; %forecast horizon (number of data points ahead)
 end
 
+
 printscreen1=printscreen1_INP;  % print plots with the results
 
 % <==============================================================================>
 % <====================== weighting scheme for ensemble model ============================>
 % <==============================================================================>
 
-weight_type1=weight_type1_INP; % -1= equally weighted from the top models, 0=based on AICc, 1= based on relative likelihood (Akaike weights), 2=based on WISC during calibration, 3=based on WISF during forecasting performance at previous time period (week)
+
+if exist('weight_type1_pass','var')==1 & isempty(weight_type1_pass)==0
+    weight_type1=weight_type1_pass; % -1= equally weighted from the top models, 0=based on AICc, 1= based on relative likelihood (Akaike weights), 2=based on WISC during calibration, 3=based on WISF during forecasting performance at previous time period (week)
+
+else
+    weight_type1=weight_type1_INP; % -1= equally weighted from the top models, 0=based on AICc, 1= based on relative likelihood (Akaike weights), 2=based on WISC during calibration, 3=based on WISF during forecasting performance at previous time period (week)
+end
+
 
 WISC_hash=zeros(length(topmodels1),1); % vector that saves the WISC based on calibration to be used with weight_type1=2
 
@@ -782,9 +790,9 @@ if getperformance
     T.Properties.VariableNames(1:5) = {'i_th-ranked model','MAE','MSE','Coverage 95%PI','WIS'};
     writetable(T,strcat('./output/performance-forecasting-topRanked-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-horizon-',num2str(forecastingperiod),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
 
-    % <============================================================================>
+    % <===========================================================================================>
     % <=================plot forecasting performance metrics of the ensemble models ==============>
-    % <============================================================================>
+    % <===========================================================================================>
 
     figure(401)
 
@@ -833,6 +841,6 @@ if getperformance
 
     T = array2table(performance);
     T.Properties.VariableNames(1:5) = {'Ensemble(i) model','MAE','MSE','Coverage 95%PI','WIS'};
-    writetable(T,strcat('./output/performance-forecasting-Ensemble-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-horizon-',num2str(forecastingperiod),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
+    writetable(T,strcat('./output/performance-forecasting-Ensemble-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-horizon-',num2str(forecastingperiod),'-weight_type-',num2str(weight_type1),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
 
 end
