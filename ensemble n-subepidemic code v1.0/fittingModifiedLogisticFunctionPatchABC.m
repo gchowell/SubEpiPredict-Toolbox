@@ -124,7 +124,8 @@ cumcurve1=cumsum(smooth(data1(:,2),smoothfactor1));
 
 onset_thrs=linspace(cumcurve1(1),cumcurve1(end),length(data1(:,2)));
 
-onset_thrs=onset_thrs(1:end-1);
+onset_thrs=[0 onset_thrs(1:end-1)];
+
 
 % <==============================================================================>
 % <===== Set range of the possible number of subepidemics (1:npatches_fixed)=====>
@@ -167,8 +168,6 @@ for npatches2=[npatchess]
         onset_thrs=onset_thrs2;
         
     end
-    
-    
     
     % <================================================================================================>
     % <=========================== Set initial parameter guesses and bounds ===========================>
@@ -226,9 +225,7 @@ for npatches2=[npatchess]
         
         % ******** MLE estimation method with MultiStart  *********
         % check multiple initial guesses to ensure global minimum is obtained
-        
-        %method1=3; %LSQ=0, MLE Poisson=1, Pearson chi-squared=2, MLE (Neg Binomial)=3
-        
+               
         
         %'UseParallel','always'
         options=optimoptions('fmincon','Algorithm','sqp','StepTolerance',1.0000e-6,'MaxFunEvals',20000,'MaxIter',20000);
