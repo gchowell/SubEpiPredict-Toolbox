@@ -22,7 +22,7 @@ global calibrationperiod1
 % <================== Load the parameter values ===============================>
 % <============================================================================>
 
-[outbreakx_INP, caddate1_INP, cadregion_INP, caddisease_INP, datatype_INP, DT_INP, datevecfirst1_INP, datevecend1_INP, numstartpoints_INP, topmodelsx_INP, M_INP, flag1_INP]=options
+[cumulative1_INP, outbreakx_INP, caddate1_INP, cadregion_INP, caddisease_INP, datatype_INP, DT_INP, datevecfirst1_INP, datevecend1_INP, numstartpoints_INP, topmodelsx_INP, M_INP, flag1_INP]=options
 
 
 % <============================================================================>
@@ -55,6 +55,8 @@ datatype=datatype_INP; % string indicating the nature of the data (cases, deaths
 
 DT=DT_INP; % temporal resolution in days (1=daily data, 7=weekly data, 365= yearly data).
 
+cumulative1=cumulative1_INP;
+
 if DT==1
     cadtemporal='daily';
 elseif DT==7
@@ -65,7 +67,11 @@ end
 
 % Name of the file containing the cumulative time series data (rows=time, cols=regions)
 
-datafilename1=strcat('cumulative-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-',caddate1,'.txt'); %data file with all time series across areas/regions
+if cumulative1==1
+    datafilename1=strcat('cumulative-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-',caddate1,'.txt'); %data file with all time series across areas/regions
+else
+    datafilename1=strcat(cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-',caddate1,'.txt'); %data file with all time series across areas/regions
+end
 
 % Name of the file for the adjusted incidence data file for a specific region and
 % after removing early zeros.
@@ -168,7 +174,7 @@ for outbreak1=outbreakx
 
     data1=dataprov(outbreak1,:)'; % Cumulative curve
 
-    if strcmp('CUMULATIVE',upper(datafilename1(1:10)))==1
+    if cumulative1==1
 
         data1=[data1(1);diff(data1)]; % Incidence curve
 
@@ -201,7 +207,8 @@ for outbreak1=outbreakx
     
     timelags=index1(1)-1;
     
-    
+
+
     %     if 0
     %         % remove early low testing period and start from the monotonic increasing trend
     %
@@ -356,8 +363,8 @@ for outbreak1=outbreakx
     % <===========================================================================================>
     % <=============== Derive uncertainty for the <topmodelsx> best fitting models and save results =====================>
     % <===========================================================================================>
-    
-    
+      
+   
     for rank1=1:topmodelsx
         
         [Phatss,npatches,onset_thr,curves,bestfit,data1,P0,AICc_best,factor1,d]=fittingModifiedLogisticFunctionPatchMultiple(RMSESx,PS,data1,DT,t_window,M,flag1,numstartpoints,rank1);

@@ -27,14 +27,14 @@ global smoothfactor1 calibrationperiod1
 % <============================================================================>
 
 % options.m
-[outbreakx_INP, caddate1_INP, cadregion_INP, caddisease_INP, datatype_INP, DT_INP, datevecfirst1_INP, datevecend1_INP, numstartpoints_INP, topmodelsx_INP, M_INP, flag1_INP]=options
+[cumulative1_INP, outbreakx_INP, caddate1_INP, cadregion_INP, caddisease_INP, datatype_INP, DT_INP, datevecfirst1_INP, datevecend1_INP, numstartpoints_INP, topmodelsx_INP, M_INP, flag1_INP]=options
 
 % <============================================================================>
 % <================================ Dataset ====================================>
 % <============================================================================>
 
 
-if exist('outbreakx_pass','var')==1
+if exist('outbreakx_pass','var')==1 & isempty(outbreakx_pass)==0
 
     outbreakx=outbreakx_pass;
 
@@ -43,7 +43,7 @@ else
 
 end
 
-if exist('caddate1_pass','var')==1
+if exist('caddate1_pass','var')==1 & isempty(caddate1_pass)==0
 
     caddate1=caddate1_pass;
 else
@@ -197,7 +197,7 @@ for run_id=-1
     
     figure(100)
     
-    color1=['r-';'b-';'g-';'m-';'c-';'k-';'y-';'r-';'b-';'g-';'m-';'c-';'k-';'y-';'r-';'b-';'g-';'m-';'c-';'k-';'y-';'r-';'b-';'g-';'m-';'c-';'k-';'y-';'r-';'b-';'g-';'m-';'c-';'k-';'y-';];
+    color1=['r-';'b-';'g-';'m-';'c-';'y-';'r-';'b-';'g-';'m-';'c-';'y-';'r-';'b-';'g-';'m-';'c-';'y-';'r-';'b-';'g-';'m-';'c-';'y-';'r-';'b-';'g-';'m-';'c-';'y-';];
     
     
     factors=factor(length(topmodelsx));
@@ -215,9 +215,7 @@ for run_id=-1
     end
     
     
-    
     for index1=topmodelsx
-        
         
    
         subplot(rows,cols,index1)
@@ -294,7 +292,7 @@ for run_id=-1
         [~,x]=ode15s(@modifiedLogisticGrowthPatch,timevect,IC,[],rs_hat,ps_hat,as_hat,Ks_hat,npatches,onset_thr,flag1);
         %x=ode5(@modifiedLogisticGrowthPatch,timevect,IC,r_hat,p_hat,a_hat,K_hat,npatches,onset_thr,q_hat,flag1);
         
-        invasions
+
         
         %     if sum(invasions)<npatches
         %
@@ -400,11 +398,10 @@ for run_id=-1
 end
 
 for j=1:cols
-    
-subplot(rows,cols,topmodelsx(end-j+1))
-xlabel('Time');
+
+    subplot(rows,cols,topmodelsx(end-j+1))
+    xlabel('Time');
 
 end
 
 save(strcat('./output/AICc_bests-modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-0-smoothing-',num2str(smoothfactor1),'-',caddisease,'-',datatype,'-',cadregion,'-state-',num2str(outbreakx),'-dateini-',datestr(datenum(caddate1),'mm-dd-yy'),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-topmodels-',num2str(topmodelsx(end)),'.mat'),'AICc_bests','-mat')
-   

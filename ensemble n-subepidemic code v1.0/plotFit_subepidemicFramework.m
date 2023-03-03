@@ -2,7 +2,7 @@
 % < Author: Gerardo Chowell  ==================================================>
 % <============================================================================>
 
-function plotFit_subepidemicFramework(outbreakx_pass,caddate1_pass)
+function [AICc_bests]=plotFit_subepidemicFramework(outbreakx_pass,caddate1_pass)
 
 % Plot model fits and derive performance metrics during the calibration period for the best fitting models
 
@@ -29,7 +29,7 @@ global calibrationperiod1
 % <============================================================================>
 
 % options.m
-[outbreakx_INP, caddate1_INP, cadregion_INP, caddisease_INP, datatype_INP, DT_INP, datevecfirst1_INP, datevecend1_INP, numstartpoints_INP, topmodelsx_INP, M_INP, flag1_INP]=options
+[cumulative1_INP,outbreakx_INP, caddate1_INP, cadregion_INP, caddisease_INP, datatype_INP, DT_INP, datevecfirst1_INP, datevecend1_INP, numstartpoints_INP, topmodelsx_INP, M_INP, flag1_INP]=options
 
 % <============================================================================>
 % <================================ Dataset ======================================>
@@ -545,218 +545,223 @@ writetable(T,strcat('./output/performance-calibration-topRanked-onsetfixed-',num
 % <========== compute ensemble model from top fitting models and evaluate performance metrics ============>
 % <==================================================================================>
 
-if length(topmodels1)>1
+if 0
 
-    figure(500)
+    if length(topmodels1)>1
 
-    forecastingperiod=0;
-    getperformance=1;
+        figure(500)
 
-    weights1=(1./AICc_bests)/(sum(1./AICc_bests));
+        forecastingperiod=0;
+        getperformance=1;
 
-    curvesforecasts1ens=[];
-    curvesforecasts2ens=[];
+        weights1=(1./AICc_bests)/(sum(1./AICc_bests));
+
+        curvesforecasts1ens=[];
+        curvesforecasts2ens=[];
 
 
-    for rank1=topmodels1
+        for rank1=topmodels1
 
-        % <========================================================================================>
-        % <================================ Load model results ====================================>
-        % <========================================================================================>
+            % <========================================================================================>
+            % <================================ Load model results ====================================>
+            % <========================================================================================>
 
-        load (strcat('./output/modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-',num2str(onset_fixed),'-smoothing-',num2str(smoothfactor1),'-',cadfilename2,'-flag1-',num2str(flag1(1)),'-flag1-',num2str(flag1(2)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-rank-',num2str(rank1),'.mat'))
+            load (strcat('./output/modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-',num2str(onset_fixed),'-smoothing-',num2str(smoothfactor1),'-',cadfilename2,'-flag1-',num2str(flag1(1)),'-flag1-',num2str(flag1(2)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-rank-',num2str(rank1),'.mat'))
 
-        M1=M;
+            M1=M;
 
-        curvesforecasts1=zeros(length(timevect),M1);
+            curvesforecasts1=zeros(length(timevect),M1);
 
-        curvesforecasts2=[];
+            curvesforecasts2=[];
 
-        for j=1:M1
+            for j=1:M1
 
-            P=Phatss(j,:);
+                P=Phatss(j,:);
 
-            rs_hat=P(1,1:npatches);
-            ps_hat=P(1,npatches+1:2*npatches);
-            as_hat=P(1,2*npatches+1:3*npatches);
-            Ks_hat=P(1,3*npatches+1:4*npatches);
+                rs_hat=P(1,1:npatches);
+                ps_hat=P(1,npatches+1:2*npatches);
+                as_hat=P(1,2*npatches+1:3*npatches);
+                Ks_hat=P(1,3*npatches+1:4*npatches);
 
-            alpha_hat=P(1,end-1);
-            d_hat=P(1,end);
+                alpha_hat=P(1,end-1);
+                d_hat=P(1,end);
 
-            IC=zeros(npatches,1);
+                IC=zeros(npatches,1);
 
-            if onset_thr>0
-                IC(1,1)=data1(1,2);
-                IC(2:end,1)=1;
+                if onset_thr>0
+                    IC(1,1)=data1(1,2);
+                    IC(2:end,1)=1;
 
-                invasions=zeros(npatches,1);
-                timeinvasions=zeros(npatches,1);
-                Cinvasions=zeros(npatches,1);
+                    invasions=zeros(npatches,1);
+                    timeinvasions=zeros(npatches,1);
+                    Cinvasions=zeros(npatches,1);
 
-                invasions(1)=1;
-                timeinvasions(1)=0;
-                Cinvasions(1)=0;
-            else
-                IC(1:end,1)=data1(1,2)./length(IC(1:end,1));
+                    invasions(1)=1;
+                    timeinvasions(1)=0;
+                    Cinvasions(1)=0;
+                else
+                    IC(1:end,1)=data1(1,2)./length(IC(1:end,1));
 
-                invasions=zeros(npatches,1);
-                timeinvasions=zeros(npatches,1);
-                Cinvasions=zeros(npatches,1);
+                    invasions=zeros(npatches,1);
+                    timeinvasions=zeros(npatches,1);
+                    Cinvasions=zeros(npatches,1);
 
-                invasions(1:end)=1;
-                timeinvasions(1:end)=0;
-                Cinvasions(1:end)=0;
+                    invasions(1:end)=1;
+                    timeinvasions(1:end)=0;
+                    Cinvasions(1:end)=0;
+                end
+
+
+                [~,x]=ode15s(@modifiedLogisticGrowthPatch,timevect,IC,[],rs_hat,ps_hat,as_hat,Ks_hat,npatches,onset_thr,flag1);
+
+
+
+                y=sum(x,2);
+
+                totinc=[y(1,1);diff(y(:,1))];
+
+                if onset_fixed==0
+                    totinc(1)=totinc(1)-(npatches-1);
+                end
+                %
+
+                fittedCurve1=totinc;
+
+                curvesforecasts1(:,j)= fittedCurve1;
+
+                curvesforecasts2=[curvesforecasts2 AddPoissonError(cumsum(curvesforecasts1(:,j)),20,dist1,factor1,1)];
+
+
             end
 
+            M1=length(curvesforecasts1(1,:));
 
-            [~,x]=ode15s(@modifiedLogisticGrowthPatch,timevect,IC,[],rs_hat,ps_hat,as_hat,Ks_hat,npatches,onset_thr,flag1);
+            index1=datasample(1:M1,round(M1*weights1(rank1)),'Replace',false);
+
+            curvesforecasts1ens=[curvesforecasts1ens curvesforecasts1(:,index1)];
 
 
+            M2=length(curvesforecasts2(1,:));
 
-            y=sum(x,2);
+            index2=datasample(1:M2,round(M2*weights1(rank1)),'Replace',false);
 
-            totinc=[y(1,1);diff(y(:,1))];
-
-            if onset_fixed==0
-                totinc(1)=totinc(1)-(npatches-1);
-            end
-            %
-
-            fittedCurve1=totinc;
-
-            curvesforecasts1(:,j)= fittedCurve1;
-
-            curvesforecasts2=[curvesforecasts2 AddPoissonError(cumsum(curvesforecasts1(:,j)),20,dist1,factor1,1)];
+            curvesforecasts2ens=[curvesforecasts2ens curvesforecasts2(:,index2)];
 
 
         end
 
-        M1=length(curvesforecasts1(1,:));
+        curvesforecasts1=curvesforecasts1ens;
 
-        index1=datasample(1:M1,round(M1*weights1(rank1)),'Replace',false);
-
-        curvesforecasts1ens=[curvesforecasts1ens curvesforecasts1(:,index1)];
+        curvesforecasts2=curvesforecasts2ens;
 
 
-        M2=length(curvesforecasts2(1,:));
-
-        index2=datasample(1:M2,round(M2*weights1(rank1)),'Replace',false);
-
-        curvesforecasts2ens=[curvesforecasts2ens curvesforecasts2(:,index2)];
+        timevect=data1(:,1);
 
 
-    end
+        % <========================================================================================>
+        % <================================ Plot ensemble model fit ====================================>
+        % <========================================================================================>
 
-    curvesforecasts1=curvesforecasts1ens;
+        datenum1=datenum([str2num(caddate1(7:10)) str2num(caddate1(1:2)) str2num(caddate1(4:5))]);
 
-    curvesforecasts2=curvesforecasts2ens;
+        datevec1=datevec(datenum1+forecastingperiod*DT);
 
+        wave=[datevecfirst1 datevec1(1:3)];
 
-    timevect=data1(:,1);
+        hold on
 
+        quantile(curvesforecasts2',0.025)
 
-    % <========================================================================================>
-    % <================================ Plot ensemble model fit ====================================>
-    % <========================================================================================>
+        LB1=quantile(curvesforecasts2',0.025);
+        UB1=quantile(curvesforecasts2',0.975);
 
-    datenum1=datenum([str2num(caddate1(7:10)) str2num(caddate1(1:2)) str2num(caddate1(4:5))]);
+        size(LB1)
+        size(timevect)
 
-    datevec1=datevec(datenum1+forecastingperiod*DT);
+        h=area(timevect',[LB1' UB1'-LB1'])
+        hold on
 
-    wave=[datevecfirst1 datevec1(1:3)];
+        h(1).FaceColor = [1 1 1];
+        h(2).FaceColor = [0.8 0.8 0.8];
 
-    hold on
+        line1=plot(timevect,median(curvesforecasts2,2),'r-')
 
-    quantile(curvesforecasts2',0.025)
+        set(line1,'LineWidth',2)
 
-    LB1=quantile(curvesforecasts2',0.025);
-    UB1=quantile(curvesforecasts2',0.975);
+        line1=plot(timevect,LB1,'r--')
+        set(line1,'LineWidth',2)
 
-    size(LB1)
-    size(timevect)
-
-    h=area(timevect',[LB1' UB1'-LB1'])
-    hold on
-
-    h(1).FaceColor = [1 1 1];
-    h(2).FaceColor = [0.8 0.8 0.8];
-
-    line1=plot(timevect,median(curvesforecasts2,2),'r-')
-
-    set(line1,'LineWidth',2)
-
-    line1=plot(timevect,LB1,'r--')
-    set(line1,'LineWidth',2)
-
-    line1=plot(timevect,UB1,'r--')
-    set(line1,'LineWidth',2)
+        line1=plot(timevect,UB1,'r--')
+        set(line1,'LineWidth',2)
 
 
-    % plot time series datalatest
-    line1=plot(data1(:,1),data1(:,2),'ko')
-    set(line1,'LineWidth',2)
+        % plot time series datalatest
+        line1=plot(data1(:,1),data1(:,2),'ko')
+        set(line1,'LineWidth',2)
 
 
-    axis([0 length(timevect)-1 0 max(UB1)*1.2])
+        axis([0 length(timevect)-1 0 max(UB1)*1.2])
 
-    line2=[timevect(end) 0;timevect(end) max(UB1)*1.20];
+        line2=[timevect(end) 0;timevect(end) max(UB1)*1.20];
 
-    box on
-
-
-    % plot dates in x axis
-    'day='
-    datenum1=datenum(wave(1:3))+timelags*DT; % start of fall wave (reference date)
-    datestr(datenum1)
-
-    datenumIni=datenum1;
-    datenumEnd=datenum(wave(4:6))
-
-    dates1=datestr(datenumIni:DT:datenumEnd,'mm-dd');
+        box on
 
 
-    if DT==1
+        % plot dates in x axis
+        'day='
+        datenum1=datenum(wave(1:3))+timelags*DT; % start of fall wave (reference date)
+        datestr(datenum1)
 
-        set(gca, 'XTick', 0:3:length(dates1(:,1))-1);
-        set(gca, 'XTickLabel', strcat('\fontsize{14}',dates1(1:3:end,:)));
+        datenumIni=datenum1;
+        datenumEnd=datenum(wave(4:6))
 
-    elseif DT==7
-
-        set(gca, 'XTick', 0:2:length(dates1(:,1))-1);
-        set(gca, 'XTickLabel', strcat('\fontsize{14}',dates1(1:2:end,:)));
-
-    elseif DT==365
-
-        years1=wave(1)+timelags:wave(1)+timelags+length(dates1(:,1))-1;
-
-        set(gca,'XTick',0:1:length(years1)-1);
-
-        set(gca, 'XTickLabel', strcat('\fontsize{14}',num2str(years1')));
-
-    end
+        dates1=datestr(datenumIni:DT:datenumEnd,'mm-dd');
 
 
-    xticklabel_rotate;
+        if DT==1
+
+            set(gca, 'XTick', 0:3:length(dates1(:,1))-1);
+            set(gca, 'XTickLabel', strcat('\fontsize{14}',dates1(1:3:end,:)));
+
+        elseif DT==7
+
+            set(gca, 'XTick', 0:2:length(dates1(:,1))-1);
+            set(gca, 'XTickLabel', strcat('\fontsize{14}',dates1(1:2:end,:)));
+
+        elseif DT==365
+
+            years1=wave(1)+timelags:wave(1)+timelags+length(dates1(:,1))-1;
+
+            set(gca,'XTick',0:1:length(years1)-1);
+
+            set(gca, 'XTickLabel', strcat('\fontsize{14}',num2str(years1')));
+
+        end
 
 
-    ylabel(strcat(caddisease,{' '},datatype))
+        xticklabel_rotate;
 
-    title('Ensemble Model')
 
-    set(gca,'FontSize',24)
-    set(gcf,'color','white')
+        ylabel(strcat(caddisease,{' '},datatype))
 
-    % <==========================================================================================>
-    % <==================== Get calibration performance metrics for ensemble model ==============>
-    % <==========================================================================================>
+        title('Ensemble Model')
 
-    if getperformance
+        set(gca,'FontSize',24)
+        set(gcf,'color','white')
 
-        [RMSECS_model1 MSECS_model1 MAECS_model1  PICS_model1 MISCS_model1, RMSEFS_model1 MSEFS_model1 MAEFS_model1 PIFS_model1 MISFS_model1]=computeforecastperformance(data1,data1,curvesforecasts1,curvesforecasts2,forecastingperiod);
+        % <==========================================================================================>
+        % <==================== Get calibration performance metrics for ensemble model ==============>
+        % <==========================================================================================>
 
-        [WISC,WISFS]=computeWIS(data1,data1,curvesforecasts2,forecastingperiod)
+        if getperformance
+
+            [RMSECS_model1 MSECS_model1 MAECS_model1  PICS_model1 MISCS_model1, RMSEFS_model1 MSEFS_model1 MAEFS_model1 PIFS_model1 MISFS_model1]=computeforecastperformance(data1,data1,curvesforecasts1,curvesforecasts2,forecastingperiod);
+
+            [WISC,WISFS]=computeWIS(data1,data1,curvesforecasts2,forecastingperiod)
+
+        end
 
     end
 
 end
+
