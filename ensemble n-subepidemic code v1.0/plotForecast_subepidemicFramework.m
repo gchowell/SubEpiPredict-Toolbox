@@ -2,7 +2,7 @@
 % < Author: Gerardo Chowell  ==================================================>
 % <============================================================================>
 
-function plotForecast_subepidemicFramework(outbreakx_pass,caddate1_pass,forecastingperiod_pass,weight_type1_pass)
+function [performanceTop, performanceEns]=plotForecast_subepidemicFramework(outbreakx_pass,caddate1_pass,forecastingperiod_pass,weight_type1_pass)
 
 % generate short-term forecasts using best fitting models and derive ensemble model
 
@@ -212,6 +212,9 @@ for run_id=-1
 
     cadfilename2=strcat(cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-state-',num2str(outbreakx),'-',caddate1);
 
+    AICc_rank1=[];
+    relativelik_rank1=[];
+
     for rankx=topmodels1
 
         rankx
@@ -225,6 +228,10 @@ for run_id=-1
         % <========================================================================================>
 
         load (strcat('./output/modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-',num2str(onset_fixed),'-smoothing-',num2str(smoothfactor1),'-',cadfilename2,'-flag1-',num2str(flagx(1)),'-flag1-',num2str(flagx(2)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-rank-',num2str(rankx),'.mat'))
+    
+        rankx
+        AICc_rank1=[AICc_rank1;[rank1 AICc_best]];
+        relativelik_rank1=[relativelik_rank1;[rank1 relativelik_i(rankx)]];
 
 
         d_hat=1;
@@ -784,10 +791,10 @@ if getperformance
     % <============================== Save file with top-ranked models' performance metrics =======================>
     % <=============================================================================================>
 
-    performance=[topmodels1' MAEFSS(index2,4) MSEFSS(index2,4) PIFSS(index2,4) WISFSS(index2,4)];
+    performanceTop=[topmodels1' MAEFSS(index2,4) MSEFSS(index2,4) PIFSS(index2,4) WISFSS(index2,4) AICc_rank1(:,2) relativelik_rank1(:,2)];
 
-    T = array2table(performance);
-    T.Properties.VariableNames(1:5) = {'i_th-ranked model','MAE','MSE','Coverage 95%PI','WIS'};
+    T = array2table(performanceTop);
+    T.Properties.VariableNames(1:7) = {'i_th-ranked model','MAE','MSE','Coverage 95%PI','WIS','AICc','RelativeLikelihood'};
     writetable(T,strcat('./output/performance-forecasting-topRanked-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-horizon-',num2str(forecastingperiod),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
 
     % <===========================================================================================>
@@ -837,9 +844,9 @@ if getperformance
     % <============================== Save file with ensemble performance metrics ==============================>
     % <=============================================================================================>
 
-    performance=[(1+(1:length(index1)))' MAEFSS(index1,4) MSEFSS(index1,4) PIFSS(index1,4) WISFSS(index1,4)];
+    performanceEns=[(1+(1:length(index1)))' MAEFSS(index1,4) MSEFSS(index1,4) PIFSS(index1,4) WISFSS(index1,4)];
 
-    T = array2table(performance);
+    T = array2table(performanceEns);
     T.Properties.VariableNames(1:5) = {'Ensemble(i) model','MAE','MSE','Coverage 95%PI','WIS'};
     writetable(T,strcat('./output/performance-forecasting-Ensemble-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-horizon-',num2str(forecastingperiod),'-weight_type-',num2str(weight_type1),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
 
