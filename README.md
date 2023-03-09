@@ -20,7 +20,7 @@ A MATLAB toolbox for fitting and forecasting epidemic trajectories using the ens
 <ul>
     <li>fitting models using different parameter estimation approaches (least-squares, maximum likelihood estimation),</li>
     <li>fitting models using assuming different error structures (normal, Poisson, negagive binomial),</li>
-    <li>user can select the underlying function for the sub-epidemic building block (generalized-logistic model (GLM), Richards model, generalized Richards model (GRM), Gompertz model),</li>
+    <li>user can select the underlying function for the sub-epidemic building block (generalized-logistic growth model (GLM), Richards model, and the generalized Richards model (GRM),</li>
     <li>user can select whether the sub-epidemics start synchronously at time 0 or asynchronously as defined by parameter C_thr.</li>
     
 </ul>
