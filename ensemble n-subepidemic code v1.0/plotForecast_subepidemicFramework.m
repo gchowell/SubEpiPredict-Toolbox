@@ -337,6 +337,11 @@ for run_id=-1
 
             end
 
+            if length(totinc)==1
+                continue
+            end
+
+            totinc=real(totinc);
 
             curvesforecasts1=[curvesforecasts1 totinc];
 
