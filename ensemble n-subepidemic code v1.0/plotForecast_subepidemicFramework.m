@@ -31,7 +31,7 @@ global calibrationperiod1
 [cumulative1_INP, outbreakx_INP, caddate1_INP, cadregion_INP, caddisease_INP, datatype_INP, DT_INP, datevecfirst1_INP, datevecend1_INP, numstartpoints_INP, topmodelsx_INP, M_INP, flag1_INP]=options;
 
 % options_forecast.m
-[getperformance_INP, deletetempfiles_INP, forecastingperiod_INP, printscreen1_INP, weight_type1_INP]=options_forecast;
+[getperformance_INP, deletetempfiles_INP, forecastingperiod_INP, weight_type1_INP]=options_forecast;
 
 
 % <============================================================================>
@@ -151,7 +151,7 @@ else
 end
 
 
-printscreen1=printscreen1_INP;  % print plots with the results
+printscreen1=1;  % print plots with the results
 
 % <==============================================================================>
 % <====================== weighting scheme for ensemble model ============================>
@@ -310,6 +310,11 @@ for run_id=-1
 
             [~,x]=ode15s(@modifiedLogisticGrowthPatch,timevect2,IC,[],rs_hat,ps_hat,as_hat,Ks_hat,npatches,onset_thr,flag1);
 
+            if length(x(:,1))~=length(timevect2)
+                continue
+            end
+
+            x=real(x);
 
             for j=1:npatches
 
@@ -336,12 +341,6 @@ for run_id=-1
                 plot(timevect2,totinc,'color',gray1(7,:))
 
             end
-
-            if length(totinc)==1
-                continue
-            end
-
-            totinc=real(totinc);
 
             curvesforecasts1=[curvesforecasts1 totinc];
 
