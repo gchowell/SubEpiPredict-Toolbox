@@ -2,7 +2,7 @@
 % < Author: Gerardo Chowell  ==================================================>
 % <============================================================================>
 
-function [cumulative1,outbreakx, caddate1, cadregion, caddisease, datatype, DT, datevecfirst1, datevecend1,numstartpoints, topmodelsx, M, flag1]=options
+function [cumulative1,outbreakx, caddate1, cadregion, caddisease, datatype, DT, datevecfirst1, datevecend1,numstartpoints, topmodelsx, B, flag1]=options
 
 % <============================================================================>
 % <=================== Declare global variables ===============================>
@@ -12,10 +12,8 @@ global method1 %Parameter estimation method - LSQ=0, MLE Poisson=1, Pearson chi-
 global npatches_fixed
 global onset_fixed
 global dist1
-global factor1
 global smoothfactor1
 global calibrationperiod1
-global weights_obs
 
 % <============================================================================>
 % <================================ Parameters related to the data =======================>
@@ -106,7 +104,7 @@ end
 
 numstartpoints=10; % Number of initial guesses for parameter estimation procedure using MultiStart
 
-M=300; % number of bootstrap realizations to characterize parameter uncertainty
+B=30; % number of bootstrap realizations to characterize parameter uncertainty
 
 % <==============================================================================>
 % <========================= n-subepidemic growth model ===============================>

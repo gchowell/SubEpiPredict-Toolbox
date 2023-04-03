@@ -127,9 +127,9 @@ onset_thrs=linspace(cumcurve1(1),cumcurve1(end),length(data1(:,2)));
 onset_thrs=[0 onset_thrs(1:end-1)];
 
 
-% <==============================================================================>
-% <===== Set range of the possible number of subepidemics (1:npatches_fixed)=====>
-% <==============================================================================>
+% <=============================================================================>
+% <===== Set range of the possible number of subepidemics (1:npatches_fixed)======================>
+% <=============================================================================>
 
 npatchess=1:1:npatches_fixed;
 
@@ -149,9 +149,9 @@ PS=sparse(1000,npatches_fixed*4+2);
 count1=1;
 
 
-% <================================================================================================>
-% <==== Evaluate AICc across models with different number of subepidemics and C_thr values ========>
-% <================================================================================================>
+% <====================================================================================>
+% <==== Evaluate AICc across models with different number of subepidemics and C_thr values ==================>
+% <====================================================================================>
 
 ydata=smooth(data,smoothfactor1);
 
@@ -319,7 +319,7 @@ for npatches2=[npatchess]
         %
         
         
-        AICc=getAICc(method1,npatches,flag1,1,fval,length(ydata));
+        AICc=getAICc(method1,dist1,npatches,flag1,1,fval,length(ydata),onset_fixed);
         
         RMSES(count1,:)=[npatches onset_thr AICc];
         

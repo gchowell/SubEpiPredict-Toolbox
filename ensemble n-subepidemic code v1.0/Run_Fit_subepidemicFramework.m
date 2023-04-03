@@ -172,7 +172,7 @@ for outbreak1=outbreakx
     
     close all
 
-    data1=dataprov(outbreak1,:)'; % Cumulative curve
+    data1=dataprov(outbreak1,:)';
 
     if cumulative1==1
 
