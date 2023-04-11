@@ -26,7 +26,6 @@ global smoothfactor1
 
 global LBe UBe
 
-
 close all
 
 % <=============================================================================================>
@@ -51,7 +50,7 @@ AICc_best=RMSES(index1,3);
 
 P0=PS(index1,1:npatches*4+2);
 
-numparams=get_nparams(method1,npatches,flag1,1);
+numparams=get_nparams(method1,dist1,npatches,flag1,1,onset_fixed);
 
 %
 
@@ -136,7 +135,7 @@ options=optimoptions('fmincon','Algorithm','sqp','StepTolerance',1.0000e-6,'MaxF
 
 %options=optimoptions('fmincon','Algorithm','sqp','tolfun',10^-6,'TolX',10^-6,'MaxFunEvals',3200,'MaxIter',3200);
 
-f=@plotModifiedLogisticGrowthPatchMethodsFullLogLik;
+f=@plotModifiedLogisticGrowthPatchMethodLogLik;
 
 problem = createOptimProblem('fmincon','objective',f,'x0',z,'lb',LB,'ub',UB,'options',options);
 

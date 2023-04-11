@@ -9,7 +9,7 @@ numparams=0;
 
 for j=1:npatches
 
-    switch flag1(j) % model indicator
+    switch flag1 % model indicator
 
         case 0
             numparams=numparams+2;

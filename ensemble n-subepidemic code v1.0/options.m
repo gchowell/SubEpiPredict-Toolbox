@@ -104,7 +104,7 @@ end
 
 numstartpoints=10; % Number of initial guesses for parameter estimation procedure using MultiStart
 
-B=30; % number of bootstrap realizations to characterize parameter uncertainty
+B=60; % number of bootstrap realizations to characterize parameter uncertainty
 
 % <==============================================================================>
 % <========================= n-subepidemic growth model ===============================>
@@ -124,7 +124,7 @@ GRM=2;  % 2 = GRM
 LM=3;   % 3 = LM
 RICH=4; % 4 = Richards
 
-flag1=zeros(1,npatches_fixed)+GLM; % Sequence of subepidemic growth models considered in epidemic trajectory.
+flag1=GLM; % Sequence of subepidemic growth models considered in epidemic trajectory.
 
 onset_fixed=0; % flag to indicate if the onset timing of subepidemics fixed at time 0 (onset_fixed=1) or not (onset_fixed=0).
 

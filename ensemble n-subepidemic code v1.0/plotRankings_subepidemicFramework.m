@@ -140,7 +140,7 @@ for run_id=-1
 
     %
 
-    load (strcat('./output/ABC-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-',num2str(onset_fixed),'-smoothing-',num2str(smoothfactor1),'-',cadfilename2,'-flag1-',num2str(flag1(1)),'-flag1-',num2str(flag1(2)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'.mat'))
+    load (strcat('./output/ABC-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-',num2str(onset_fixed),'-smoothing-',num2str(smoothfactor1),'-',cadfilename2,'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'.mat'))
 
     
     % remove repeated rows
@@ -404,4 +404,19 @@ for j=1:cols
 
 end
 
+
 save(strcat('./output/AICc_bests-modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-0-smoothing-',num2str(smoothfactor1),'-',caddisease,'-',datatype,'-',cadregion,'-state-',num2str(outbreakx),'-dateini-',datestr(datenum(caddate1),'mm-dd-yy'),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-topmodels-',num2str(topmodelsx(end)),'.mat'),'AICc_bests','-mat')
+
+
+% <=====================================================================================================>
+% <============================== Save file with top-ranked models' AICc metrics =======================>
+% <=====================================================================================================>
+
+performanceTop=[topmodelsx' RMSES(topmodelsx,3) relativelik_i(topmodelsx)];
+
+T = array2table(performanceTop);
+T.Properties.VariableNames(1:3) = {'i_th-ranked model','AICc','RelativeLikelihood'};
+writetable(T,strcat('./output/AICc-topRanked-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
+
+
+

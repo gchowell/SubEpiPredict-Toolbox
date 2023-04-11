@@ -94,13 +94,13 @@ as1=ones(1,npatches_fixed);
 
 for j=1:npatches_fixed
     
-    if flag1(j)==3 | flag1(j)==4 | flag1(j)==5 % Logistic model or Richards model (p=1)
+    if flag1==3 | flag1==4 | flag1==5 % Logistic model or Richards model (p=1)
         ps1(j)=1;
     else
         ps1(j)=0.9;
     end
     
-    if flag1(j)==5
+    if flag1==5
         
         rs1(j)=1-I0/Ks1(j);
         
@@ -182,7 +182,7 @@ for npatches2=[npatchess]
     
     for j=1:npatches
         
-        if flag1(j)==3 | flag1(j)==4 | flag1(j)==5 % Logistic model or Richards model (p=1)
+        if flag1==3 | flag1==4 | flag1==5 % Logistic model or Richards model (p=1)
             ps1(j)=1;
             
         else
@@ -190,8 +190,7 @@ for npatches2=[npatchess]
             
         end
         
-        if flag1(j)==5
-            
+        if flag1==5
             
             rs1(j)=1-I0/Ks1(j);
             
@@ -232,7 +231,7 @@ for npatches2=[npatchess]
         
         %options=optimoptions('fmincon','Algorithm','sqp','tolfun',10^-6,'TolX',10^-6,'MaxFunEvals',20000,'MaxIter',20000);
         
-        f=@plotModifiedLogisticGrowthPatchMethodsFullLogLik;
+        f=@plotModifiedLogisticGrowthPatchMethodLogLik;
         
         problem = createOptimProblem('fmincon','objective',f,'x0',z,'lb',LB,'ub',UB,'options',options);
         
@@ -558,5 +557,5 @@ end
 % <===================================  Save the results  ======================================>
 % <=============================================================================================>
 
-save(strcat('./output/ABC-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-',num2str(onset_fixed),'-smoothing-',num2str(smoothfactor1),'-',datafilename1(1:end-4),'-flag1-',num2str(flag1(1)),'-flag1-',num2str(flag1(2)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'.mat'),'-mat')
+save(strcat('./output/ABC-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-',num2str(onset_fixed),'-smoothing-',num2str(smoothfactor1),'-',datafilename1(1:end-4),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'.mat'),'-mat')
 

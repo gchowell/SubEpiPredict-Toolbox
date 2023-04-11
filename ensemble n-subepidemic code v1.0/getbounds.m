@@ -14,7 +14,7 @@ for j=1:npatches
     
     Kmax=100000000000;
     
-    switch flag1(j)
+    switch flag1
         
         case 0 %GGM
             

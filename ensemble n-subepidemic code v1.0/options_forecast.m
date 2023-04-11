@@ -16,5 +16,5 @@ forecastingperiod=30; % forecast horizon (number of time units ahead)
 % <====================== weighting scheme for ensemble model ============================>
 % <==============================================================================>
 
-weight_type1=-1; % -1= equally weighted from the top models, 0= weighted ensemble based on AICc, 1= weighted ensemble based on relative likelihood (Akaike weights), 
+weight_type1=1; % -1= equally weighted from the top models, 0= weighted ensemble based on AICc, 1= weighted ensemble based on relative likelihood (Akaike weights), 
 % 2=weighted ensemble based on the weighted interval score of the calibration period (WISC).

@@ -6,7 +6,6 @@ global Cinvasions
 
 dx=zeros(npatches,1);
 
-
 for j=1:npatches
     
     if invasions(j)==0
@@ -23,7 +22,7 @@ for j=1:npatches
         
     end
     
-    switch flag1(j)
+    switch flag1
         
         case 0 %GGM
             

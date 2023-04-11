@@ -2,7 +2,7 @@
 % < Author: Gerardo Chowell  ==================================================>
 % <============================================================================>
 
-function [AICc_bests]=plotFit_subepidemicFramework(outbreakx_pass,caddate1_pass)
+function performance=plotFit_subepidemicFramework(outbreakx_pass,caddate1_pass)
 
 % Plot model fits and derive performance metrics during the calibration period for the best fitting models
 
@@ -130,8 +130,6 @@ WISS=[];
 
 cc1=1;
 
-AICc_bests=[];
-
 quantilescs=[];
 
 param_rs=[];
@@ -142,6 +140,8 @@ param_qs=[];
 param_alphas=[];
 param_ds=[];
 
+AICc_rank1=[];
+relativelik_rank1=[];
 
 for rank1=topmodels1
 
@@ -156,14 +156,12 @@ for rank1=topmodels1
     % <================================ Load model results ====================================>
     % <========================================================================================>
 
-    load (strcat('./output/modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-',num2str(onset_fixed),'-smoothing-',num2str(smoothfactor1),'-',cadfilename2,'-flag1-',num2str(flag1(1)),'-flag1-',num2str(flag1(2)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-rank-',num2str(rank1),'.mat'))
+    load (strcat('./output/modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-',num2str(onset_fixed),'-smoothing-',num2str(smoothfactor1),'-',cadfilename2,'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-rank-',num2str(rank1),'.mat'))
 
-    npatches
-
-    AICc_bests=[AICc_bests;AICc_best];
+    AICc_rank1=[AICc_rank1;[rank1 AICc_best]];
+    relativelik_rank1=[relativelik_rank1;[rank1 relativelik_i(rank1)]];
 
     timevect=data1(:,1);
-
 
     % <========================================================================================>
     % <================================ Parameter estimates =========================================>
@@ -533,10 +531,10 @@ set(gcf,'color','white')
 % <============================== Save file with top-ranked performance metrics (calibration) ====================>
 % <=============================================================================================>
 
-performance=[topmodels1' MAES MSES PIS WISS];
+performance=[topmodels1' MAES MSES PIS WISS AICc_rank1(:,2) relativelik_rank1(:,2)];
 
 T = array2table(performance);
-T.Properties.VariableNames(1:5) = {'i_th-ranked model','MAE','MSE','Coverage 95%PI','WIS'};
+T.Properties.VariableNames(1:7) = {'i_th-ranked model','MAE','MSE','Coverage 95%PI','WIS','AICc','RelativeLikelihood'};
 writetable(T,strcat('./output/performance-calibration-topRanked-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
 
 
@@ -566,7 +564,7 @@ if 0
             % <================================ Load model results ====================================>
             % <========================================================================================>
 
-            load (strcat('./output/modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-',num2str(onset_fixed),'-smoothing-',num2str(smoothfactor1),'-',cadfilename2,'-flag1-',num2str(flag1(1)),'-flag1-',num2str(flag1(2)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-rank-',num2str(rank1),'.mat'))
+            load (strcat('./output/modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-',num2str(onset_fixed),'-smoothing-',num2str(smoothfactor1),'-',cadfilename2,'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-rank-',num2str(rank1),'.mat'))
 
             M1=M;
 
