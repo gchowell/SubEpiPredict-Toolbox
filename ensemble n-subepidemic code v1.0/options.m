@@ -104,7 +104,7 @@ end
 
 numstartpoints=10; % Number of initial guesses for parameter estimation procedure using MultiStart
 
-B=60; % number of bootstrap realizations to characterize parameter uncertainty
+B=300; % number of bootstrap realizations to characterize parameter uncertainty
 
 % <==============================================================================>
 % <========================= n-subepidemic growth model ===============================>
