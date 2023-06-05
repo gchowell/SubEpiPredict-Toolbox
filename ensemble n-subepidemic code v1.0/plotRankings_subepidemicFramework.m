@@ -343,7 +343,7 @@ for run_id=-1
         set(line1,'Linewidth',3)
         
         
-        ylabel('COVID-19 deaths')
+        ylabel(strcat(caddisease,{' '},datatype))
         
         set(gca,'FontSize',24)
         set(gcf,'color','white')
