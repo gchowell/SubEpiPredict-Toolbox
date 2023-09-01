@@ -64,7 +64,7 @@ datevecend1=[2022 05 09]; % 3-value date vector that specifies the date of the m
 % <============================Adjustments to data =================================>
 % <============================================================================>
 
-smoothfactor1=7; % The span of  the moving average smoothing of the case series (smoothfactor1=1 indicates no smoothing)
+smoothfactor1=7; % The span of the moving average smoothing of the case series (smoothfactor1=1 indicates no smoothing)
 
 calibrationperiod1=90; % calibrates model using the most recent <calibrationperiod1> data points where <calibrationperiod> does not exceed the length of the time series data otherwise it will use the maximum length of the data
 
@@ -133,3 +133,20 @@ if onset_fixed==1
         topmodelsx=npatches_fixed;
     end
 end
+
+
+% <===========================================================================================================>
+% <====== Check that the number of estimated parameters is smaller than the number of data points= ===========>
+% <===========================================================================================================>
+
+numparams=get_nparams(method1,dist1,npatches_fixed,flag1,1,onset_fixed);
+
+numparams
+calibrationperiod1
+
+if numparams>=calibrationperiod1
+
+    error("Number of estimated parameters should be smaller than the calibration period. Consider reducing <npatches_fixed> or increasing the length of the calibration period.")
+
+end
+
