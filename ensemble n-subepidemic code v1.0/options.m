@@ -134,19 +134,3 @@ if onset_fixed==1
     end
 end
 
-
-% <===========================================================================================================>
-% <====== Check that the number of estimated parameters is smaller than the number of data points= ===========>
-% <===========================================================================================================>
-
-numparams=get_nparams(method1,dist1,npatches_fixed,flag1,1,onset_fixed);
-
-numparams
-calibrationperiod1
-
-if numparams>=calibrationperiod1
-
-    error("Number of estimated parameters should be smaller than the calibration period. Consider reducing <npatches_fixed> or increasing the length of the calibration period.")
-
-end
-

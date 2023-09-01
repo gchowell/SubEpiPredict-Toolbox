@@ -155,7 +155,21 @@ flag1=flag1_INP; % Sequence of subepidemic growth models considered in epidemic 
 
 %onset_fixed=0; % flag to indicate if the onset timing of subepidemics fixed at time 0 (onset_fixed=1) or not (onset_fixed=0).
 
-flag1
+% <===========================================================================================================>
+% <====== Check that the number of estimated parameters is smaller than the number of data points= ===========>
+% <===========================================================================================================>
+
+numparams=get_nparams(method1,dist1,npatches_fixed,flag1,1,onset_fixed);
+
+numparams
+calibrationperiod1
+
+if numparams>=calibrationperiod1
+
+    error("Number of estimated parameters should be smaller than the calibration period. Consider reducing <npatches_fixed> or increasing the length of the calibration period.")
+
+end
+
 
 % <==============================================================================>
 % <============ Load data and proceed to parameter estimation ===================>
