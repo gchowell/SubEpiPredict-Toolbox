@@ -9,7 +9,8 @@ a_bnds=[];
 K_bnds=[];
 
 rlb=mean(abs(data(1:2,1)))/200;
-rub=mean(abs(data(1:2,1)))*2;
+rub=max(abs(data(1:2,1)))*2;
+
 
 for j=1:npatches
     
