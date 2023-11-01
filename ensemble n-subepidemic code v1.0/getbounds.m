@@ -1,5 +1,5 @@
 
-function [LB,UB]=getbounds(npatches)
+function [LB,UB]=getbounds(npatches,data)
 
 global flag1
 
@@ -8,11 +8,14 @@ p_bnds=[];
 a_bnds=[];
 K_bnds=[];
 
+rlb=mean(abs(data(1:2,1)))/200;
+rub=mean(abs(data(1:2,1)))*2;
+
 for j=1:npatches
     
-    r_bnds=[r_bnds [0;2000]];
+    r_bnds=[r_bnds [rlb;rub]];
     
-    Kmax=100000000000;
+    Kmax=10000000000;
     
     switch flag1
         

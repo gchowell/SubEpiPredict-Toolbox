@@ -98,10 +98,9 @@ alpha=P0(end-1);
 
 d=P0(end);
 
-
 z=[rs1 ps1 as1 Ks1 alpha d];
 
-[LB1,UB1]=getbounds(npatches);
+[LB1,UB1]=getbounds(npatches,data);
 
 LB=[LB1 LBe]; %r p a K alpha d
 
