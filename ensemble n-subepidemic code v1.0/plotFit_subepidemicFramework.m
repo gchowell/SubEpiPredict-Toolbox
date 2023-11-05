@@ -294,8 +294,7 @@ for rank1=topmodels1
     plot(timevect,curves,'c-')
     hold on
 
-    %line1=plot(timevect,mean(curves,2),'k--')  % asymptotic mean
-    line1=plot(timevect,median(curves,2),'r-')  %LSQ fit
+    line1=plot(timevect,median(curves,2),'r-') 
 
     set(line1,'LineWidth',2)
 
@@ -426,6 +425,60 @@ for rank1=topmodels1
     quantilescs=[quantilescs; quantilesc];
 
 
+    % compute doubling times
+
+    forecastingperiod=0;
+    
+    meandoublingtime=zeros(M,1);
+
+    doublingtimess=zeros(30,M)+NaN;
+
+    maxd=1;
+
+    for j=1:M
+
+        [tds,C0data,curve,doublingtimes]=getDoublingTimeCurve(max(fittedcurves(:,j),0),DT,0);
+
+        doublingtimess(1:length(doublingtimes),j)=doublingtimes;
+
+        if maxd<length(doublingtimes)
+            maxd=length(doublingtimes);
+        end
+
+        meandoublingtime=[meandoublingtime;mean(doublingtimes)];
+    end
+
+    doublingtimess=doublingtimess(1:maxd,1:M);
+
+    seq_doublingtimes=[];
+
+    for j=1:maxd
+
+        index1=find(~isnan(doublingtimess(j,:)));
+
+        seq_doublingtimes=[seq_doublingtimes;[j mean(doublingtimess(j,index1)) quantile(doublingtimess(j,index1),0.025) quantile(doublingtimess(j,index1),0.975) length(index1)./M]];
+
+    end
+
+    seq_doublingtimes % [ith doubling, mean, 95%CI LB, 95%CI UB, prob. i_th doubling]
+
+    % Mean doubling times
+    dmean=mean(meandoublingtime);
+    dLB=quantile(meandoublingtime,0.025);
+    dUB=quantile(meandoublingtime,0.975);
+
+    param_doubling=[dmean dLB dUB]
+
+    % <=============================================================================================>
+    % <============================== Save file with doubling time estimates =======================>
+    % <=============================================================================================>
+
+    T = array2table(seq_doublingtimes);
+    T.Properties.VariableNames(1:5) = {'i_th doubling','db mean','db 95%CI LB','db 95% CI UB','prob. i_th doubling'};
+    writetable(T,strcat('./output/doublingTimes-ranked(', num2str(rank1),')-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-horizon-',num2str(forecastingperiod),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
+
+
+
     % <========================================================================================>
     % <================================ Plot residuals ========================================>
     % <========================================================================================>
@@ -530,6 +583,7 @@ set(gcf,'color','white')
 % <=============================================================================================>
 % <============================== Save file with top-ranked performance metrics (calibration) ====================>
 % <=============================================================================================>
+
 
 performance=[topmodels1' MAES MSES PIS WISS AICc_rank1(:,2) relativelik_rank1(:,2)];
 

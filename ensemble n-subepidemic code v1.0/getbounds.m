@@ -9,7 +9,7 @@ a_bnds=[];
 K_bnds=[];
 
 rlb=mean(abs(data(1:2,1)))/200;
-rub=max(abs(data(1:2,1)))*20;
+rub=max(abs(data(1:2,1)))*50;
 
 %rlb
 %rub
