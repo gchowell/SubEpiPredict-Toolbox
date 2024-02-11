@@ -1,4 +1,4 @@
-# ensemble_n-subepidemic_framework
+# SubEpiPredict
 A MATLAB toolbox for fitting and forecasting epidemic trajectories using the ensemble n-subepidemic framework
 
 <p> It carries out the following tasks: </p> 
