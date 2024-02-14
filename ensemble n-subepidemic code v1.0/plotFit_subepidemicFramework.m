@@ -158,6 +158,9 @@ for rank1=topmodels1
 
     load (strcat('./output/modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-',num2str(onset_fixed),'-smoothing-',num2str(smoothfactor1),'-',cadfilename2,'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-rank-',num2str(rank1),'.mat'))
 
+     datevecfirst1=datevecfirst1_INP;
+
+
     AICc_rank1=[AICc_rank1;[rank1 AICc_best]];
     relativelik_rank1=[relativelik_rank1;[rank1 relativelik_i(rank1)]];
 
@@ -387,7 +390,6 @@ for rank1=topmodels1
         bestfit=totinc;
 
         fittedcurves(:,realization)=totinc;
-
 
         gray1=gray(10);
 
@@ -713,6 +715,8 @@ if 0
         % <========================================================================================>
         % <================================ Plot ensemble model fit ====================================>
         % <========================================================================================>
+
+         caddate1=datestr(datenum(caddate1),'mm-dd-yyyy');
 
         datenum1=datenum([str2num(caddate1(7:10)) str2num(caddate1(1:2)) str2num(caddate1(4:5))]);
 
