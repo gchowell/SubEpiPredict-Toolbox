@@ -28,10 +28,10 @@ global calibrationperiod1
 % <============================================================================>
 
 % options.m
-[cumulative1_INP, outbreakx_INP, caddate1_INP, cadregion_INP, caddisease_INP, datatype_INP, DT_INP, datevecfirst1_INP, datevecend1_INP, numstartpoints_INP, topmodelsx_INP, M_INP, flag1_INP]=options;
+[cumulative1_INP, outbreakx_INP, caddate1_INP, cadregion_INP, caddisease_INP, datatype_INP, DT_INP, datevecfirst1_INP2, datevecend1_INP, numstartpoints_INP, topmodelsx_INP, M_INP, flag1_INP]=options;
 
 % options_forecast.m
-[getperformance_INP, deletetempfiles_INP, forecastingperiod_INP, weight_type1_INP]=options_forecast;
+[getperformance_INP2, deletetempfiles_INP, forecastingperiod_INP, weight_type1_INP]=options_forecast;
 
 
 % <============================================================================>
@@ -63,7 +63,7 @@ caddisease=caddisease_INP;
 
 datatype=datatype_INP;
 
-datevecfirst1=datevecfirst1_INP;
+datevecfirst1=datevecfirst1_INP2;
 
 datevecend1=datevecend1_INP;
 
@@ -141,7 +141,7 @@ end
 % <========================== Forecasting parameters ===================================>
 % <==============================================================================>
 
-getperformance=getperformance_INP; % flag or indicator variable (1/0) to calculate forecasting performance or not
+getperformance=getperformance_INP2; % flag or indicator variable (1/0) to calculate forecasting performance or not
 
 deletetempfiles=deletetempfiles_INP; %flag or indicator variable (1/0) to delete Forecast..mat files after use
 
@@ -229,6 +229,11 @@ for run_id=-1
 
         load (strcat('./output/modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-',num2str(onset_fixed),'-smoothing-',num2str(smoothfactor1),'-',cadfilename2,'-flag1-',num2str(flagx(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-rank-',num2str(rankx),'.mat'))
     
+        datevecfirst1=datevecfirst1_INP2;
+
+        getperformance=getperformance_INP2;
+
+
         rankx
         AICc_rank1=[AICc_rank1;[rank1 AICc_best]];
         relativelik_rank1=[relativelik_rank1;[rank1 relativelik_i(rankx)]];
@@ -366,8 +371,13 @@ for run_id=-1
 
         maxd=1;
 
-        for j=1:M
+        if onset_fixed==1
+         curvesforecasts1(1,:)=data1(1,2);
+        end
 
+        for j=1:M
+            
+            
             [tds,C0data,curve,doublingtimes]=getDoublingTimeCurve(max(curvesforecasts1(:,j),0),DT,0);
 
             doublingtimess(1:length(doublingtimes),j)=doublingtimes;
@@ -435,17 +445,14 @@ for run_id=-1
             line1=plot(line2(:,1),line2(:,2),'k--')
             set(line1,'LineWidth',2)
 
-
-            %wave=[2020 2 27 2020 9 08];
-
-            %caddate1=caddate1(6:end);
+            caddate1=datestr(datenum(caddate1),'mm-dd-yyyy');
 
             datenum1=datenum([str2num(caddate1(7:10)) str2num(caddate1(1:2)) str2num(caddate1(4:5))]);
+
 
             datevec1=datevec(datenum1+forecastingperiod*DT);
 
             wave=[datevecfirst1 datevec1(1:3)];
-
 
             % plot dates in x axis
             'day='
@@ -641,6 +648,7 @@ for run_id=-1
 
 
             else
+
                 forecastdata=[str2num(datestr((datenumIni:DT:datenumEnd)','yyyy')) str2num(datestr((datenumIni:DT:datenumEnd)','mm')) str2num(datestr((datenumIni:DT:datenumEnd)','dd')) [data1(:,2);data2] median(curvesforecasts2,2) LB1' UB1'];
 
 
@@ -670,6 +678,13 @@ for run_id=-1
 
 
             else
+
+               length([str2num(datestr((datenumIni:DT:datenumEnd)','yyyy')) str2num(datestr((datenumIni:DT:datenumEnd)','mm')) str2num(datestr((datenumIni:DT:datenumEnd)','dd'))])
+
+               length([data1(:,2);zeros(forecastingperiod,1)+NaN])
+
+               length(LB1)
+
 
                 forecastdata=[str2num(datestr((datenumIni:DT:datenumEnd)','yyyy')) str2num(datestr((datenumIni:DT:datenumEnd)','mm')) str2num(datestr((datenumIni:DT:datenumEnd)','dd')) [data1(:,2);zeros(forecastingperiod,1)+NaN] median(curvesforecasts2,2) LB1' UB1'];
 
