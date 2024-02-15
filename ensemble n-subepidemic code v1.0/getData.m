@@ -21,7 +21,7 @@ if DT==365
     years1=datevecfirst1(1):1:date1(1);
 
     if length(data1)<length(years1)+forecastingperiod
-        error('Forecasting period is loo long and cannot be evaluated with the available data.')
+        error('Forecasting period is too long and cannot be evaluated with the available data.')
     else
         data2=data1(length(years1)+1:1:length(years1)+forecastingperiod);
     end
@@ -35,7 +35,7 @@ else
     index1=length(datenum1):1:length(datenum1)+forecastingperiod-1;
 
     if index1(end)>length(data1)
-        error('Forecasting period is loo long and cannot be evaluated with the available data.')
+        error('Forecasting period is too long and cannot be evaluated with the available data.')
     else
         data2=data1(index1);
     end
