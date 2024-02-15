@@ -376,8 +376,7 @@ for run_id=-1
         end
 
         for j=1:M
-            
-            
+
             [tds,C0data,curve,doublingtimes]=getDoublingTimeCurve(max(curvesforecasts1(:,j),0),DT,0);
 
             doublingtimess(1:length(doublingtimes),j)=doublingtimes;
