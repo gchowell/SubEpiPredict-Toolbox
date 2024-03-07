@@ -1,5 +1,6 @@
 # SubEpiPredict
 A MATLAB toolbox for fitting and forecasting epidemic trajectories using the ensemble n-subepidemic framework
+<p>Tutorial: https://www.sciencedirect.com/science/article/pii/S2468042724000125?dgcid=rss_sd_all</p>
 <p>Video Tutorial: https://www.youtube.com/watch?v=lj_-2Kre1qw</p>
 
 <p> It carries out the following tasks: </p> 
