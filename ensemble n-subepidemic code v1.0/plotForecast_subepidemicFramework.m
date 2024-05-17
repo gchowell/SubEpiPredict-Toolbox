@@ -495,7 +495,7 @@ for run_id=-1
 
             %title(strcat('Sub-epidemic Model Forecast',{' '},getUSstateName(outbreakx),{' '},'- Reported by',{' '},caddate1))
 
-            set(gca,'FontSize',24)
+            set(gca,'FontSize',GetAdjustedFontSize)
             set(gcf,'color','white')
 
 
@@ -596,7 +596,7 @@ for run_id=-1
 
             %title(strcat('Sub-epidemic Model Forecast-',{' '},getUSstateName(outbreakx),{' '},'- Reported by',{' '},caddate1))
 
-            set(gca,'FontSize',24)
+            set(gca,'FontSize',GetAdjustedFontSize)
             set(gcf,'color','white')
 
         end

@@ -178,6 +178,10 @@ end
 %pause(10*rand)
 data=load(strcat('./input/',datafilename1)); % load time series dataset (rows=time, cols=regions/areas)
 
+if isempty(data)
+    error('The dataset is empty')
+end
+
 dataprov=data';
 
 timelags=0; % keeps track of the epidemic onset timing (nonzero case)
@@ -327,7 +331,7 @@ for outbreak1=outbreakx
         
         xlabel('i_{th} ranked model')
         ylabel('AICc')
-        set(gca,'FontSize', 24);
+        set(gca,'FontSize',GetAdjustedFontSize);
         set(gcf,'color','white')
         
         
@@ -339,7 +343,7 @@ for outbreak1=outbreakx
         
         xlabel('i_{th} ranked model')
         ylabel('Relative likelihood')
-        set(gca,'FontSize', 24);
+        set(gca,'FontSize',GetAdjustedFontSize);
         set(gcf,'color','white')
         
         
@@ -355,7 +359,7 @@ for outbreak1=outbreakx
         
         xlabel('i_{th} ranked model')
         ylabel('Evidence ratio')
-        set(gca,'FontSize', 24);
+        set(gca,'FontSize',GetAdjustedFontSize);
         set(gcf,'color','white')
         
         

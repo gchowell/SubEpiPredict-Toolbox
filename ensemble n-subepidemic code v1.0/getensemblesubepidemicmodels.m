@@ -198,7 +198,7 @@ if printscreen1
     %title(strcat('Ensemble Model Forecast -',{' '},getUSstateName(outbreakx),{' '},'- Reported by',{' '},caddate1))
     title(strcat('Ensemble(',num2str(topmodels1(end)),')'))
 
-    set(gca,'FontSize',24)
+    set(gca,'FontSize',GetAdjustedFontSize)
     set(gcf,'color','white')
 
 end

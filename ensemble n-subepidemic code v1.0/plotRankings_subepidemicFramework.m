@@ -162,7 +162,7 @@ for run_id=-1
         
         xlabel('i_{th} Ranked Model')
         ylabel('AICc')
-        set(gca,'FontSize', 24);
+        set(gca,'FontSize',GetAdjustedFontSize);
         set(gcf,'color','white')
         
         
@@ -174,7 +174,7 @@ for run_id=-1
         
         xlabel('i_{th} Ranked Model')
         ylabel('Relative likelihood')
-        set(gca,'FontSize', 24);
+        set(gca,'FontSize',GetAdjustedFontSize);
         set(gcf,'color','white')
         
         
@@ -188,7 +188,7 @@ for run_id=-1
         
         xlabel('i_{th} Ranked Model')
         ylabel('Evidence ratio')
-        set(gca,'FontSize', 24);
+        set(gca,'FontSize',GetAdjustedFontSize);
         set(gcf,'color','white')
         
         
@@ -345,7 +345,7 @@ for run_id=-1
         
         ylabel(strcat(caddisease,{' '},datatype))
         
-        set(gca,'FontSize',24)
+        set(gca,'FontSize',GetAdjustedFontSize)
         set(gcf,'color','white')
         
         

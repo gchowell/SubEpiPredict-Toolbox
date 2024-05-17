@@ -271,7 +271,7 @@ set(line1,'Linewidth',3)
 ylabel('dC(t)/dt')
 xlabel('Time');
 
-set(gca,'FontSize',24)
+set(gca,'FontSize',GetAdjustedFontSize)
 set(gcf,'color','white')
 
 axis([0 timevect(end) 0 max(totinc)+10])
