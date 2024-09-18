@@ -66,6 +66,8 @@ topmodels1
 
 for rank1=topmodels1
 
+    % Resetting the quantile array
+    combinedQuantiles = []; 
 
     load(strcat('./output/Forecast-modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-',num2str(onset_fixed),'-smoothing-',num2str(smoothfactor1),'-',cadfilename1,'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-forecastingperiod-',num2str(forecastingperiod),'-rank-',num2str(rank1),'.mat'))
 
@@ -98,6 +100,17 @@ curvesforecasts2=curvesforecasts2ens;
 forecast1=[median(curvesforecasts2,2) quantile(curvesforecasts2',0.975)' quantile(curvesforecasts2',0.025)'];
 
 [quantilesc,quantilesf]=computeQuantiles(data1,curvesforecasts2,forecastingperiod);
+
+% Names for quantile forecast table 
+quantNamesRanked = {'Q_0.010', 'Q_0.025', 'Q_0.050', 'Q_0.100', 'Q_0.150', 'Q_0.200', 'Q_0.250', 'Q_0.300', 'Q_0.350', 'Q_0.400', 'Q_0.450', 'Q_0.500', 'Q_0.550', 'Q_0.600', 'Q_0.650', 'Q_0.700', 'Q_0.750', 'Q_0.800', 'Q_0.850', 'Q_0.900', 'Q_0.950', 'Q_0.975', 'Q_0.990'};
+        
+% Quantile forecast array 
+combinedQuantiles = [quantilesc; quantilesf];
+combinedQuantilesTable = array2table(combinedQuantiles, 'VariableNames', quantNamesRanked);
+        
+% Exporting the quantile forecasts
+writetable(combinedQuantilesTable,strcat('./output/quantileTimes-Ensemble(',num2str(topmodels1(end)),')-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-horizon-',num2str(forecastingperiod),'-weighttype-',num2str(weight_type1),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
+
 
 if printscreen1
 

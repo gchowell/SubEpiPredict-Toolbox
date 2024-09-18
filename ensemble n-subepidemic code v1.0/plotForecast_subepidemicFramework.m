@@ -219,6 +219,9 @@ for run_id=-1
 
         rankx
 
+        % Resetting the array for quantiles
+        combinedQuantiles = []; 
+
         npatches=npatches_fixed;
 
         %caddate1='04-05-21';
@@ -361,6 +364,16 @@ for run_id=-1
         quantilescs=[quantilescs;quantilesc];
 
         quantilesfs=[quantilesfs;quantilesf];
+
+        % Names for quantile forecast table 
+        quantNamesRanked = {'Q_0.010', 'Q_0.025', 'Q_0.050', 'Q_0.100', 'Q_0.150', 'Q_0.200', 'Q_0.250', 'Q_0.300', 'Q_0.350', 'Q_0.400', 'Q_0.450', 'Q_0.500', 'Q_0.550', 'Q_0.600', 'Q_0.650', 'Q_0.700', 'Q_0.750', 'Q_0.800', 'Q_0.850', 'Q_0.900', 'Q_0.950', 'Q_0.975', 'Q_0.990'};
+        
+        % Quantile forecast array 
+        combinedQuantiles = [quantilesc; quantilesf];
+        combinedQuantilesTable = array2table(combinedQuantiles, 'VariableNames', quantNamesRanked);
+        
+        % Exporting the quantile forecasts
+        writetable(combinedQuantilesTable,strcat('./output/quantile-ranked(', num2str(rank1),')-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-horizon-',num2str(forecastingperiod),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
 
 
         % compute doubling times
