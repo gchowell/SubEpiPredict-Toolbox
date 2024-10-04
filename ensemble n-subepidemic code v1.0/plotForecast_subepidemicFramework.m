@@ -230,6 +230,10 @@ for run_id=-1
         % <================================ Load model results ==========================================>
         % <========================================================================================>
 
+          strcat('./output/modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-',num2str(onset_fixed),'-smoothing-',num2str(smoothfactor1),'-',cadfilename2,'-flag1-',num2str(flagx(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-rank-',num2str(rankx),'.mat')
+
+          pause
+
         load (strcat('./output/modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-',num2str(onset_fixed),'-smoothing-',num2str(smoothfactor1),'-',cadfilename2,'-flag1-',num2str(flagx(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-rank-',num2str(rankx),'.mat'))
     
         datevecfirst1=datevecfirst1_INP2;
@@ -283,12 +287,16 @@ for run_id=-1
             IC=zeros(npatches,1);
 
 
-            if method1>=3
-                factor1=Phatss(realization,end-1);
-            end
+            if (method1==3) | (method1==4)
 
-            if method1==5
+                factor1=Phatss(realization,end-1);
+
+            elseif (method1==5)
+
+                factor1=Phatss(realization,end-1);
+
                 d_hat=Phatss(realization,end);
+
             end
 
 
