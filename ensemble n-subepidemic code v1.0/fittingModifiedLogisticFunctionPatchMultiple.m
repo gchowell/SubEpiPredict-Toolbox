@@ -210,13 +210,21 @@ end
 
 bestfit=totinc;
 
-% normal distribution of the error structure
-if method1==0 & dist1==0
+
+if method1==0 & dist1==0 % normal distribution of the error structure
 
     var1=sum((bestfit-data).^2)./(length(bestfit)-numparams); % last revised: 01 June 2022
     factor1=sqrt(var1);
 
+elseif method1==6 & dist1==6
+
+    var1=sum((bestfit-data).^2)./(length(bestfit)-numparams); % last revised: 04 Oct 2024
+    factor1=sqrt(var1)/sqrt(2);  % scale parameter: b= sigma/sqrt(2);
+
 end
+
+
+
 
         
 plot(timevect,totinc,'r')

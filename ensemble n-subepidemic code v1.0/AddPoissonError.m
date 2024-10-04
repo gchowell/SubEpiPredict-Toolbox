@@ -71,11 +71,11 @@ for real=1:M
                 r1=mean1*p1/(1-p1);
                 yirData(t,1)=nbinrnd(r1,p1,1,1);
             end
-            
+
         case 5
             % Negative binomial dist with parameter VAR= MEAN +
             % alpha*MEAN^d
-            
+
             for t=2:length(yi)
                 lambda=abs(yi(t)-yi(t-1));
                 mean1=lambda;
@@ -84,9 +84,26 @@ for real=1:M
                 r1=mean1*p1/(1-p1);
                 yirData(t,1)=nbinrnd(r1,p1,1,1);
             end
-            
+
+        case 6 % Laplace distribution
+    
+            for t=2:length(yi)
+
+                % Step 1: Generate uniform random numbers between -0.5 and 0.5
+                U = rand(1, 1) - 0.5;
+
+                % Step 2: Apply the inverse CDF of the Laplace distribution
+                lambda = abs(yi(t) - yi(t-1));  % Location parameter (e.g., difference between observations)
+                b = factor1;             % Scale parameter
+
+                lambda - b * sign(U) .* log(1 - 2 * abs(U))
+
+                % Calculate the Laplace-distributed random variable using the inverse CDF
+                yirData(t,1)=lambda - b * sign(U) .* log(1 - 2 * abs(U));
+            end
+
     end
-    
+
     curves=[curves yirData];
-    
+
 end

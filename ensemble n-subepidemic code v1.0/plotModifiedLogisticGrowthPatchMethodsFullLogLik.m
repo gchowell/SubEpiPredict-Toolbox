@@ -166,28 +166,33 @@ else
             
             objfunction=-sum1;
             
-            
+
         case 5
             % MLE Negative binomial (negative log-likelihood) where sigma^2=mean+alpha*mean^d;
-            
+
             sum1=0;
-            
+
             for i=1:length(ydata)
                 for j=0:(ydata(i)-1)
-                    
+
                     sum1=sum1+log(j+(1/alpha)*yfit(i).^(2-d));
-                    
+
                 end
-                
+
                 %sum1=sum1+ydata(i)*log(alpha*(yfit(i).^(d-1)))-(ydata(i)+(1/alpha)*yfit(i).^(2-d))*log(1+alpha*(yfit(i).^(d-1)))-sum(log(2:1:ydata(i)));
                 sum1=sum1+ydata(i)*log(alpha*(yfit(i).^(d-2)).*yfit(i))-(ydata(i)+(1/alpha)*yfit(i).^(2-d))*log(1+alpha*(yfit(i).^(d-2)).*yfit(i));
 
             end
-            
+
             objfunction=-sum1;
-            
+
+        case 6 % Sum of Absolute Deviations (SAD)
+
+            objfunction=sum(abs(ydata-yfit));
+
+
     end
-    
+
 end
 
 

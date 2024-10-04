@@ -58,21 +58,34 @@ elseif method1==5
 
     numparams=numparams+2;  %Neg. Binomial requires 2 more parameters (alpha,d)
 
+elseif method1==6  % Laplace distribution -- one parameter for scale
+
+    numparams=numparams+1;
+
 end
 
 
 switch method1
-    
+
     case 0
-        
+
         AICc= n*log(fval) + 2*numparams + (2*numparams*(numparams+1))/(n-numparams-1);
-        
+
         part1= n*log(fval);
-        
+
         part2= 2*numparams + (2*numparams*(numparams+1))/(n-numparams-1);
-        
+
+    case 6
+
+        AICc= 2*n*log(2*fval/n) + 2*n + 2*numparams + (2*numparams*(numparams+1))/(n-numparams-1);
+
+        part1 = 2*n*log(2*fval/n);
+
+        part2=  2*n + 2*numparams + (2*numparams*(numparams+1))/(n-numparams-1);
+
+
     otherwise
-        
+
         AICc=-2*(-fval) + 2*numparams + (2*numparams*(numparams+1))/(n-numparams-1);
         
         part1=-2*(-fval);

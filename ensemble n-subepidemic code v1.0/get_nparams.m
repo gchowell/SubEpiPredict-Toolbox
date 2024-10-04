@@ -29,6 +29,7 @@ for j=1:npatches
             numparams=numparams+2;
 
     end
+    
 end
 
 
@@ -56,6 +57,10 @@ elseif method1==3 | method1==4 %Neg. Binomial requires one more parameter (alpha
 elseif method1==5
 
     numparams=numparams+2;  %Neg. Binomial requires 2 more parameters (alpha,d)
+
+elseif method1==6 % Laplace distribution for SAD method -- one parameter for the scale parameter
+
+    numparams=numparams+1;
 
 end
 
