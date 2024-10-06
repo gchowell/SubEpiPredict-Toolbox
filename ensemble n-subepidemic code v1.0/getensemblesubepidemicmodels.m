@@ -224,6 +224,8 @@ meandoublingtime=zeros(M1,1);
 doublingtimess=zeros(30,M1)+NaN;
 
 maxd=1;
+ 
+M1=length(curvesforecasts1);
 
 for j=1:M1
 
