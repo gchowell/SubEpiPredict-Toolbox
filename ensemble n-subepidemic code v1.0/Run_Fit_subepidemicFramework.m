@@ -271,7 +271,7 @@ for outbreak1=outbreakx
     % <================ If time series is too short, do not proceed further ==========================================>
     % <=============================================================================================>
     
-    if length(data1)<10
+    if length(data1)<10 && npatches_fixed>1
         length(data1)
         'small number of data points..'
         continue
