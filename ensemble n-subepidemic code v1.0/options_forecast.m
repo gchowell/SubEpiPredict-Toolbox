@@ -1,19 +1,27 @@
- 
-function [getperformance, deletetempfiles, forecastingperiod, weight_type1]=options_forecast
+function [getperformance, deletetempfiles, forecastingperiod, weight_type1] = options_forecast
 
 % <==============================================================================>
-% <========================== Forecasting parameters ===================================>
+% <========================== Forecasting Parameters ===========================>
 % <==============================================================================>
+% Define parameters for forecasting configuration.
 
-getperformance=1; % flag or indicator variable (1/0) to calculate forecasting performance metrics or not
+getperformance = 1; % Flag to calculate forecasting performance metrics.
+% 1 = Calculate performance metrics (e.g., error, accuracy).
+% 0 = Skip performance calculations.
 
-deletetempfiles=1; %flag or indicator variable (1/0) to indicate whether we wan to delete Forecast..mat files after use
+deletetempfiles = 1; % Flag to indicate whether temporary forecast files should be deleted.
+% 1 = Delete temporary Forecast..mat files after use.
+% 0 = Retain temporary Forecast..mat files for further analysis.
 
-forecastingperiod=30; % forecast horizon (number of time units ahead)
+forecastingperiod = 30; % Forecast horizon, representing the number of time units to predict ahead.
 
 % <==============================================================================>
-% <====================== weighting scheme for ensemble model ============================>
+% <================= Weighting Scheme for Ensemble Model =======================>
 % <==============================================================================>
+% Define the weighting scheme for constructing ensemble models from the top models.
 
-weight_type1=1; % -1= equally weighted from the top models, 0= weighted ensemble based on AICc, 1= weighted ensemble based on relative likelihood (Akaike weights), 
-% 2=weighted ensemble based on the weighted interval score of the calibration period (WISC).
+weight_type1 = 1; % Type of weighting for the ensemble model:
+% -1 = Equal weighting from the top models.
+%  0 = Weighted ensemble based on Akaike Information Criterion corrected (AICc).
+%  1 = Weighted ensemble based on relative likelihood (Akaike weights).
+%  2 = Weighted ensemble based on the Weighted Interval Score of the calibration period (WISC).

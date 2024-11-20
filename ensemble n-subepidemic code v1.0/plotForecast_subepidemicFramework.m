@@ -234,6 +234,7 @@ for run_id=-1
 
         load (strcat('./output/modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-',num2str(onset_fixed),'-smoothing-',num2str(smoothfactor1),'-',cadfilename2,'-flag1-',num2str(flagx(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-rank-',num2str(rankx),'.mat'))
     
+        
         datevecfirst1=datevecfirst1_INP2;
 
         getperformance=getperformance_INP2;
@@ -447,7 +448,7 @@ for run_id=-1
 
             title(strcat(num2ordinal(rank1),' Ranked Model'))
 
-            line1=plot(data1(:,1),data1(:,2),'ko')
+            line1=plot(data1(:,1),data1(:,2),'ko');
             set(line1,'LineWidth',2)
 
 
@@ -460,7 +461,7 @@ for run_id=-1
             line2=[timevect(end) 0;timevect(end) max(data1(:,2))*2];
 
 
-            line1=plot(line2(:,1),line2(:,2),'k--')
+            line1=plot(line2(:,1),line2(:,2),'k--');
             set(line1,'LineWidth',2)
 
             caddate1=datestr(datenum(caddate1),'mm-dd-yyyy');
@@ -506,7 +507,7 @@ for run_id=-1
             end
 
 
-            line1=plot(line2(:,1),line2(:,2),'k--')
+            line1=plot(line2(:,1),line2(:,2),'k--');
             set(line1,'LineWidth',2)
 
 
@@ -546,18 +547,18 @@ for run_id=-1
             h(1).FaceColor = [1 1 1];
             h(2).FaceColor = [0.8 0.8 0.8];
 
-            line1=plot(timevect2,median(curvesforecasts2,2),'r-')
+            line1=plot(timevect2,median(curvesforecasts2,2),'r-');
 
             set(line1,'LineWidth',2)
 
-            line1=plot(timevect2,LB1,'k--')
+            line1=plot(timevect2,LB1,'k--');
             set(line1,'LineWidth',2)
 
-            line1=plot(timevect2,UB1,'k--')
+            line1=plot(timevect2,UB1,'k--');
             set(line1,'LineWidth',2)
 
             % plot time series datalatest
-            line1=plot(data1(:,1),data1(:,2),'ko')
+            line1=plot(data1(:,1),data1(:,2),'ko');
             set(line1,'LineWidth',2)
 
             axis([0 length(timevect2)-1 0 max(UB1)*1.2])
@@ -566,7 +567,7 @@ for run_id=-1
 
             box on
 
-            line1=plot(line2(:,1),line2(:,2),'k--')
+            line1=plot(line2(:,1),line2(:,2),'k--');
             set(line1,'LineWidth',2)
 
 
@@ -606,7 +607,7 @@ for run_id=-1
             end
 
 
-            line1=plot(line2(:,1),line2(:,2),'k--')
+            line1=plot(line2(:,1),line2(:,2),'k--');
             set(line1,'LineWidth',2)
 
             ylabel(strcat(caddisease,{' '},datatype))
