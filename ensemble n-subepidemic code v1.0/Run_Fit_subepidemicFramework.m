@@ -307,6 +307,8 @@ for outbreak1=outbreakx
     
     data1=data(t_window',:)
     
+    tiledlayout(1,1,'Padding','compact','TileSpacing','compact');
+    nexttile(1)
     plot(data1(:,1),data1(:,2),'ko')
     
     % <=======================================================================================>
@@ -324,7 +326,9 @@ for outbreak1=outbreakx
         
         figure(99)
         
-        subplot(1,3,1)
+        tiledlayout(1,3,'Padding','compact','TileSpacing','compact');
+
+        nexttile(1)
         line1=plot(RMSESx(1:topmodelsx,3),'ko-')
         
         set(line1,'LineWidth',2)
@@ -335,7 +339,7 @@ for outbreak1=outbreakx
         set(gcf,'color','white')
         
         
-        subplot(1,3,2)
+        nexttile(2)
         
         line1=plot(relativelik_i(1:topmodelsx),'ko-')
         
@@ -347,7 +351,7 @@ for outbreak1=outbreakx
         set(gcf,'color','white')
         
         
-        subplot(1,3,3)
+        nexttile(3)
         
         %deltas=AICc_bests-AICc_bests(1);
         

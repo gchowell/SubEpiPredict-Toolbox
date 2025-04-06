@@ -215,6 +215,13 @@ for run_id=-1
     AICc_rank1=[];
     relativelik_rank1=[];
 
+    %figure(10)
+    %tiledlayout(rows,cols)
+
+    %figure(11)
+    %tiledlayout(rows,cols)
+
+
     for rankx=topmodels1
 
         rankx
@@ -268,7 +275,6 @@ for run_id=-1
 
         if printscreen1
             figure(10)
-            %subplot(1,length(topmodels1),cc1)
 
             subplot(rows,cols,cc1)
 
@@ -489,6 +495,7 @@ for run_id=-1
                 set(gca, 'XTickLabel', strcat('\fontsize{14}',dates1(1:3:end,:)));
 
                 xticklabel_rotate;
+                xtickangle(45)
 
             elseif DT==7
 
@@ -535,7 +542,7 @@ for run_id=-1
         if printscreen1
 
             figure(11)
-            %subplot(1,length(topmodels1),cc1)
+
             subplot(rows,cols,cc1)
 
 
@@ -838,8 +845,10 @@ if getperformance
     index2=setdiff(1:length(MAEFSS(:,1)),index1);
 
     figure(400)
+    
+    tiledlayout(2,2,'Padding','compact','TileSpacing','compact');
 
-    subplot(2,2,1)
+    nexttile(1)
     line1=plot(MAEFSS(index2,1),MAEFSS(index2,4),'k-o')
     set(line1,'linewidth',2)
     xlabel('i_{th}Ranked Model')
@@ -848,7 +857,7 @@ if getperformance
     set(gca,'FontSize', 16);
     set(gcf,'color','white')
 
-    subplot(2,2,2)
+    nexttile(2)
     line1=plot(MSEFSS(index2,1),MSEFSS(index2,4),'k-o')
     set(line1,'linewidth',2)
     xlabel('i_{th}Ranked Model')
@@ -857,7 +866,7 @@ if getperformance
     set(gca,'FontSize', 16);
     set(gcf,'color','white')
 
-    subplot(2,2,3)
+    nexttile(3)
     line1=plot(PIFSS(index2,1),PIFSS(index2,4),'k-o')
     set(line1,'linewidth',2)
     xlabel('i_{th}Ranked Model')
@@ -866,7 +875,7 @@ if getperformance
     set(gca,'FontSize', 16);
     set(gcf,'color','white')
 
-    subplot(2,2,4)
+    nexttile(4)
 
     line1=plot(WISFSS(index2,1),WISFSS(index2,4),'k-o')
     set(line1,'linewidth',2)
@@ -893,7 +902,10 @@ if getperformance
     if  isempty(index1)~=1
         figure(401)
 
-        subplot(2,2,1)
+        tiledlayout(2,2,'Padding','compact','TileSpacing','compact');
+
+        nexttile(1)
+
         line1=plot((1+(1:length(index1)))',MAEFSS(index1,4),'k-o')
         set(line1,'linewidth',2)
         xlabel('Ensemble(i) model')
@@ -902,7 +914,7 @@ if getperformance
         set(gca,'FontSize', 16);
         set(gcf,'color','white')
 
-        subplot(2,2,2)
+        nexttile(2)
         line1=plot((1+(1:length(index1)))',MSEFSS(index1,4),'k-o')
         set(line1,'linewidth',2)
         xlabel('Ensemble(i) model')
@@ -911,7 +923,7 @@ if getperformance
         set(gca,'FontSize', 16);
         set(gcf,'color','white')
 
-        subplot(2,2,3)
+        nexttile(3)
         line1=plot((1+(1:length(index1)))',PIFSS(index1,4),'k-o')
         set(line1,'linewidth',2)
         xlabel('Ensemble(i) model')
@@ -920,7 +932,7 @@ if getperformance
         set(gca,'FontSize', 16);
         set(gcf,'color','white')
 
-        subplot(2,2,4)
+        nexttile(4)
 
         line1=plot((1+(1:length(index1)))',WISFSS(index1,4),'k-o')
         set(line1,'linewidth',2)

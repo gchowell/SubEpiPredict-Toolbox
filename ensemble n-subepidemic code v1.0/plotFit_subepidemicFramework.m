@@ -143,6 +143,10 @@ param_ds=[];
 AICc_rank1=[];
 relativelik_rank1=[];
 
+figure(300+topmodels1(end)+1)
+
+tiledlayout(length(topmodels1),3,'Padding','compact','TileSpacing','compact');
+
 for rank1=topmodels1
 
     cc2=1;
@@ -196,6 +200,8 @@ for rank1=topmodels1
 
     figure(300+rank1)
 
+    tiledlayout(full(double(npatches)),4,'Padding','compact','TileSpacing','compact');
+
     for j=1:npatches
 
         param_r=[param_r;[mean(rs(:,j)) quantile(rs(:,j),0.025) quantile(rs(:,j),0.975)]];
@@ -212,7 +218,7 @@ for rank1=topmodels1
         cad4=strcat('K_',num2str(j),'=',num2str(param_K(j,1),3),'(95%CI:',num2str(param_K(j,2),3),',',num2str(param_K(j,3),3),')')
 
 
-        subplot(npatches,4,i)
+        nexttile(i)
 
         hist(rs(:,j))
         hold on
@@ -230,7 +236,7 @@ for rank1=topmodels1
 
         legend(strcat(num2ordinal(rank1),' Ranked Model'))
 
-        subplot(npatches,4,i+1)
+        nexttile(i+1)
         hist(ps(:,j))
         hold on
 
@@ -246,7 +252,7 @@ for rank1=topmodels1
         set(line1,'LineWidth',2)
 
 
-        subplot(npatches,4,i+2)
+        nexttile(i+2)
         hist(as(:,j))
         hold on
         xlabel('a')
@@ -261,7 +267,7 @@ for rank1=topmodels1
         set(line1,'LineWidth',2)
 
 
-        subplot(npatches,4,i+3)
+        nexttile(i+3)
         hist(Ks(:,j))
         hold on
         xlabel('K')
@@ -292,7 +298,7 @@ for rank1=topmodels1
 
     figure(300+topmodels1(end)+1)
 
-    subplot(length(topmodels1),3,cc1)
+    nexttile(cc1)
 
     plot(timevect,curves,'c-')
     hold on
@@ -328,7 +334,7 @@ for rank1=topmodels1
     % <================================ Plot subepidemic profile ===========================================>
     % <=============================================================================================>
 
-    subplot(length(topmodels1),3,cc1+1)
+    nexttile(cc1+1)
 
     color1=['r-';'b-';'g-';'m-';'c-';'k-';'y-';'r-';'b-';'g-';'m-';'c-';'k-';'y-';'r-';'b-';'g-';'m-';'c-';'k-';'y-';'r-';'b-';'g-';'m-';'c-';'k-';'y-';'r-';'b-';'g-';'m-';'c-';'k-';'y-';];
 
@@ -485,7 +491,7 @@ for rank1=topmodels1
     % <================================ Plot residuals ========================================>
     % <========================================================================================>
 
-    subplot(length(topmodels1),3,cc1+2)
+    nexttile(cc1+2)
 
     resid1=bestfit-data1(:,2);
 
@@ -502,6 +508,8 @@ for rank1=topmodels1
 
 
     figure(400)
+    tiledlayout(1,1,'Padding','compact','TileSpacing','compact');
+
     hist(Phatss(:,3*npatches+1:4*npatches))
     xlabel('Sub-epidemic size')
     ylabel('Frequency')
@@ -545,7 +553,9 @@ end
 
 figure(400)
 
-subplot(2,2,1)
+tiledlayout(2,2,'Padding','compact','TileSpacing','compact');
+
+nexttile(1)
 line1=plot(MAES,'k-o');
 set(line1,'linewidth',2)
 xlabel('i_{th}Ranked Model')
@@ -554,7 +564,7 @@ ylabel('MAE')
 set(gca,'FontSize', 16);
 set(gcf,'color','white')
 
-subplot(2,2,2)
+nexttile(2)
 line1=plot(MSES,'k-o');
 set(line1,'linewidth',2)
 xlabel('i_{th}Ranked Model')
@@ -563,7 +573,7 @@ ylabel('MSE')
 set(gca,'FontSize', 16);
 set(gcf,'color','white')
 
-subplot(2,2,3)
+nexttile(3)
 line1=plot(PIS,'k-o');
 set(line1,'linewidth',2)
 xlabel('i_{th}Ranked Model')
@@ -572,8 +582,7 @@ ylabel('Coverage of the 95% PI')
 set(gca,'FontSize', 16);
 set(gcf,'color','white')
 
-subplot(2,2,4)
-
+nexttile(4)
 line1=plot(WISS,'k-o');
 set(line1,'linewidth',2)
 xlabel('i_{th}Ranked Model')
@@ -604,6 +613,8 @@ if 0
     if length(topmodels1)>1
 
         figure(500)
+
+        tiledlayout(1,1,'Padding','compact','TileSpacing','compact');
 
         forecastingperiod=0;
         getperformance=1;

@@ -493,7 +493,8 @@ end
 % <=============================================================================================>
 
 figure(100)
-
+tiledlayout(1,1,'Padding','compact','TileSpacing','compact');
+nexttile(1)
 for j=1:npatches
     
     incidence1=[x(1,j);diff(x(:,j))];

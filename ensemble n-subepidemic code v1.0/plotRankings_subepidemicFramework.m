@@ -154,8 +154,9 @@ for run_id=-1
     if 1  %plot relative likelihoods of the models
         
         figure(99)
-        
-        subplot(1,3,1)
+        tiledlayout(1,3,'Padding','compact','TileSpacing','compact');
+
+        nexttile(1)
         line1=plot(RMSES(topmodelsx,3),'ko-')
         
         set(line1,'LineWidth',2)
@@ -166,7 +167,7 @@ for run_id=-1
         set(gcf,'color','white')
         
         
-        subplot(1,3,2)
+        nexttile(2)
         
         line1=plot(relativelik_i(topmodelsx),'ko-')
         
@@ -178,7 +179,7 @@ for run_id=-1
         set(gcf,'color','white')
         
         
-        subplot(1,3,3)
+        nexttile(3)
         
         %deltas=AICc_bests-AICc_bests(1);
         
@@ -214,11 +215,13 @@ for run_id=-1
         cols=factors(2);
     end
     
+   tiledlayout(rows,cols,'Padding','compact','TileSpacing','compact');
+
     
     for index1=topmodelsx
         
    
-        subplot(rows,cols,index1)
+        nexttile(index1)
         
         npatches=RMSES(index1,1);
         
@@ -399,7 +402,7 @@ end
 
 for j=1:cols
 
-    subplot(rows,cols,topmodelsx(end-j+1))
+    nexttile(topmodelsx(end-j+1))
     xlabel('Time');
 
 end

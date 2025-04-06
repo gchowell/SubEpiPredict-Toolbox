@@ -247,6 +247,9 @@ end
 
 [~,x]=ode15s(@modifiedLogisticGrowthPatch,timevect,IC,[],r1,p1,a1,K1,npatches,onset_thr,flag1);
 
+tiledlayout(1,1,'Padding','compact','TileSpacing','compact');
+nexttile(1)
+
 for j=1:npatches
 
     incidence1=[x(1,j);diff(x(:,j))];
