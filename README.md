@@ -113,5 +113,4 @@ See the [LICENSE](LICENSE) file for more information.
 
 For questions or feedback, please contact:  
 **Gerardo Chowell**  
-[https://www.researchgate.net/profile/Gerardo-Chowell](https://www.researchgate.net/profile/Gerardo-Chowell)  
 [https://github.com/gchowell](https://github.com/gchowell)
