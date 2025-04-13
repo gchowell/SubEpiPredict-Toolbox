@@ -1,32 +1,41 @@
 # SubEpiPredict Toolbox
-A MATLAB toolbox for fitting and forecasting epidemic trajectories using the ensemble n-subepidemic framework
 
-<p> <a href="https://www.sciencedirect.com/science/article/pii/S2468042724000125?dgcid=rss_sd_all" target="_blank">SubEpiPredict Tutorial</a></p> 
-<p><a href="https://www.youtube.com/watch?v=lj_-2Kre1qw" target="_blank">Video Tutorial</a></p>
+**SubEpiPredict** is a user-friendly **MATLAB toolbox** designed for fitting and forecasting epidemic trajectories using the **ensemble n-subepidemic modeling framework**. This approach is particularly effective for capturing complex epidemic patterns, including multiple waves and overlapping sub-epidemics.
 
-<p> It carries out the following tasks: </p> 
-<ul>
-    <li>fitting models to time series data,</li>
-    <li>estimation of parameters with quantified uncertainty,</li>
-    <li>plotting the model fits, sub-epidemic profiles, and residuals of the top-ranked models,</li>
-    <li>plotting the empirical distributions of the model parameters associated with each sub-epidemic</li>
-    <li>plotting the calibration performance metrics of the top-ranked models, </li>    
-    <li>plotting the AICc values, relative likelihood, and evidence ratio of the top-ranked models,</li>
-    <li>plotting forecasts derived from the top-ranked and ensemble models,</li>
-    <li>plotting the forecasting performance metrics of the top-ranked models and the ensemble models, </li>    
-    <li>plotting the effective reproduction number derived from the top-ranked models.</li>
-    
-</ul>
+📄 **Tutorial Paper**  
+Chowell et al. (2024), *SubEpiPredict: A tutorial-based primer and toolbox for fitting and forecasting growth trajectories using the ensemble n-sub-epidemic modeling framework*, Infectious Disease Modelling.  
+👉 [Read the paper](https://www.sciencedirect.com/science/article/pii/S2468042724000125)
 
-<p> Additional features include:</p>
+🎥 **Video Tutorial**  
+👉 [Watch on YouTube](https://www.youtube.com/watch?v=lj_-2Kre1qw)
 
-<ul>
-    <li>fitting models using different parameter estimation approaches (least-squares, maximum likelihood estimation),</li>
-    <li>fitting models using assuming different error structures (normal, Poisson, negagive binomial),</li>
-    <li>user can select the underlying function for the sub-epidemic building block (generalized-logistic growth model (GLM), Richards model, and the generalized Richards model (GRM),</li>
-    <li>user can select whether the sub-epidemics start synchronously at time 0 or asynchronously as defined by parameter C_thr.</li>
-    
-</ul>
+---
+
+## Features
+
+The toolbox offers the following capabilities:
+
+- **Fitting models to time series data**
+- **Estimating parameters with quantified uncertainty**
+- **Plotting model fits, sub-epidemic profiles, and residuals of top-ranked models**
+- **Visualizing empirical distributions of model parameters for each sub-epidemic**
+- **Assessing calibration performance metrics of top-ranked models**
+- **Analyzing AICc values, relative likelihoods, and evidence ratios**
+- **Generating forecasts from top-ranked and ensemble models**
+- **Evaluating forecasting performance metrics**
+- **Estimating and plotting the effective reproduction number (Rt) from top-ranked models**
+
+**Additional features include:**
+
+- **Support for different parameter estimation approaches (least squares, maximum likelihood estimation)**
+- **Flexibility in error structures (normal, Poisson, negative binomial)**
+- **Choice of sub-epidemic building block functions:**
+  - **Generalized Logistic Model (GLM)**
+  - **Richards Model**
+  - **Generalized Richards Model (GRM)**
+- **Option to model sub-epidemics starting synchronously at time 0 or asynchronously using parameter `C_thr`**
+
+---
     
 # Installation requirements
 
