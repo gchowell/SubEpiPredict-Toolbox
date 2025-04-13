@@ -92,21 +92,26 @@ After generating forecasts from top-ranked models, you can use the toolbox to ge
     <li>run the function <code>plotReproductionNumber.m</code></li>
 </ul>
 
-# Publications
+## Publications
 
-<ul>
+- Chowell, G., Dahal, S., Bleichrodt, A., Tariq, A., Hyman, J. M., & Luo, R. (2024). *SubEpiPredict: A tutorial-based primer and toolbox for fitting and forecasting growth trajectories using the ensemble n-sub-epidemic modeling framework*. Infectious Disease Modelling, 9(2), 411-436.  
+  [https://www.sciencedirect.com/science/article/pii/S2468042724000125](https://www.sciencedirect.com/science/article/pii/S2468042724000125)
+- Chowell, G., Dahal, S., Tariq, A., Roosa, K., Hyman, J. M., & Luo, R. (2022). *An ensemble n-sub-epidemic modeling framework for short-term forecasting epidemic trajectories: Application to the COVID-19 pandemic in the USA*. PLOS Comput Biol, 18(10), e1010602.
+- Chowell, G., Tariq, A., & Hyman, J. M. (2019). *A novel sub-epidemic modeling framework for short-term forecasting epidemic waves*. BMC Medicine, 17(1), 164.
+- Bleichrodt, A., Dahal, S., Maloney, K., Casanova, L., Luo, R., & Chowell, G. (2022). *Real-time forecasting the trajectory of monkeypox outbreaks at the national and global levels, July–October 2022*. BMC Medicine, 21(1), 1–20.
 
- <li>Chowell, G., Dahal, S., Tariq, A., Roosa, K., Hyman, J. M., & Luo, R. (2022). An ensemble n-sub-epidemic modeling framework for short-term forecasting epidemic trajectories: Application to the COVID-19 pandemic in the USA. PLOS Computational Biology, 18(10), e1010602. </li>
+---
 
- <li>Chowell, G., Tariq, A., & Hyman, J. M. (2019). A novel sub-epidemic modeling framework for short-term forecasting epidemic waves. BMC medicine, 17(1), 1-18.  </li>
- 
-<li>Bleichrodt, A., Dahal, S., Maloney, K., Casanova, L., Luo, R., & Chowell, G. (2022). Real-time forecasting the trajectory of monkeypox outbreaks at the national and global levels, July–October 2022. BMC medicine, 21(1), 1-20.</li>
+## License
 
-</ul>
+This project is licensed under the terms of the **GNU General Public License v3.0**.  
+See the [LICENSE](LICENSE) file for more information.
 
-# Disclaimer
+---
 
-This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, version 3 of the License.
+## Contact
 
-This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU General Public License for more details.  
+For questions or feedback, please contact:  
+**Gerardo Chowell**  
+[https://www.researchgate.net/profile/Gerardo-Chowell](https://www.researchgate.net/profile/Gerardo-Chowell)  
+[https://github.com/gchowell](https://github.com/gchowell)
