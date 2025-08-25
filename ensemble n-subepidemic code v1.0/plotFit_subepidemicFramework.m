@@ -284,7 +284,55 @@ for rank1=topmodels1
 
         i=i+4;
 
+
     end
+
+    % <==============================================================================================>
+    % <=============== Save csv files with parameter estimates for each sub-epidemic ================>
+    % <==============================================================================================>
+
+    forecastingperiod=0;
+
+    T = array2table([(1:npatches)' param_r log10(param_r(:,3)./param_r(:,2))]);
+    T.Properties.VariableNames(1)={'sub-epidemic'};
+    T.Properties.VariableNames(2:5) = {'r mean','r 95% CI LB','r 95% CI UB','r SCI'};
+    writetable(T,strcat('./output/param-r-ranked(', num2str(rank1),')-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-horizon-',num2str(forecastingperiod),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
+
+    T = array2table([(1:npatches)' param_p log10(param_p(:,3)./param_p(:,2))]);
+    T.Properties.VariableNames(1)={'sub-epidemic'};
+    T.Properties.VariableNames(2:5) = {'p mean','p 95% CI LB','p 95% CI UB','p SCI'};
+    writetable(T,strcat('./output/param-p-ranked(', num2str(rank1),')-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-horizon-',num2str(forecastingperiod),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
+
+    T = array2table([(1:npatches)' param_a log10(param_a(:,3)./param_a(:,2))]);
+    T.Properties.VariableNames(1)={'sub-epidemic'};
+    T.Properties.VariableNames(2:5) = {'a mean','a 95% CI LB','a 95% CI UB','a SCI'};
+    writetable(T,strcat('./output/param-a-ranked(', num2str(rank1),')-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-horizon-',num2str(forecastingperiod),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
+
+    T = array2table([(1:npatches)' param_K log10(param_K(:,3)./param_K(:,2))]);
+    T.Properties.VariableNames(1)={'sub-epidemic'};
+    T.Properties.VariableNames(2:5) = {'K mean','K 95% CI LB','K 95% CI UB','K SCI'};
+    writetable(T,strcat('./output/param-K-ranked(', num2str(rank1),')-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-horizon-',num2str(forecastingperiod),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
+
+    % <==============================================================================================>
+    % <=============== Save csv files with N.B error structure parameters ===========================>
+    % <==============================================================================================>
+
+    if method1==3 || method1==4  %save parameter alpha. VAR=mean+alpha*mean; VAR=mean+alpha*mean^2;
+
+        T = array2table([param_alpha log10(param_alpha(:,3)./param_alpha(:,2))]);
+        T.Properties.VariableNames(1:4) = {'alpha mean','alpha 95% CI LB','alpha 95% CI UB','alpha SCI'};
+        writetable(T,strcat('./output/param-NB-alpha-ranked(', num2str(rank1),')-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-horizon-',num2str(forecastingperiod),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
+    elseif method1==5
+        T = array2table([param_alpha log10(param_alpha(:,3)./param_alpha(:,2))]);
+        T.Properties.VariableNames(1:4) = {'alpha mean','alpha 95% CI LB','alpha 95% CI UB','alpha SCI'};
+        writetable(T,strcat('./output/param-NB-alpha-ranked(', num2str(rank1),')-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-horizon-',num2str(forecastingperiod),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
+
+        T = array2table([param_d log10(param_d(:,3)./param_d(:,2))]);
+        T.Properties.VariableNames(1:4) = {'d mean','d 95% CI LB','d 95% CI UB','d SCI'};
+        writetable(T,strcat('./output/param-NB-d-ranked(', num2str(rank1),')-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-horizon-',num2str(forecastingperiod),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
+    end
+
+
 
     % <========================================================================================>
     % <================================ Plot model fit ========================================>
@@ -727,7 +775,7 @@ if 0
         % <================================ Plot ensemble model fit ====================================>
         % <========================================================================================>
 
-         caddate1=datestr(datenum(caddate1),'mm-dd-yyyy');
+        caddate1=datestr(datenum(caddate1),'mm-dd-yyyy');
 
         datenum1=datenum([str2num(caddate1(7:10)) str2num(caddate1(1:2)) str2num(caddate1(4:5))]);
 
