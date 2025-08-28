@@ -122,6 +122,11 @@ After generating forecasts from top-ranked models, you can use the toolbox to ge
     <li>run the function <code>plotReproductionNumber.m</code></li>
 </ul>
 
+ ## Example outputs
+   <p align="center">
+  <img src="docs/images/reproductionnumber.png" width="48%">
+</p>
+
 ## Publications
 
 - Chowell, G., Dahal, S., Bleichrodt, A., Tariq, A., Hyman, J. M., & Luo, R. (2024). *SubEpiPredict: A tutorial-based primer and toolbox for fitting and forecasting growth trajectories using the ensemble n-sub-epidemic modeling framework*. Infectious Disease Modelling, 9(2), 411-436.  
