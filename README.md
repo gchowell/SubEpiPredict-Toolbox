@@ -107,6 +107,11 @@ The function also outputs files with the fit and forecasts of the top-ranked and
   <img src="docs/images/forecasts2.png" width="48%">
 </p>
 
+ <p align="center">
+  <img src="docs/images/ensembles.png" width="48%">
+  <img src="docs/images/performance_ensemble.png" width="48%">
+</p>
+
 
 # Generating and plotting reproduction number forecasts from the top-ranked models
 
