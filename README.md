@@ -41,6 +41,8 @@ The toolbox offers the following capabilities:
 
 The n-subepidemic framework toolbox requires a MATLAB installation.
 
+# Options files configurations
+
 | Setting                            | Where                | What it controls                                                                                  | Typical values                                                                                                                                                  |
 | ---------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `cumulative1`                      | `options.m`          | Whether the **input file** is cumulative (`type-1`) or incidence (`type-0`)                       | `0` or `1`                                                                                                                                                      |
