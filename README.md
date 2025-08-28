@@ -63,7 +63,18 @@ After fitting the model to your data, you can use the toolbox to plot the model 
 </ul>
     
 The function also outputs a file with the calibration performance metrics of the top-ranked models.
-    
+
+ ## Example outputs
+   <p align="center">
+  <img src="docs/images/model_fit.png" width="48%">
+  <img src="docs/images/parameters.png" width="48%">
+</p>
+
+   <p align="center">
+  <img src="docs/images/performance_calibration.png" width="48%">
+</p>
+
+
 # Plotting the top-ranked subepidemic model profiles and the corresponding AIC values
 
 After fitting the model to your data, you can use the toolbox to plot the subepidemic profiles and AICc values as follows:
