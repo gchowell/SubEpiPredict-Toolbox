@@ -127,6 +127,24 @@ After generating forecasts from top-ranked models, you can use the toolbox to ge
   <img src="docs/images/reproductionnumber.png" width="48%">
 </p>
 
+## Output Files & Naming Conventions
+
+| File prefix                                                        | Produced by  | Purpose                                                                                    | Key columns / contents                                                                           |
+| ------------------------------------------------------------------ | ------------ | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| `ranked(k)-… .csv`                                                 | Forecast     | **Point (central) forecast** from the **k-th top-ranked model** (AICc).                    | `time`, `mean`, `median` (optionally `sd`).                                                      |
+| `Ensemble(k)-… .csv`                                               | Forecast     | **Point forecast** from the **ensemble of top k models** (weights per `options_forecast`). | `time`, `mean`, `median` (optionally `sd`).                                                      |
+| `quantileTimes-ranked(k)-… .csv` / `quantile-ranked(k)-… .csv`     | Forecast     | **Forecast quantiles** for model **rank k**.                                               | `time`, `q0.025`, `q0.25`, `q0.50`, `q0.75`, `q0.975` (set may vary).                            |
+| `quantileTimes-Ensemble(k)-… .csv` / `quantile-Ensemble(k)-… .csv` | Forecast     | **Ensemble forecast quantiles** (top k models).                                            | `time`, `q0.025`, `q0.25`, `q0.50`, `q0.75`, `q0.975`.                                           |
+| `doublingTimes-ranked(k)-… .csv`                                   | Forecast     | **Doubling-time series** implied by model **rank k** (if applicable).                      | `time`, `median` + quantiles (e.g., `q0.025`, `q0.975`).                                         |
+| `doublingTimes-Ensemble(k)-… .csv`                                 | Forecast     | **Doubling-time series** implied by the **ensemble**.                                      | `time`, `median` + quantiles.                                                                    |
+| `performance-forecasting-topRanked-… .csv`                         | Forecast     | **Out-of-sample forecast metrics** for **top-ranked models**.                              | `model_rank`, `horizon`, `MAE`, `RMSE`, `MAPE`, `PI_coverage`, `PI_width`, `WIS` (set may vary). |
+| `performance-forecastingEnsemble-… .csv`                           | Forecast     | **Out-of-sample metrics** for the **ensemble**.                                            | `horizon`, `MAE`, `RMSE`, `MAPE`, `PI_coverage`, `PI_width`, `WIS`.                              |
+| `performance-calibration-topRanked-… .csv`                         | Fit/Forecast | **In-sample (calibration) metrics** for **top-ranked models**.                             | `model_rank`, `horizon` (if present), `MAE`, `RMSE`, `MAPE`, `PI_coverage`, `PI_width`, …        |
+| `param-<p>-ranked(k)-… .csv`                                       | Fit/Forecast | **Parameter summaries** for parameter `<p>` (e.g., `r`, `a`, `K`) from model **rank k**.   | For each `<p>`: `mean`, `95% CI LB`, `95% CI UB` (often `SCI = log10(UB/LB)`).                   |
+| `Rt-ranked(k)-… .csv`                                              | Rt           | **Effective reproduction number** series from model **rank k** using your GI assumptions.  | `time`, `Rt_median`/`Rt_mean`, quantiles (e.g., `q0.025`, `q0.975`).                             |
+
+
+
 ## Publications
 
 - Chowell, G., Dahal, S., Bleichrodt, A., Tariq, A., Hyman, J. M., & Luo, R. (2024). *SubEpiPredict: A tutorial-based primer and toolbox for fitting and forecasting growth trajectories using the ensemble n-sub-epidemic modeling framework*. Infectious Disease Modelling, 9(2), 411-436.  
