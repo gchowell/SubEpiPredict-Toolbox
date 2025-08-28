@@ -4,6 +4,79 @@
 
 function [cumulative1, outbreakx, caddate1, cadregion, caddisease, datatype, DT, datevecfirst1, datevecend1, numstartpoints, topmodelsx, B, flag1] = options
 
+% OPTIONS  SubEpiPredict configuration for fitting n-sub-epidemic models
+%
+% Overview
+%   Defines data tags, temporal resolution, smoothing/calibration settings,
+%   estimation/error models, and the search space for n-sub-epidemic growth
+%   trajectories. Used by the fitting scripts to calibrate candidate models
+%   (1..n patches) and rank them (e.g., by AICc).
+%
+% Usage
+%   [cumulative1, outbreakx, caddate1, cadregion, caddisease, datatype, ...
+%    DT, datevecfirst1, datevecend1, numstartpoints, topmodelsx, B, flag1] = options;
+%
+% Returns
+%   cumulative1      (logical) 1 if input file stores cumulative counts; 0 if incidence
+%   outbreakx        (int)     COLUMN INDEX of the focal area/group in the input matrix
+%   caddate1         (char)    Datestamp in filenames, format 'mm-dd-yyyy'
+%   cadregion        (char)    Geographic tag (e.g., 'USA')
+%   caddisease       (char)    Disease tag (e.g., 'coronavirus')
+%   datatype         (char)    'cases' | 'deaths' | 'hospitalizations' | …
+%   DT               (int)     Time step: 1=daily, 7=weekly, 365=yearly
+%   datevecfirst1    (1×3 int) First date present [yyyy mm dd]
+%   datevecend1      (1×3 int) Last date present  [yyyy mm dd]
+%   numstartpoints   (int)     MultiStart initial points for optimization
+%   topmodelsx       (int)     # top-ranked models to keep (by AICc)
+%   B                (int)     Bootstrap replicates for parameter/forecast uncertainty
+%   flag1            (int)     Growth-kernel code used in the trajectory (see below)
+%
+% Globals used/set
+%   method1            Estimator:
+%                        0=LSQ, 1=MLE Poisson, 2=Pearson χ², 3/4/5=MLE NegBin (see below)
+%   npatches_fixed     Max number of sub-epidemic components (patches)
+%   onset_fixed        1=fixed onset times across patches; 0=asynchronous allowed
+%   dist1              Observation/error model code (mapped below)
+%   smoothfactor1      Moving-average span for pre-smoothing (1=no smoothing)
+%   calibrationperiod1 # of most recent points used for calibration
+%
+% Input data & filename patterns (in ./input)
+%   If cumulative1==1 → file name MUST start with 'cumulative-':
+%     'cumulative-<cadtemporal>-<caddisease>-<datatype>-<cadregion>-<caddate1>.txt'
+%   Else (incidence):
+%     '<cadtemporal>-<caddisease>-<datatype>-<cadregion>-<caddate1>.txt'
+%   where <cadtemporal> ∈ {'daily','weekly','yearly'}; columns = areas/groups.
+%
+% Estimation & error models
+%   method1 chooses the estimator; dist1 encodes/weights the observation model:
+%     method1 = 0  LSQ
+%         choose dist1 ∈ {0,1,2}:
+%           0: Normal (homoscedastic LSQ)
+%           1: Poisson-like weighting (var≈mean; LSQ variant)
+%           2: NegBin-like weighting var=factor1·mean (factor1 estimated empirically)
+%     method1 = 1  MLE Poisson                  → dist1 := 1 (automatic)
+%     method1 = 2  Pearson χ² (GOF diagnostic)  → dist1 unchanged (no auto-mapping)
+%     method1 = 3  MLE NegBin var = mean + α·mean    → dist1 := 3 (automatic)
+%     method1 = 4  MLE NegBin var = mean + α·mean^2  → dist1 := 4 (automatic)
+%     method1 = 5  MLE NegBin var = mean + α·mean^d  → dist1 := 5 (automatic)
+%
+% n-sub-epidemic growth kernels (flag1 codes)
+%   GGM=0 (Generalized Growth), GLM=1 (Logistic), GRM=2 (Generalized Richards),
+%   LM=3 (Linear), RICH=4 (Richards). Set flag1 to one of the above.
+%
+% Model search & constraints
+%   npatches_fixed caps the number of sub-epidemic components considered.
+%   If onset_fixed==1 and topmodelsx > npatches_fixed, topmodelsx is reduced to npatches_fixed.
+%   If npatches_fixed==1, topmodelsx is forced to 1.
+%
+% Notes
+%   • Smoothing via smoothfactor1 helps stabilize noisy incidence series.
+%   • Calibration uses the last calibrationperiod1 points of the series.
+%
+% See also
+%   Run_Fit_subepidemicFramework, plotFit_subepidemicFramework, plotRankings_subepidemicFramework
+
+
 % <============================================================================>
 % <=================== Declare Global Variables ===============================>
 % <============================================================================>

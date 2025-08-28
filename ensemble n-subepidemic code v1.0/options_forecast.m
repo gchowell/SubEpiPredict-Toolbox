@@ -1,5 +1,32 @@
 function [getperformance, deletetempfiles, forecastingperiod, weight_type1] = options_forecast
 
+% OPTIONS_FORECAST  SubEpiPredict configuration for forecasting & ensembles
+%
+% Overview
+%   Sets the forecast horizon, whether to compute performance metrics, whether
+%   to delete temporary forecast MAT files, and the weighting scheme used to
+%   build an ensemble from top-ranked models.
+%
+% Usage
+%   [getperformance, deletetempfiles, forecastingperiod, weight_type1] = options_forecast;
+%
+% Returns
+%   getperformance     (logical) 1=compute forecast performance metrics; 0=skip
+%   deletetempfiles    (logical) 1=delete temporary 'Forecast-*.mat' files; 0=keep for audit
+%   forecastingperiod  (int)     Number of steps ahead to predict (horizon)
+%   weight_type1       (int)     Ensemble weighting:
+%                                   -1: Equal weights over the top models
+%                                    0: AICc-based weights (relative support)
+%                                    1: Akaike weights (relative likelihoods)
+%                                    2: WISC-based weights (Weighted Interval Score on calibration)
+%
+% Notes
+%   • Ensure the weighting scheme aligns with the set of top models retained by the fit.
+%
+% See also
+%   plotForecast_subepidemicFramework, Run_Fit_subepidemicFramework
+
+
 % <==============================================================================>
 % <========================== Forecasting Parameters ===========================>
 % <==============================================================================>
