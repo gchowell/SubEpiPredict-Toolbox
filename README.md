@@ -82,7 +82,14 @@ After fitting the model to your data, you can use the toolbox to plot the subepi
 <ul>
     <li>run the function <code>plotRankings_subepidemicFramework.m</code></li>
 </ul>
-    
+
+ ## Example outputs
+   <p align="center">
+  <img src="docs/images/rankings.png" width="48%">
+  <img src="docs/images/relativelikelihood.png" width="48%">
+</p>
+
+
 # Generating and plotting forecasts of the top-ranked and ensemble subepidemic models
 
 After fitting the model to your data, you can use the toolbox to plot forecasts derived from the top-ranked and ensemble subepidemic models as follows:
