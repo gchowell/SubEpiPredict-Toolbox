@@ -101,6 +101,13 @@ After fitting the model to your data, you can use the toolbox to plot forecasts 
 
 The function also outputs files with the fit and forecasts of the top-ranked and ensemble models as well as the forecasting performance metrics for the top-ranked and ensemble models.
 
+ ## Example outputs
+   <p align="center">
+  <img src="docs/images/forecasts.png" width="48%">
+  <img src="docs/images/forecasts2.png" width="48%">
+</p>
+
+
 # Generating and plotting reproduction number forecasts from the top-ranked models
 
 After generating forecasts from top-ranked models, you can use the toolbox to generate and plot forecasts of the effective reproduction number from the top-ranked models as follows:
