@@ -104,6 +104,8 @@ The function also outputs a file with the calibration performance metrics of the
   <img src="docs/images/performance_calibration.png" width="48%">
 </p>
 
+Top-ranked sub-epidemic model fit (rank 1 by AICc) vs observed incidence. Shaded band shows 95% bootstrap CI for the fitted trajectory.
+
 
 # Plotting the top-ranked subepidemic model profiles and the corresponding AIC values
 
@@ -136,7 +138,6 @@ The function also outputs files with the fit and forecasts of the top-ranked and
   <img src="docs/images/forecasts.png" width="48%">
   <img src="docs/images/forecasts2.png" width="48%">
 </p>
-Top-ranked sub-epidemic model fit (rank 1 by AICc) vs observed incidence. Shaded band shows 95% bootstrap CI for the fitted trajectory.
 
  <p align="center">
   <img src="docs/images/ensembles.png" width="48%">
@@ -155,12 +156,12 @@ After generating forecasts from top-ranked models, you can use the toolbox to ge
     <li>run the function <code>plotReproductionNumber.m</code></li>
 </ul>
 
-Time-varying effective reproduction number, Rt, computed from the fitted trajectory under the specified GI (see options_Rt.m). Median and 95% credible band shown.
-
  ## Example outputs
    <p align="center">
   <img src="docs/images/reproductionnumber.png" width="48%">
 </p>
+
+Time-varying effective reproduction number, Rt, computed from the fitted trajectory under the specified GI (see options_Rt.m). Median and 95% credible band shown.
 
 ## Output Files & Naming Conventions
 
@@ -182,14 +183,9 @@ Time-varying effective reproduction number, Rt, computed from the fitted traject
 All results are written to ./output/. Filenames carry run metadata (kernel, method, dist, horizon, type, disease, region, etc.) so artifacts are self-describing. See the “Output Files & Naming Conventions” table below in this README for exact file names and columns (ranked models, ensembles, quantiles, performance, Rt, doubling time). Rt CSVs are produced by plotReproductionNumber.m (fit-period Rt) and, when applicable, its forecast counterpart.
 
 
-## Publications
+## How to cite
 
-- Chowell, G., Dahal, S., Bleichrodt, A., Tariq, A., Hyman, J. M., & Luo, R. (2024). *SubEpiPredict: A tutorial-based primer and toolbox for fitting and forecasting growth trajectories using the ensemble n-sub-epidemic modeling framework*. Infectious Disease Modelling, 9(2), 411-436.  
-  [https://www.sciencedirect.com/science/article/pii/S2468042724000125](https://www.sciencedirect.com/science/article/pii/S2468042724000125)
-- Chowell, G., Dahal, S., Tariq, A., Roosa, K., Hyman, J. M., & Luo, R. (2022). *An ensemble n-sub-epidemic modeling framework for short-term forecasting epidemic trajectories: Application to the COVID-19 pandemic in the USA*. PLOS Comput Biol, 18(10), e1010602.
-- Chowell, G., Tariq, A., & Hyman, J. M. (2019). *A novel sub-epidemic modeling framework for short-term forecasting epidemic waves*. BMC Medicine, 17(1), 164.
-- Bleichrodt, A., Dahal, S., Maloney, K., Casanova, L., Luo, R., & Chowell, G. (2022). *Real-time forecasting the trajectory of monkeypox outbreaks at the national and global levels, July–October 2022*. BMC Medicine, 21(1), 1–20.
-
+- Chowell, G., Dahal, S., Bleichrodt, A., Tariq, A., Hyman, J. M., & Luo, R. (2024). *SubEpiPredict: A tutorial-based primer and toolbox for fitting and forecasting growth trajectories using the ensemble n-sub-epidemic modeling framework*. Infectious Disease Modelling, 9(2), 411-436. [https://www.sciencedirect.com/science/article/pii/S2468042724000125](https://www.sciencedirect.com/science/article/pii/S2468042724000125)
 ---
 
 ## License
