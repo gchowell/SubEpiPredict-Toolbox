@@ -1,6 +1,6 @@
 # SubEpiPredict Toolbox
 
-SubEpiPredict is a MATLAB toolbox for fitting and forecasting epidemic trajectories with an ensemble n-sub-epidemic framework, supporting rolling-window calibration, ensemble weighting, and proper scoring rules (e.g., WIS).
+SubEpiPredict is a MATLAB toolbox for fitting and forecasting epidemic trajectories with an ensemble n-sub-epidemic framework, supporting rolling-window calibration, ensemble weighting, and evaluation with proper scoring rules (e.g., Weighted Interval Score, WIS).
 
 📄 **Tutorial Paper**  
 Chowell et al. (2024), *SubEpiPredict: A tutorial-based primer and toolbox for fitting and forecasting growth trajectories using the ensemble n-sub-epidemic modeling framework*, Infectious Disease Modelling.  
@@ -42,17 +42,14 @@ The toolbox offers the following capabilities:
 
 The n-subepidemic framework toolbox requires a MATLAB installation.
 
-# Configure once: the three options files
+# Configure the options files
 
 Set these before running:
 
-options.m — Data & fit setup: dataset tags, temporal step, smoothing/calibration, estimator (method1), error model (dist1), max sub-epidemics, kernel choice, etc.
+- **[`options.m`](./options.m)** — dataset tags, temporal step, smoothing/calibration, estimator (`method1`), error model (`dist1`), max sub-epidemics, kernel choice.
+- **[`options_forecast.m`](./options_forecast.m)** — forecast horizon, metrics, ensemble weighting.
+- **[`options_Rt.m`](./options_Rt.m)** — generation-interval (GI) family and parameters (use the **same time unit** as your data).
 
-options_forecast.m — Forecast & ensemble: horizon, performance metrics, ensemble weighting.
-
-options_Rt.m — Effective reproduction number: generation-interval (GI) family and parameters (use the same time unit as your data).
-
-Tip: run help options, help options_forecast, and help options_Rt to see concise in-file docs.
 
 # Quick reference
 
@@ -165,6 +162,8 @@ Time-varying effective reproduction number, Rt, computed from the fitted traject
 
 ## Output Files & Naming Conventions
 
+**Rt CSVs** are produced by `plotReproductionNumber.m` (fit-period Rt).
+
 | File prefix                                                        | Produced by  | Purpose                                                                                    | Key columns / contents                                                                           |
 | ------------------------------------------------------------------ | ------------ | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
 | `ranked(k)-… .csv`                                                 | Forecast     | **Point (central) forecast** from the **k-th top-ranked model** (AICc).                    | `time`, `mean`, `median` (optionally `sd`).                                                      |
@@ -185,8 +184,10 @@ All results are written to ./output/. Filenames carry run metadata (kernel, meth
 
 ## How to cite
 
-- Chowell, G., Dahal, S., Bleichrodt, A., Tariq, A., Hyman, J. M., & Luo, R. (2024). *SubEpiPredict: A tutorial-based primer and toolbox for fitting and forecasting growth trajectories using the ensemble n-sub-epidemic modeling framework*. Infectious Disease Modelling, 9(2), 411-436. [https://www.sciencedirect.com/science/article/pii/S2468042724000125](https://www.sciencedirect.com/science/article/pii/S2468042724000125)
----
+If you use SubEpiPredict, please cite:
+
+Chowell G, Dahal S, Bleichrodt A, Luo R. **SubEpiPredict: A tutorial-based primer and toolbox for forecasting with an ensemble n-sub-epidemic framework.** *Infect Dis Model.* 2024. Open-access: https://pmc.ncbi.nlm.nih.gov/articles/PMC10879680/
+
 
 ## License
 
