@@ -11,6 +11,7 @@ Chowell et al. (2024), *SubEpiPredict: A tutorial-based primer and toolbox for f
 
 ---
 
+
 ## Features
 
 The toolbox offers the following capabilities:
@@ -187,7 +188,7 @@ All results are written to ./output/. Filenames carry run metadata (kernel, meth
 
 If you use SubEpiPredict, please cite:
 
-Chowell G, Dahal S, Bleichrodt A, Luo R. **SubEpiPredict: A tutorial-based primer and toolbox for forecasting with an ensemble n-sub-epidemic framework.** *Infect Dis Model.* 2024. Open-access: https://pmc.ncbi.nlm.nih.gov/articles/PMC10879680/
+Chowell, G., Dahal, S., Bleichrodt, A., Tariq, A., Hyman, J. M., & Luo, R. (2024). SubEpiPredict: A tutorial-based primer and toolbox for fitting and forecasting growth trajectories using the ensemble n-sub-epidemic modeling framework. Infectious Disease Modelling, 9(2), 411-436. https://pmc.ncbi.nlm.nih.gov/articles/PMC10879680/
 
 
 ## License
