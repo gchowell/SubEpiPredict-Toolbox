@@ -46,9 +46,9 @@ The n-subepidemic framework toolbox requires a MATLAB installation.
 
 Set these before running:
 
-- **[`options.m`](./ensemble n-subepidemic code v1.0/options.m)** — dataset tags, temporal step, smoothing/calibration, estimator (`method1`), error model (`dist1`), max sub-epidemics, kernel choice.
-- **[`options_forecast.m`](./ensemble n-subepidemic code v1.0/options_forecast.m)** — forecast horizon, metrics, ensemble weighting.
-- **[`options_Rt.m`](./ensemble n-subepidemic code v1.0/options_Rt.m)** — generation-interval (GI) family and parameters (use the **same time unit** as your data).
+- **[`options.m`](./ensemble-n-subepidemic code v1.0/options.m)** — dataset tags, temporal step, smoothing/calibration, estimator (`method1`), error model (`dist1`), max sub-epidemics, kernel choice.
+- **[`options_forecast.m`](./ensemble-n-subepidemic code v1.0/options_forecast.m)** — forecast horizon, metrics, ensemble weighting.
+- **[`options_Rt.m`](./ensemble-n-subepidemic code v1.0/options_Rt.m)** — generation-interval (GI) family and parameters (use the **same time unit** as your data).
 
 
 # Quick reference
