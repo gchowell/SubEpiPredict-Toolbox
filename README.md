@@ -1,6 +1,6 @@
 # SubEpiPredict Toolbox
 
-**SubEpiPredict** is a user-friendly **MATLAB toolbox** designed for fitting and forecasting epidemic trajectories using the **ensemble n-subepidemic modeling framework**. This approach is particularly effective for capturing complex epidemic patterns, including multiple waves and overlapping sub-epidemics.
+SubEpiPredict is a MATLAB toolbox for fitting and forecasting epidemic trajectories with an ensemble n-sub-epidemic framework, supporting rolling-window calibration, ensemble weighting, and proper scoring rules (e.g., WIS).
 
 📄 **Tutorial Paper**  
 Chowell et al. (2024), *SubEpiPredict: A tutorial-based primer and toolbox for fitting and forecasting growth trajectories using the ensemble n-sub-epidemic modeling framework*, Infectious Disease Modelling.  
@@ -36,26 +36,39 @@ The toolbox offers the following capabilities:
 - **Option to model sub-epidemics starting synchronously at time 0 or asynchronously using parameter `C_thr`**
 
 ---
-    
+
+
 # Installation requirements
 
 The n-subepidemic framework toolbox requires a MATLAB installation.
 
-# Options files configurations
+# Configure once: the three options files
 
-| Setting                            | Where                | What it controls                                                                                            | Typical values                                                                                                                                                                                                 |
-| ---------------------------------- | -------------------- | ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `cumulative1`                      | `options.m`          | Whether the **input file** is cumulative (`type-1`) or incidence (`type-0`)                                 | `0` or `1`                                                                                                                                                                                                     |
-| `DT`                               | `options.m`          | Temporal step / filename tag                                                                                | `1` (daily), `7` (weekly), `365` (yearly)                                                                                                                                                                      |
-| `outbreakx`                        | `options.m`          | **Column/area index** to analyze when the file contains multiple areas | integer (e.g., `52`)                                                                                                                                                                                           |
-| `method1` / `dist1`                | `options.m`          | Estimator & observation/error model                                                                         | `method1`: `0`=LSQ, `1`=MLE Poisson, `2`=Pearson χ², `3/4/5`=MLE NegBin; `dist1`: `0`=Normal, `1`=Poisson, `2`=NegBin (LSQ-like), `3/4/5`=NegBin (MLE variants) *(note: `method1=2` leaves `dist1` unchanged)* |
-| `flag1`                            | `options.m`          | Growth kernel                                                                                               | `0`=GGM, `1`=GLM, `2`=GRM, `3`=LM, `4`=RICH                                                                                                                                                                    |
-| `npatches_fixed`                   | `options.m`          | Max sub-epidemics (model complexity)                                                                        | `1..N` (e.g., `2`)                                                                                                                                                                                             |
-| `smoothfactor1`                    | `options.m`          | Moving-average smoothing span (`1` = no smoothing)                                                          | e.g., `7`                                                                                                                                                                                                      |
-| `calibrationperiod1`               | `options.m`          | Number of most-recent points used for calibration                                                           | e.g., `90`                                                                                                                                                                                                     |
-| `forecastingperiod`                | `options_forecast.m` | Steps ahead to predict (horizon)                                                                            | e.g., `30`                                                                                                                                                                                                     |
-| `weight_type1`                     | `options_forecast.m` | Ensemble weighting                                                                                          | `-1`, `0`, `1`, or `2`                                                                                                                                                                                         |
-| `type_GId1`, `mean_GI1`, `var_GI1` | `options_Rt.m`       | GI family & parameters for Rt (use same time units as `DT`)                                                 | `1/2/3`, numbers                                                                                                                                                                                               |
+Set these before running:
+
+options.m — Data & fit setup: dataset tags, temporal step, smoothing/calibration, estimator (method1), error model (dist1), max sub-epidemics, kernel choice, etc.
+
+options_forecast.m — Forecast & ensemble: horizon, performance metrics, ensemble weighting.
+
+options_Rt.m — Effective reproduction number: generation-interval (GI) family and parameters (use the same time unit as your data).
+
+Tip: run help options, help options_forecast, and help options_Rt to see concise in-file docs.
+
+# Quick reference
+
+| Setting                            | Where                | What it controls                                                                              | Typical values                                                                                                                                                  |
+| ---------------------------------- | -------------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cumulative1`                      | `options.m`          | Whether the **input** file is cumulative (`type-1`) or incidence (`type-0`)                   | `0` or `1`                                                                                                                                                      |
+| `DT`                               | `options.m`          | Temporal step / filename tag                                                                  | `1` (daily), `7` (weekly), `365` (yearly)                                                                                                                       |
+| `outbreakx`                        | `options.m`          | **Column/area index** to analyze when file has multiple areas (**not in the input filename**) | integer (e.g., `52`)                                                                                                                                            |
+| `method1` / `dist1`                | `options.m`          | Estimator & observation model                                                                 | `method1`: `0`=LSQ, `1`=MLE Poisson, `2`=Pearson χ², `3/4/5`=MLE NegBin; `dist1`: `0`=Normal, `1`=Poisson, `2`=NegBin (LSQ-like), `3/4/5`=NegBin (MLE variants) |
+| `flag1`                            | `options.m`          | Growth kernel                                                                                 | `0`=GGM, `1`=GLM, `2`=GRM, `3`=LM, `4`=RICH                                                                                                                     |
+| `npatches_fixed`                   | `options.m`          | Max sub-epidemics (model complexity)                                                          | `1..N` (e.g., `2`)                                                                                                                                              |
+| `smoothfactor1`                    | `options.m`          | Moving-average smoothing span (`1` = no smoothing)                                            | e.g., `7`                                                                                                                                                       |
+| `calibrationperiod1`               | `options.m`          | # most-recent points used for calibration                                                     | e.g., `90`                                                                                                                                                      |
+| `forecastingperiod`                | `options_forecast.m` | Steps ahead to predict                                                                        | e.g., `30`                                                                                                                                                      |
+| `weight_type1`                     | `options_forecast.m` | Ensemble weighting                                                                            | `-1`, `0`, `1`, or `2`                                                                                                                                          |
+| `type_GId1`, `mean_GI1`, `var_GI1` | `options_Rt.m`       | GI family & parameters for Rt (**same unit as `DT`**)                                         | `1/2/3`, numbers                                                                                                                                                |
 
 
 # Fitting the model to your data
@@ -123,11 +136,14 @@ The function also outputs files with the fit and forecasts of the top-ranked and
   <img src="docs/images/forecasts.png" width="48%">
   <img src="docs/images/forecasts2.png" width="48%">
 </p>
+Top-ranked sub-epidemic model fit (rank 1 by AICc) vs observed incidence. Shaded band shows 95% bootstrap CI for the fitted trajectory.
 
  <p align="center">
   <img src="docs/images/ensembles.png" width="48%">
   <img src="docs/images/performance_ensemble.png" width="48%">
 </p>
+
+Ensemble forecast (top k models; weighting per weight_type1) with 50% and 95% prediction intervals over a forecastingperiod of H steps.
 
 
 # Generating and plotting reproduction number forecasts from the top-ranked models
@@ -138,6 +154,8 @@ After generating forecasts from top-ranked models, you can use the toolbox to ge
     <li>define the generation interval parameters by editing the function <code>options_rt.m</code></li>
     <li>run the function <code>plotReproductionNumber.m</code></li>
 </ul>
+
+Time-varying effective reproduction number, Rt, computed from the fitted trajectory under the specified GI (see options_Rt.m). Median and 95% credible band shown.
 
  ## Example outputs
    <p align="center">
@@ -160,6 +178,8 @@ After generating forecasts from top-ranked models, you can use the toolbox to ge
 | `param-<p>-ranked(k)-… .csv`                                       | Fit/Forecast | **Parameter summaries** for parameter `<p>` (e.g., `r`, `a`, `K`) from model **rank k**.   | For each `<p>`: `mean`, `95% CI LB`, `95% CI UB` (often `SCI = log10(UB/LB)`).                   |
 | `Rt-ranked(k)-… .csv`                                              | Rt           | **Effective reproduction number** series from model **rank k** using your GI assumptions.  | `time`, `Rt_median`/`Rt_mean`, quantiles (e.g., `q0.025`, `q0.975`).                             |
 
+
+All results are written to ./output/. Filenames carry run metadata (kernel, method, dist, horizon, type, disease, region, etc.) so artifacts are self-describing. See the “Output Files & Naming Conventions” table below in this README for exact file names and columns (ranked models, ensembles, quantiles, performance, Rt, doubling time). Rt CSVs are produced by plotReproductionNumber.m (fit-period Rt) and, when applicable, its forecast counterpart.
 
 
 ## Publications
