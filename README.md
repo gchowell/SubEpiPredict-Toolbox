@@ -129,6 +129,10 @@ After fitting the model to your data, you can use the toolbox to plot the subepi
     <li>run the function <code>plotRankings_subepidemicFramework.m</code></li>
 </ul>
 
+```matlab
+plotRankings_subepidemicFramework.m
+```
+
  ## Example outputs
    <p align="center">
   <img src="docs/images/rankings.png" width="48%">
@@ -144,6 +148,10 @@ After fitting the model to your data, you can use the toolbox to plot forecasts 
     <li>define the forecasting parameters by editing <code>options_forecast.m</code></li>
     <li>run the function <code>plotForecast_subepidemicFramework.m</code></li>
 </ul>
+
+```matlab
+plotForecast_subepidemicFramework.m
+```
 
 The function also outputs files with the fit and forecasts of the top-ranked and ensemble models as well as the forecasting performance metrics for the top-ranked and ensemble models.
 
@@ -169,6 +177,10 @@ After generating forecasts from top-ranked models, you can use the toolbox to ge
     <li>define the generation interval parameters by editing the function <code>options_rt.m</code></li>
     <li>run the function <code>plotReproductionNumber.m</code></li>
 </ul>
+
+```matlab
+ plotReproductionNumber.m
+```
 
  ## Example outputs
    <p align="center">
