@@ -92,7 +92,12 @@ To use the toolbox to fit the ensemble n-subepidemic framework to your data, you
     <li>define the model parameter values and time series parameters by editing <code>options.m</code> </li>
     <li>run the function <code>Run_Fit_subepidemicFramework.m</code> </li>
 </ul>
-  
+
+
+  ```matlab
+   Run_Fit_subepidemicFramework.m
+  ```
+
 # Plotting the fits of the top-ranked models and parameter estimates
 
 After fitting the model to your data, you can use the toolbox to plot the model fits and parameter estimates as follows:
