@@ -1,6 +1,6 @@
 # SubEpiPredict Toolbox
 
-SubEpiPredict is a MATLAB toolbox for fitting and forecasting epidemic trajectories with an ensemble n-sub-epidemic framework, supporting rolling-window calibration, ensemble weighting, and evaluation with proper scoring rules (e.g., Weighted Interval Score, WIS).
+SubEpiPredict-Toolbox is an open-source MATLAB package for fitting and forecasting epidemic trajectories using the n-sub-epidemic modeling framework. The toolbox implements a flexible family of growth models that decompose epidemic waves into multiple overlapping sub-epidemics, capturing complex dynamics such as multi-wave behavior, resurgence, and varying epidemic growth profiles.
 
 📄 **Tutorial Paper**  
 Chowell et al. (2024), *SubEpiPredict: A tutorial-based primer and toolbox for fitting and forecasting growth trajectories using the ensemble n-sub-epidemic modeling framework*, Infectious Disease Modelling.  
@@ -51,6 +51,16 @@ Set these before running:
 - **[options_forecast.m](./ensemble%20n-subepidemic%20code%20v1.0/options_forecast.m)** — forecast horizon, metrics, ensemble weighting.
 - **[options_Rt.m](./ensemble%20n-subepidemic%20code%20v1.0/options_Rt.m)** — generation-interval (GI) family and parameters (use the **same time unit** as your data).
 
+
+# Input file format
+
+Place a text file in ./input/ named <dataset>.txt containing the observed epidemic series.
+
+The data file may contain multiple columns (headerless):
+
+Column 1: time index (0, 1, 2, …)
+
+Columns 2+: observed series
 
 
 # Quick reference
