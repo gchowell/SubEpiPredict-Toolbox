@@ -54,7 +54,7 @@ Set these before running:
 
 # Input file format
 
-Place a text file in `./input/` named '<dataset>.txt' containing the observed epidemic series.
+Place a text file in `./input/` named `<dataset>.txt` containing the observed epidemic series.
 
 The data file may contain multiple columns (headerless):
 
