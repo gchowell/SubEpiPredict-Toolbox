@@ -874,6 +874,17 @@ if 0
 
             [WISC,WISFS]=computeWIS(data1,data1,curvesforecasts2,forecastingperiod)
 
+            % <=============================================================================================>
+            % <============================== Save file with ensemble performance metrics ==============================>
+            % <=============================================================================================>
+
+            performanceEns=[topmodels1(end) MAECS_model1  MSEFS_model1 PIFS_model1 WISC];
+
+            T = array2table(performanceEns);
+            T.Properties.VariableNames(1:5) = {'Ensemble(i) model','MAE','MSE','Coverage 95%PI','WIS'};
+            writetable(T,strcat('./output/performance-calibration-Ensemble-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-horizon-',num2str(forecastingperiod),'-weight_type-',num2str(weight_type1),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
+
+
         end
 
     end

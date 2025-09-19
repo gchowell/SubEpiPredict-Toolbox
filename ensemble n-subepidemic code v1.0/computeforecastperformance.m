@@ -81,7 +81,7 @@ if forecastingperiod>0
         
         dataf=datagroundtruth(dataFperiod,2);
         
-        
+      
         %plot ground truth data
         %line1=plot(datagroundtruth(1:end-1,1)*DT,datagroundtruth(1:end-1,2),'ko')
         %set(line1,'LineWidth',2)

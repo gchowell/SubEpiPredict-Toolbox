@@ -227,7 +227,7 @@ for run_id=-1
         rankx
 
         % Resetting the array for quantiles
-        combinedQuantiles = []; 
+        combinedQuantiles = [];
 
         npatches=npatches_fixed;
 
@@ -240,8 +240,8 @@ for run_id=-1
         %strcat('./output/modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-',num2str(onset_fixed),'-smoothing-',num2str(smoothfactor1),'-',cadfilename2,'-flag1-',num2str(flagx(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-rank-',num2str(rankx),'.mat')
 
         load (strcat('./output/modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-',num2str(onset_fixed),'-smoothing-',num2str(smoothfactor1),'-',cadfilename2,'-flag1-',num2str(flagx(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-rank-',num2str(rankx),'.mat'))
-    
-        
+
+
         datevecfirst1=datevecfirst1_INP2;
 
         getperformance=getperformance_INP2;
@@ -378,13 +378,13 @@ for run_id=-1
 
         quantilesfs=[quantilesfs;quantilesf];
 
-        % Names for quantile forecast table 
+        % Names for quantile forecast table
         quantNamesRanked = {'Q_0.010', 'Q_0.025', 'Q_0.050', 'Q_0.100', 'Q_0.150', 'Q_0.200', 'Q_0.250', 'Q_0.300', 'Q_0.350', 'Q_0.400', 'Q_0.450', 'Q_0.500', 'Q_0.550', 'Q_0.600', 'Q_0.650', 'Q_0.700', 'Q_0.750', 'Q_0.800', 'Q_0.850', 'Q_0.900', 'Q_0.950', 'Q_0.975', 'Q_0.990'};
-        
-        % Quantile forecast array 
+
+        % Quantile forecast array
         combinedQuantiles = [quantilesc; quantilesf];
         combinedQuantilesTable = array2table(combinedQuantiles, 'VariableNames', quantNamesRanked);
-        
+
         % Exporting the quantile forecasts
         writetable(combinedQuantilesTable,strcat('./output/quantile-ranked(', num2str(rank1),')-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-horizon-',num2str(forecastingperiod),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
 
@@ -398,7 +398,7 @@ for run_id=-1
         maxd=1;
 
         if onset_fixed==1
-         curvesforecasts1(1,:)=data1(1,2);
+            curvesforecasts1(1,:)=data1(1,2);
         end
 
         for j=1:M
@@ -600,7 +600,7 @@ for run_id=-1
                 set(gca, 'XTick', 0:2:length(dates1(:,1))-1);
                 set(gca, 'XTickLabel', strcat('\fontsize{14}',dates1(1:2:end,:)));
 
-               xticklabel_rotate;
+                xticklabel_rotate;
 
             elseif DT==365
 
@@ -640,11 +640,11 @@ for run_id=-1
 
         datenum1=datenum([str2num(caddate1(7:10)) str2num(caddate1(1:2)) str2num(caddate1(4:5))]);
 
-       if (DT~=365)
+        if (DT~=365)
 
-        datenum1=datenum1+DT;
+            datenum1=datenum1+DT;
 
-       end
+        end
 
 
         if getperformance & forecastingperiod>0
@@ -666,7 +666,7 @@ for run_id=-1
 
             if DT==365
 
-               forecastdata=[(1:1:length([data1(:,2);data2]))' [data1(:,2);data2] median(curvesforecasts2,2) LB1' UB1'];
+                forecastdata=[(1:1:length([data1(:,2);data2]))' [data1(:,2);data2] median(curvesforecasts2,2) LB1' UB1'];
 
                 T = array2table(forecastdata);
                 T.Properties.VariableNames(1:5) = {'year','data','median','LB','UB'};
@@ -705,11 +705,11 @@ for run_id=-1
 
             else
 
-               length([str2num(datestr((datenumIni:DT:datenumEnd)','yyyy')) str2num(datestr((datenumIni:DT:datenumEnd)','mm')) str2num(datestr((datenumIni:DT:datenumEnd)','dd'))])
+                length([str2num(datestr((datenumIni:DT:datenumEnd)','yyyy')) str2num(datestr((datenumIni:DT:datenumEnd)','mm')) str2num(datestr((datenumIni:DT:datenumEnd)','dd'))])
 
-               length([data1(:,2);zeros(forecastingperiod,1)+NaN])
+                length([data1(:,2);zeros(forecastingperiod,1)+NaN])
 
-               length(LB1)
+                length(LB1)
 
 
                 forecastdata=[str2num(datestr((datenumIni:DT:datenumEnd)','yyyy')) str2num(datestr((datenumIni:DT:datenumEnd)','mm')) str2num(datestr((datenumIni:DT:datenumEnd)','dd')) [data1(:,2);zeros(forecastingperiod,1)+NaN] median(curvesforecasts2,2) LB1' UB1'];
@@ -727,38 +727,36 @@ for run_id=-1
         % <========== Get forecast performance metrics for the model (if getperformance=1) =====================================>
         % <==================================================================================================>
 
-        if getperformance
+        [RMSECS_model1 MSECS_model1 MAECS_model1  PICS_model1 MISCS_model1 RMSEFS_model1 MSEFS_model1 MAEFS_model1 PIFS_model1 MISFS_model1]=computeforecastperformance(data1,datalatest2,curvesforecasts1,curvesforecasts2,forecastingperiod*getperformance);
 
-            [RMSECS_model1 MSECS_model1 MAECS_model1  PICS_model1 MISCS_model1 RMSEFS_model1 MSEFS_model1 MAEFS_model1 PIFS_model1 MISFS_model1]=computeforecastperformance(data1,datalatest2,curvesforecasts1,curvesforecasts2,forecastingperiod);
+        [WISC,WISFS]=computeWIS(data1,datalatest2,curvesforecasts2,forecastingperiod*getperformance);
 
-            [WISC,WISFS]=computeWIS(data1,datalatest2,curvesforecasts2,forecastingperiod);
+        WISC_hash(rankx,1)=WISC;  %save WISC for the model to be used to weight the models in the ensemble in function getensemblesubepidemics
 
-            WISC_hash(rankx,1)=WISC;  %save WISC for the model to be used to weight the models in the ensemble in function getensemblesubepidemics
-
+        if getperformance && forecastingperiod>0
             WISF_hash(rankx,run_id+1)=WISFS(end,end);  %save WISF for the model to be used to weight the models in the ensemble in function getensemblesubepidemics
+        end
 
-            % store metrics for calibration
-            RMSECSS=[RMSECSS;[rankx outbreakx datenum(caddate1) RMSECS_model1(end,end)]];
-            MSECSS=[MSECSS;[rankx outbreakx datenum(caddate1) MSECS_model1(end,end)]];
-            MAECSS=[MAECSS;[rankx outbreakx datenum(caddate1) MAECS_model1(end,end)]];
-            PICSS=[PICSS;[rankx outbreakx datenum(caddate1) PICS_model1(end,end)]];
-            MISCSS=[MISCSS;[rankx outbreakx datenum(caddate1) MISCS_model1(end,end)]];
+        % store metrics for calibration
+        RMSECSS=[RMSECSS;[rankx outbreakx datenum(caddate1) RMSECS_model1(end,end)]];
+        MSECSS=[MSECSS;[rankx outbreakx datenum(caddate1) MSECS_model1(end,end)]];
+        MAECSS=[MAECSS;[rankx outbreakx datenum(caddate1) MAECS_model1(end,end)]];
+        PICSS=[PICSS;[rankx outbreakx datenum(caddate1) PICS_model1(end,end)]];
+        MISCSS=[MISCSS;[rankx outbreakx datenum(caddate1) MISCS_model1(end,end)]];
 
-            WISCSS=[WISCSS;[rankx outbreakx datenum(caddate1) WISC(end,end)]];
+        WISCSS=[WISCSS;[rankx outbreakx datenum(caddate1) WISC(end,end)]];
 
 
-            % store metrics for short-term forecasts
-            if forecastingperiod>0
+        % store metrics for short-term forecasts
+        if getperformance && forecastingperiod>0
 
-                RMSEFSS=[RMSEFSS;[rankx outbreakx datenum(caddate1) RMSEFS_model1(end,end)]];
-                MSEFSS=[MSEFSS;[rankx outbreakx datenum(caddate1) MSEFS_model1(end,end)]];
-                MAEFSS=[MAEFSS;[rankx outbreakx datenum(caddate1) MAEFS_model1(end,end)]];
-                PIFSS=[PIFSS;[rankx outbreakx datenum(caddate1) PIFS_model1(end,end)]];
-                MISFSS=[MISFSS;[rankx outbreakx datenum(caddate1) MISFS_model1(end,end)]];
+            RMSEFSS=[RMSEFSS;[rankx outbreakx datenum(caddate1) RMSEFS_model1(end,end)]];
+            MSEFSS=[MSEFSS;[rankx outbreakx datenum(caddate1) MSEFS_model1(end,end)]];
+            MAEFSS=[MAEFSS;[rankx outbreakx datenum(caddate1) MAEFS_model1(end,end)]];
+            PIFSS=[PIFSS;[rankx outbreakx datenum(caddate1) PIFS_model1(end,end)]];
+            MISFSS=[MISFSS;[rankx outbreakx datenum(caddate1) MISFS_model1(end,end)]];
 
-                WISFSS=[WISFSS;[rankx outbreakx datenum(caddate1) WISFS(end,end)]];
-
-            end
+            WISFSS=[WISFSS;[rankx outbreakx datenum(caddate1) WISFS(end,end)]];
 
         end
 
@@ -793,7 +791,7 @@ for run_id=-1
             WISCSS=[WISCSS;[100+rankx outbreakx datenum(caddate1) WISC(end,end)]];
 
 
-            if forecastingperiod>0
+            if getperformance && forecastingperiod>0
 
                 %store metrics for short-term forecasts
                 RMSEFSS=[RMSEFSS;[100+rankx outbreakx datenum(caddate1) RMSEFS_model1(end,end)]];
@@ -845,7 +843,7 @@ if getperformance
     index2=setdiff(1:length(MAEFSS(:,1)),index1);
 
     figure(400)
-    
+
     tiledlayout(2,2,'Padding','compact','TileSpacing','compact');
 
     nexttile(1)
@@ -948,10 +946,21 @@ if getperformance
     % <============================== Save file with ensemble performance metrics ==============================>
     % <=============================================================================================>
 
-    performanceEns=[(1+(1:length(index1)))' MAEFSS(index1,4) MSEFSS(index1,4) PIFSS(index1,4) WISFSS(index1,4)];
+    performanceEnsF=[(1+(1:length(index1)))' MAEFSS(index1,4) MSEFSS(index1,4) PIFSS(index1,4) WISFSS(index1,4)];
 
-    T = array2table(performanceEns);
+    T = array2table(performanceEnsF);
     T.Properties.VariableNames(1:5) = {'Ensemble(i) model','MAE','MSE','Coverage 95%PI','WIS'};
     writetable(T,strcat('./output/performance-forecasting-Ensemble-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-horizon-',num2str(forecastingperiod),'-weight_type-',num2str(weight_type1),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
 
+
 end
+
+MAECSS(:,1)
+
+index1=find(MAECSS(:,1)>100);
+
+performanceEnsC=[MAECSS(index1,1)-100 MAECSS(index1,4) MSECSS(index1,4) PICSS(index1,4) WISCSS(index1,4)]
+
+T = array2table(performanceEnsC);
+T.Properties.VariableNames(1:5) = {'Ensemble(i) model','MAE','MSE','Coverage 95%PI','WIS'};
+writetable(T,strcat('./output/performance-calibration-Ensemble-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-horizon-',num2str(forecastingperiod),'-weight_type-',num2str(weight_type1),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))

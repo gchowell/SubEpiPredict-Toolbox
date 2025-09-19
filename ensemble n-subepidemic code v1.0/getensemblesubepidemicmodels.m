@@ -271,7 +271,7 @@ T.Properties.VariableNames(1:5) = {'i_th doubling','db mean','db 95%CI LB','db 9
 writetable(T,strcat('./output/doublingTimes-Ensemble(',num2str(topmodels1(end)),')-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-horizon-',num2str(forecastingperiod),'-weighttype-',num2str(weight_type1),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
 
 
-if getperformance & forecastingperiod>0
+if 1
 
     % plot most recent data
 
@@ -283,33 +283,38 @@ if getperformance & forecastingperiod>0
 
     end
 
-    data2=getData(cumulative1,cadtemporal,caddisease,datatype,cadregion,DT,datevecfirst1,datevecend1,datevec(datenum1),outbreakx,forecastingperiod)
+    if getperformance
+        data2=getData(cumulative1,cadtemporal,caddisease,datatype,cadregion,DT,datevecfirst1,datevecend1,datevec(datenum1),outbreakx,forecastingperiod*getperformance)
 
-    timevect2=(data1(end,1)+1:(data1(end,1)+1+forecastingperiod-1));
+        timevect2=(data1(end,1)+1:(data1(end,1)+1+getperformance*forecastingperiod-1));
 
-    if printscreen1
-        line2=plot(timevect2,data2,'ro')
-        set(line2,'LineWidth',2)
+        if printscreen1
+            line2=plot(timevect2,data2,'ro')
+            set(line2,'LineWidth',2)
+        end
+
+        datalatest2=[data1;[timevect2' data2]];
+
+        % <=============================================================================================>
+        % <============================== Save file with forecast ======================================>
+        % <=============================================================================================>
+        forecastdata=[str2num(datestr((datenumIni:DT:datenumEnd)','yyyy')) str2num(datestr((datenumIni:DT:datenumEnd)','mm')) str2num(datestr((datenumIni:DT:datenumEnd)','dd')) [data1(:,2);data2] median(curvesforecasts2,2) LB1' UB1'];
+
+        T = array2table(forecastdata);
+        T.Properties.VariableNames(1:7) = {'year','month','day','data','median','LB','UB'};
+
+        writetable(T,strcat('./output/Ensemble(',num2str(topmodels1(end)),')-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-horizon-',num2str(forecastingperiod),'-weighttype-',num2str(weight_type1),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
+    else
+        datalatest2=data1;
+
     end
-
-    datalatest2=[data1;[timevect2' data2]];
-
-    % <=============================================================================================>
-    % <============================== Save file with forecast ======================================>
-    % <=============================================================================================>
-    forecastdata=[str2num(datestr((datenumIni:DT:datenumEnd)','yyyy')) str2num(datestr((datenumIni:DT:datenumEnd)','mm')) str2num(datestr((datenumIni:DT:datenumEnd)','dd')) [data1(:,2);data2] median(curvesforecasts2,2) LB1' UB1'];
-
-    T = array2table(forecastdata);
-    T.Properties.VariableNames(1:7) = {'year','month','day','data','median','LB','UB'};
-
-    writetable(T,strcat('./output/Ensemble(',num2str(topmodels1(end)),')-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-horizon-',num2str(forecastingperiod),'-weighttype-',num2str(weight_type1),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
 
 
     %%  compute performance metrics
 
-    [RMSECS_model1 MSECS_model1 MAECS_model1  PICS_model1 MISCS_model1 RMSEFS_model1 MSEFS_model1 MAEFS_model1 PIFS_model1 MISFS_model1]=computeforecastperformance(data1,datalatest2,curvesforecasts1,curvesforecasts2,forecastingperiod);
+    [RMSECS_model1 MSECS_model1 MAECS_model1  PICS_model1 MISCS_model1 RMSEFS_model1 MSEFS_model1 MAEFS_model1 PIFS_model1 MISFS_model1]=computeforecastperformance(data1,datalatest2,curvesforecasts1,curvesforecasts2,forecastingperiod*getperformance);
 
-    [WISC,WISFS]=computeWIS(data1,datalatest2,curvesforecasts2,forecastingperiod);
+    [WISC,WISFS]=computeWIS(data1,datalatest2,curvesforecasts2,forecastingperiod*getperformance);
 
 else
 
