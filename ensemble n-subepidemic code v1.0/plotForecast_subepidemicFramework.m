@@ -955,9 +955,22 @@ if getperformance
 
 end
 
+% <=============================================================================================>
+% <============================== Save file with top-ranked performance metrics (calibration) ====================>
+% <=============================================================================================>
+
 MAECSS(:,1)
 
+index2=find(MAECSS(:,1)<100);
+
+performanceC=[topmodels1' MAECSS(index2,4) MSECSS(index2,4) PICSS(index2,4) WISCSS(index2,4)]
+
+T = array2table(performanceC);
+T.Properties.VariableNames(1:5) = {'i_th-ranked model','MAE','MSE','Coverage 95%PI','WIS'};
+writetable(T,strcat('./output/performance-calibration-topRanked-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
+
 index1=find(MAECSS(:,1)>100);
+
 
 performanceEnsC=[MAECSS(index1,1)-100 MAECSS(index1,4) MSECSS(index1,4) PICSS(index1,4) WISCSS(index1,4)]
 
