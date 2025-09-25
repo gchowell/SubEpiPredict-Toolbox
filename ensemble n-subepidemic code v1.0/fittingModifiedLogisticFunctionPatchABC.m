@@ -118,7 +118,7 @@ end
 %onset_thrs=onset_thrs(index2)';
 
 % equal-witdh discretization of C_thr
-cumcurve1=cumsum(smooth(data1(:,2),smoothfactor1));
+cumcurve1=cumsum(smoothdata(data1(:,2),'movmean',smoothfactor1));
 
 onset_thrs=linspace(cumcurve1(1),cumcurve1(end),length(data1(:,2)));
 
@@ -148,7 +148,7 @@ count1=1;
 % <==== Evaluate AICc across models with different number of subepidemics and C_thr ==>
 % <====================================================================================>
 
-ydata=smooth(data,smoothfactor1);
+ydata=smoothdata(data,'movmean',smoothfactor1);
 
 for npatches2=[npatchess]
     
