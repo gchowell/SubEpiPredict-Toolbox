@@ -237,8 +237,8 @@ for npatches2=[npatchess]
         % ========================= CHANGED [2] START =========================
         % Reuse the base start set for every onset_thr                        %CHANGED [2]
         problem = createOptimProblem('fmincon','objective',f,'x0',z0,'lb',LB,'ub',UB,'options',options); %CHANGED [2]
-        useParallel = ~isempty(gcp('nocreate'));                             %CHANGED [2]
-        ms = MultiStart('Display','off','UseParallel',useParallel,'StartPointsToRun','bounds-ineqs'); %CHANGED [2]
+        %useParallel = ~isempty(gcp('nocreate'));                             %CHANGED [2]
+        ms = MultiStart('Display','off','UseParallel',false,'StartPointsToRun','bounds-ineqs'); %CHANGED [2]
         sp = CustomStartPointSet(starts_base);                               %CHANGED [2]
         % ========================== CHANGED [2] END ==========================
         
