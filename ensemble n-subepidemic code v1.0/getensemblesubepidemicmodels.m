@@ -3,7 +3,7 @@
 function [RMSECS_model1 MSECS_model1 MAECS_model1  PICS_model1 MISCS_model1 WISC RMSEFS_model1 MSEFS_model1 MAEFS_model1 PIFS_model1 MISFS_model1 WISFS forecast1 quantilesc quantilesf]=getensemblesubepidemics(cumulative1,cadfilename1,datevecfirst1,npatches_fixed,onset_fixed,smoothfactor1,outbreakx,cadregion,caddate1,caddisease,datatype,flag1,method1,dist1,calibrationperiod1,topmodels1,forecastingperiod,getperformance,weight_type1,WISC_hash,WISF_hash,printscreen1)
 
 load(strcat('./output/ABC-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-',num2str(onset_fixed),'-smoothing-',num2str(smoothfactor1),'-',cadfilename1,'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'.mat'),'-mat')
- 
+
 
 % remove any repeated rows
 % [npatches onset_thr AICc];
@@ -68,7 +68,7 @@ topmodels1
 for rank1=topmodels1
 
     % Resetting the quantile array
-    combinedQuantiles = []; 
+    combinedQuantiles = [];
 
     load(strcat('./output/Forecast-modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-',num2str(onset_fixed),'-smoothing-',num2str(smoothfactor1),'-',cadfilename1,'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-forecastingperiod-',num2str(forecastingperiod),'-rank-',num2str(rank1),'.mat'))
 
@@ -102,13 +102,13 @@ forecast1=[median(curvesforecasts2,2) quantile(curvesforecasts2',0.975)' quantil
 
 [quantilesc,quantilesf]=computeQuantiles(data1,curvesforecasts2,forecastingperiod);
 
-% Names for quantile forecast table 
+% Names for quantile forecast table
 quantNamesRanked = {'Q_0.010', 'Q_0.025', 'Q_0.050', 'Q_0.100', 'Q_0.150', 'Q_0.200', 'Q_0.250', 'Q_0.300', 'Q_0.350', 'Q_0.400', 'Q_0.450', 'Q_0.500', 'Q_0.550', 'Q_0.600', 'Q_0.650', 'Q_0.700', 'Q_0.750', 'Q_0.800', 'Q_0.850', 'Q_0.900', 'Q_0.950', 'Q_0.975', 'Q_0.990'};
-        
-% Quantile forecast array 
+
+% Quantile forecast array
 combinedQuantiles = [quantilesc; quantilesf];
 combinedQuantilesTable = array2table(combinedQuantiles, 'VariableNames', quantNamesRanked);
-        
+
 % Exporting the quantile forecasts
 writetable(combinedQuantilesTable,strcat('./output/quantileTimes-Ensemble(',num2str(topmodels1(end)),')-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-horizon-',num2str(forecastingperiod),'-weighttype-',num2str(weight_type1),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
 
@@ -190,7 +190,7 @@ if printscreen1
 
         set(gca, 'XTick', 0:3:length(dates1(:,1))-1);
         set(gca, 'XTickLabel', strcat('\fontsize{14}',dates1(1:3:end,:)));
-        
+
     elseif DT==7
 
         set(gca, 'XTick', 0:2:length(dates1(:,1))-1);
@@ -225,7 +225,7 @@ meandoublingtime=zeros(M1,1);
 doublingtimess=zeros(30,M1)+NaN;
 
 maxd=1;
- 
+
 M1=length(curvesforecasts1(1,:));
 
 for j=1:M1
@@ -271,7 +271,7 @@ T.Properties.VariableNames(1:5) = {'i_th doubling','db mean','db 95%CI LB','db 9
 writetable(T,strcat('./output/doublingTimes-Ensemble(',num2str(topmodels1(end)),')-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-horizon-',num2str(forecastingperiod),'-weighttype-',num2str(weight_type1),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
 
 
-if 1
+if getperformance
 
     % plot most recent data
 
@@ -317,6 +317,16 @@ if 1
     [WISC,WISFS]=computeWIS(data1,datalatest2,curvesforecasts2,forecastingperiod*getperformance);
 
 else
+
+    % plot most recent data
+
+    datenum1=datenum([str2num(caddate1(7:10)) str2num(caddate1(1:2)) str2num(caddate1(4:5))]);
+
+    if (DT~=365)
+
+        datenum1=datenum1+DT;
+
+    end
 
     RMSECS_model1=NaN; MSECS_model1=NaN; MAECS_model1=NaN;  PICS_model1=NaN; MISCS_model1=NaN; RMSEFS_model1=NaN; MSEFS_model1=NaN; MAEFS_model1=NaN; PIFS_model1=NaN; MISFS_model1=NaN;
 
