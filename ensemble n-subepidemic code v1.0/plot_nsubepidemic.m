@@ -2,10 +2,14 @@
 % < Author: Gerardo Chowell  ==================================================>
 % <============================================================================>
 
-function totinc=plot_nsubepidemic(flag1_pass,r_pass,p_pass,a_pass,K_pass,npatches_pass,onset_thr_pass,I0_pass,windowsize1_pass)
+function totinc=plot_nsubepidemic(flag1_pass,r_pass,p_pass,a_pass,K_pass,npatches_pass,onset_thr_pass,I0_pass,windowsize1_pass,onset_fixed_pass)
 
 % Plot model simulation with a specific set of parameter values provided by
 % the user
+% Optional tenth argument: onset_fixed_pass (0=asynchronous, 1=synchronous).
+% Pass this explicitly when reproducing a fitted model, especially at a zero
+% threshold. Nine-argument calls retain the historical threshold-based mode
+% for backward compatibility; they do not use the global onset_fixed value.
 
 % <============================================================================>
 % <=================== Declare global variables ===============================>
@@ -217,42 +221,23 @@ end
 
 timevect=0:1:windowsize1;
 
-IC=zeros(npatches,1);
-
-if onset_thr>0
-    IC(1,1)=I0;
-    IC(2:end,1)=1;
-
-    invasions=zeros(npatches,1);
-    timeinvasions=zeros(npatches,1);
-    Cinvasions=zeros(npatches,1);
-
-    invasions(1)=1;
-    timeinvasions(1)=0;
-    Cinvasions(1)=0;
-
+if nargin>=10 && ~isempty(onset_fixed_pass)
+    onsetMode=onset_fixed_pass;
 else
-    
-    IC(1:end,1)=I0./length(IC(1:end,1));
-
-    invasions=zeros(npatches,1);
-    timeinvasions=zeros(npatches,1);
-    Cinvasions=zeros(npatches,1);
-
-    invasions(1:end)=1;
-    timeinvasions(1:end)=0;
-    Cinvasions(1:end)=0;
+    % Legacy standalone interface only; fitted workflows always pass the mode.
+    onsetMode=double(onset_thr<=0);
 end
 
-
-[~,x]=ode15s(@modifiedLogisticGrowthPatch,timevect,IC,[],r1,p1,a1,K1,npatches,onset_thr,flag1);
+% Shared initialization, activation reset, and incidence conversion.
+[~,x,totinc,patchIncidence]=simulateSubepidemic(timevect,I0,npatches,onsetMode, ...
+    onset_thr,flag1,r1,p1,a1,K1);
 
 tiledlayout(1,1,'Padding','compact','TileSpacing','compact');
 nexttile(1)
 
 for j=1:npatches
 
-    incidence1=[x(1,j);diff(x(:,j))];
+    incidence1=patchIncidence(:,j);
 
     line1=plot(timevect,incidence1,color1(j,:))
 
@@ -261,11 +246,7 @@ for j=1:npatches
 
 end
 
-y=sum(x,2);
-totinc=[y(1,1);diff(y(:,1))];
-if onset_thr>0
-    totinc(1)=totinc(1)-(npatches-1);
-end
+
 bestfit=totinc;
 
 line1=plot(timevect,totinc,'k')

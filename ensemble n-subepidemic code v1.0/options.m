@@ -165,8 +165,8 @@ switch method1
         dist1 = 5;
 end
 
-numstartpoints = 10;    % Number of initial guesses for parameter estimation (MultiStart)
-B = 300;                % Number of bootstrap realizations for uncertainty characterization
+numstartpoints = 20;    % Number of initial guesses for parameter estimation (MultiStart)
+B = 40;                % Number of bootstrap realizations for uncertainty characterization
 
 % <============================================================================>
 % <================= n-Subepidemic Growth Model Settings ======================>

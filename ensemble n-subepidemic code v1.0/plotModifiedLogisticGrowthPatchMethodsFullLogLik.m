@@ -1,87 +1,14 @@
-function objfunction=plotModifiedLogisticGrowthPatchMethods1(z)
+function objfunction=plotModifiedLogisticGrowthPatchMethodsFullLogLik(z)
 
+% Use the same initial-value problem for calibration and reconstruction.
 global flag1 method1 timevect ydata I0 npatches onset_thr yfit
-
-global invasions
-global timeinvasions
-global Cinvasions
-global npatches_fixed
 global onset_fixed
 
+% Reject stale or mis-sized parameter vectors BEFORE any block indexing.
+[rs1,ps1,as1,Ks1,alpha,d]=unpackSubepidemicParameters(z,npatches);
 
-invasions=zeros(npatches,1);
-timeinvasions=zeros(npatches,1);
-Cinvasions=zeros(npatches,1);
-
-invasions(1)=1;
-timeinvasions(1)=0;
-Cinvasions(1)=0;
-
-rs1=z(1:npatches);
-ps1=z(npatches+1:2*npatches);
-as1=z(2*npatches+1:3*npatches);
-Ks1=z(3*npatches+1:4*npatches);
-
-alpha=z(end-1);
-d=z(end);
-
-%if onset_thr>Ks1(1)
-
-%    npatches=1;
-%end
-
-
-IC=zeros(npatches,1);
-
-if onset_fixed==0
-    
-    IC(1,1)=I0;
-    IC(2:end,1)=1;
-    
-    invasions=zeros(npatches,1);
-    timeinvasions=zeros(npatches,1);
-    Cinvasions=zeros(npatches,1);
-    
-    invasions(1)=1;
-    timeinvasions(1)=0;
-    Cinvasions(1)=0;
-else
-    IC(1:end,1)=I0./length(IC(1:end,1));
-    
-    invasions=zeros(npatches,1);
-    timeinvasions=zeros(npatches,1);
-    Cinvasions=zeros(npatches,1);
-    
-    invasions(1:end)=1;
-    timeinvasions(1:end)=0;
-    Cinvasions(1:end)=0;
-end
-
-
-[t,x]=ode15s(@modifiedLogisticGrowthPatch,timevect,IC,[],rs1,ps1,as1,Ks1,npatches,onset_thr,flag1);
-
-% if sum(invasions)<npatches
-%
-%     npatches=sum(invasions);
-%
-%     z=[rs_hat(1:npatches) ps_hat(1:npatches) as_hat(1:npatches) Ks_hat(1:npatches) alpha_hat d_hat];
-%
-%     'entro 1'
-%
-%     pause
-%
-% end
-
-y=sum(x,2);
-
-totinc=[y(1,1);diff(y(:,1))];
-
-if onset_fixed==0
-    totinc(1)=totinc(1)-(npatches-1);
-end
-
-yfit=totinc;
-
+[~,~,yfit]=simulateSubepidemic(timevect,I0,npatches,onset_fixed, ...
+    onset_thr,flag1,rs1,ps1,as1,Ks1);
 
 eps=0.001;
 

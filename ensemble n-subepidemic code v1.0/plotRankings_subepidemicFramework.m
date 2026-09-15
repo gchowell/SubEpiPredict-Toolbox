@@ -264,36 +264,9 @@ for run_id=-1
         
         
         
-        IC=zeros(npatches,1);
-        
-        if onset_fixed==0
-            IC(1,1)=I0;
-            IC(2:end,1)=1;
-            
-            invasions=zeros(npatches,1);
-            timeinvasions=zeros(npatches,1);
-            Cinvasions=zeros(npatches,1);
-            
-            invasions(1)=1;
-            timeinvasions(1)=0;
-            Cinvasions(1)=0;
-            
-        else
-            
-            IC(1:end,1)=I0./length(IC(1:end,1));
-            
-            invasions=zeros(npatches,1);
-            timeinvasions=zeros(npatches,1);
-            Cinvasions=zeros(npatches,1);
-            
-            invasions(1:end)=1;
-            timeinvasions(1:end)=0;
-            Cinvasions(1:end)=0;
-        end
-        
-        
-        [~,x]=ode15s(@modifiedLogisticGrowthPatch,timevect,IC,[],rs_hat,ps_hat,as_hat,Ks_hat,npatches,onset_thr,flag1);
-        %x=ode5(@modifiedLogisticGrowthPatch,timevect,IC,r_hat,p_hat,a_hat,K_hat,npatches,onset_thr,q_hat,flag1);
+        % Shared initialization, activation reset, and incidence conversion.
+        [~,x,totinc,patchIncidence]=simulateSubepidemic(timevect,I0,npatches,onset_fixed, ...
+            onset_thr,flag1,rs_hat,ps_hat,as_hat,Ks_hat);
         
 
         
@@ -317,7 +290,7 @@ for run_id=-1
         
         for j=1:npatches
             
-            incidence1=[x(1,j);diff(x(:,j))];
+            incidence1=patchIncidence(:,j);
             
             line1=plot(timevect,incidence1,color1(j,:))
             
@@ -326,13 +299,7 @@ for run_id=-1
             
         end
         
-        y=sum(x,2);
-        
-        totinc=[y(1,1);diff(y(:,1))];
-        
-        if onset_thr>0
-            totinc(1)=totinc(1)-(npatches-1);
-        end
+
         
         bestfit=totinc;
         

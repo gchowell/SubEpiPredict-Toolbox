@@ -144,6 +144,12 @@ PS=sparse(1000,npatches_fixed*4+2);
 
 count1=1;
 
+% Diagnostics are in search order, including skipped partial-activation fits.
+% Keep RMSES (3 columns) and PS (4*npatches_fixed+2 columns) unchanged.
+thresholdDiagnosticsColumns={'nCandidate','onset_thr','nActive','retained','fval'};
+thresholdDiagnostics=nan(numel(npatchess)*numel(onset_thrs2),5);
+nEvaluated=0;
+
 % <====================================================================================>
 % <==== Evaluate AICc across models with different number of subepidemics and C_thr ==>
 % <====================================================================================>
@@ -152,7 +158,10 @@ ydata=smoothdata(data,'movmean',smoothfactor1);
 
 for npatches2=[npatchess]
     
-    npatches=npatches2;
+    % The optimizer dimension is fixed for this entire threshold sweep.
+    % nActive is a separate observation, never a replacement for nCandidate.
+    nCandidate=npatches2;
+    npatches=nCandidate;
     
     if (onset_fixed==1 | npatches==1)
         onset_thrs=0;
@@ -227,6 +236,15 @@ for npatches2=[npatchess]
     count2=1;
 
     for onset_thr=onset_thrs
+        % Legacy objectives read this global. Reset it explicitly, but never
+        % change nCandidate, the bounds, or the starts after a partial fit.
+        npatches=nCandidate;
+        expectedDimension=4*nCandidate+2;
+        if any([numel(z0),numel(LB),numel(UB),size(starts_base,2)]~=expectedDimension)
+            error('SubEpiPredict:ParameterDimensionMismatch', ...
+                'Seeds, bounds, and starts must all have 4*nCandidate+2 columns.');
+        end
+
         % ******** MLE estimation method with MultiStart  *********
         % check multiple initial guesses to ensure global minimum is obtained
                
@@ -244,61 +262,46 @@ for npatches2=[npatchess]
         
         [P,fval,flagg,outpt,allmins] = run(ms,problem,sp);
         
-        % --> numerical solver to get the best fit in order to check the actual number of
-        % subepidemics involved in the best fit
-        
-        rs_hat=P(1,1:npatches);
-        ps_hat=P(1,npatches+1:2*npatches);
-        as_hat=P(1,2*npatches+1:3*npatches);
-        Ks_hat=P(1,3*npatches+1:4*npatches);
-        
-        alpha_hat=P(1,end-1);
-        d_hat=P(1,end);
-        
-        IC=zeros(npatches,1);
-        
-        if onset_fixed==0
-            IC(1,1)=I0;
-            IC(2:end,1)=1;
-            
-            invasions=zeros(npatches,1);
-            timeinvasions=zeros(npatches,1);
-            Cinvasions=zeros(npatches,1);
-            
-            invasions(1)=1;
-            timeinvasions(1)=0;
-            Cinvasions(1)=0;
-        else
-            IC(1:end,1)=I0./length(IC(1:end,1));
-            
-            invasions=zeros(npatches,1);
-            timeinvasions=zeros(npatches,1);
-            Cinvasions=zeros(npatches,1);
-            
-            invasions(1:end)=1;
-            timeinvasions(1:end)=0;
-            Cinvasions(1:end)=0;
+        if npatches~=nCandidate
+            error('SubEpiPredict:CandidateDimensionChanged', ...
+                'The optimizer changed the candidate dimension during a threshold fit.');
         end
-        
-        [~,x]=ode15s(@modifiedLogisticGrowthPatch,timevect,IC,[],rs_hat,ps_hat,as_hat,Ks_hat,npatches,onset_thr,flag1);
-        
-        if sum(invasions)==1 & sum(invasions)<npatches
+        [rs_hat,ps_hat,as_hat,Ks_hat,alpha_hat,d_hat]= ...
+            unpackSubepidemicParameters(P,nCandidate);
+        P=P(:).';
+
+        % Read activation from THIS simulation, not an inherited global.
+        [~,x,~,~,activation]=simulateSubepidemic(timevect,I0,nCandidate,onset_fixed, ...
+            onset_thr,flag1,rs_hat,ps_hat,as_hat,Ks_hat);
+        nActive=sum(activation.active);
+
+        nEvaluated=nEvaluated+1;
+        thresholdDiagnostics(nEvaluated,:)=[nCandidate onset_thr nActive ...
+            double(nActive==nCandidate) fval];
+
+        % Conservative policy: do not relabel or rescore a partially active
+        % nCandidate fit as a smaller model. Every smaller dimension is fitted
+        % independently by the outer loop, with its own bounds and starts.
+        % A deliberately reduced candidate would need a separate refit.
+        if nActive~=nCandidate
             continue
-        elseif sum(invasions)<npatches
-            npatches=sum(invasions);
-            P=[rs_hat(1:npatches) ps_hat(1:npatches) as_hat(1:npatches) Ks_hat(1:npatches) alpha_hat d_hat];
-            %pause
         end
-        
-        AICc=getAICc(method1,dist1,npatches,flag1,1,fval,length(ydata),onset_fixed);
-        
-        RMSES(count1,:)=[npatches onset_thr AICc];
-        PS(count1,1:length(P))=P;
+
+        AICc=getAICc(method1,dist1,nCandidate,flag1,1,fval,length(ydata),onset_fixed);
+
+        RMSES(count1,:)=[nCandidate onset_thr AICc];
+        PS(count1,1:expectedDimension)=P;
         count1=count1+1;
                 
     end %onset
     
 end %npatches
+
+thresholdDiagnostics=thresholdDiagnostics(1:nEvaluated,:);
+if count1==1
+    error('SubEpiPredict:NoFullyActiveCandidates', ...
+        'No candidate activated all of its fitted subepidemics during calibration.');
+end
 
 %RMSES(1:count1,:)
 %pause
@@ -382,13 +385,8 @@ end
 
 P=PS(index1,1:npatches*4+2);
 
-rs_hat=P(1,1:npatches);
-ps_hat=P(1,npatches+1:2*npatches);
-as_hat=P(1,2*npatches+1:3*npatches);
-Ks_hat=P(1,3*npatches+1:4*npatches);
-
-alpha_hat=P(1,end-1);
-d_hat=P(1,end);
+[rs_hat,ps_hat,as_hat,Ks_hat,alpha_hat,d_hat]= ...
+    unpackSubepidemicParameters(P,npatches);
 
 if method1==3
     
@@ -411,48 +409,18 @@ elseif method1==5
 end
 
 
-IC=zeros(npatches,1);
+% Shared initialization, activation reset, and incidence conversion.
+[~,x,totinc,patchIncidence,bestActivation]=simulateSubepidemic(timevect,I0,npatches,onset_fixed, ...
+    onset_thr,flag1,rs_hat,ps_hat,as_hat,Ks_hat);
 
-if onset_fixed==0
-    IC(1,1)=I0;
-    IC(2:end,1)=1;
-    
-    invasions=zeros(npatches,1);
-    timeinvasions=zeros(npatches,1);
-    Cinvasions=zeros(npatches,1);
-    
-    invasions(1)=1;
-    timeinvasions(1)=0;
-    Cinvasions(1)=0;
-    
-else
-    
-    IC(1:end,1)=I0./length(IC(1:end,1));
-    
-    invasions=zeros(npatches,1);
-    timeinvasions=zeros(npatches,1);
-    Cinvasions=zeros(npatches,1);
-    
-    invasions(1:end)=1;
-    timeinvasions(1:end)=0;
-    Cinvasions(1:end)=0;
-end
-
-
-[~,x]=ode15s(@modifiedLogisticGrowthPatch,timevect,IC,[],rs_hat,ps_hat,as_hat,Ks_hat,npatches,onset_thr,flag1);
-
-if sum(invasions)<npatches
-    
-    npatches=sum(invasions);
-    
-    P=[rs_hat(1:npatches) ps_hat(1:npatches) as_hat(1:npatches) Ks_hat(1:npatches) alpha_hat d_hat];
-    
-    PS(1,:)=0;
-    
-    PS(1,1:length(P))=P;
-    
-    RMSES(1,1)=npatches;
-    
+% The stored dimension, parameter vector, and AICc must stay paired. Do not
+% silently shrink the selected model after ranking if reconstruction differs.
+nActiveBest=sum(bestActivation.active);
+if nActiveBest~=npatches
+    error('SubEpiPredict:BestModelActivationMismatch', ...
+        ['The selected %d-subepidemic model reconstructed with %d active patches. ' ...
+         'The saved model must be refitted, not truncated after ranking.'], ...
+        npatches,nActiveBest);
 end
 
 
@@ -465,20 +433,14 @@ tiledlayout(1,1,'Padding','compact','TileSpacing','compact');
 nexttile(1)
 for j=1:npatches
     
-    incidence1=[x(1,j);diff(x(:,j))];
+    incidence1=patchIncidence(:,j);
     
     plot(timevect,incidence1)
     hold on
     
 end
 
-y=sum(x,2);
 
-totinc=[y(1,1);diff(y(:,1))];
-
-if onset_thr>0
-    totinc(1)=totinc(1)-(npatches-1);
-end
 
 bestfit=totinc;
 

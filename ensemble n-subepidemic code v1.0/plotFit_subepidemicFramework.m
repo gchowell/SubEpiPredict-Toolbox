@@ -160,7 +160,20 @@ for rank1=topmodels1
     % <================================ Load model results ====================================>
     % <========================================================================================>
 
+    % Do not retain a previous rank's fit if the current MAT file omits it.
+    clear bestfit bestfit_original
     load (strcat('./output/modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-',num2str(onset_fixed),'-smoothing-',num2str(smoothfactor1),'-',cadfilename2,'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-rank-',num2str(rank1),'.mat'))
+
+    % Preserve this rank's saved original-data fit for residual diagnostics.
+    % Bootstrap trajectories below are separate from this reference curve.
+    if ~exist('bestfit','var') || ~isnumeric(bestfit) || ~isreal(bestfit) || ...
+            ~isvector(bestfit) || isempty(bestfit) || ...
+            numel(bestfit) ~= size(data1,1) || any(~isfinite(bestfit(:)))
+        error('plotFit_subepidemicFramework:InvalidSavedBestFit', ...
+            ['Rank %d must contain a finite real bestfit vector with ' ...
+             'one value per calibration data row.'], rank1);
+    end
+    bestfit_original = bestfit(:);
 
      datevecfirst1=datevecfirst1_INP;
 
@@ -396,38 +409,14 @@ for rank1=topmodels1
         as_hat=Phatss(realization,2*npatches+1:npatches*3);
         Ks_hat=Phatss(realization,3*npatches+1:4*npatches);
 
-        IC=zeros(npatches,1);
-
-        if onset_thr>0
-            IC(1,1)=data1(1,2);
-            IC(2:end,1)=1;
-
-            invasions=zeros(npatches,1);
-            timeinvasions=zeros(npatches,1);
-            Cinvasions=zeros(npatches,1);
-
-            invasions(1)=1;
-            timeinvasions(1)=0;
-            Cinvasions(1)=0;
-        else
-            IC(1:end,1)=data1(1,2)./length(IC(1:end,1));
-
-            invasions=zeros(npatches,1);
-            timeinvasions=zeros(npatches,1);
-            Cinvasions=zeros(npatches,1);
-
-            invasions(1:end)=1;
-            timeinvasions(1:end)=0;
-            Cinvasions(1:end)=0;
-        end
-
-
-        [~,x]=ode15s(@modifiedLogisticGrowthPatch,timevect,IC,[],rs_hat,ps_hat,as_hat,Ks_hat,npatches,onset_thr,flag1);
+        % Shared initialization, activation reset, and incidence conversion.
+        [~,x,totinc,patchIncidence]=simulateSubepidemic(timevect,data1(1,2),npatches,onset_fixed, ...
+            onset_thr,flag1,rs_hat,ps_hat,as_hat,Ks_hat);
 
 
         for j=1:npatches
 
-            incidence1=[x(1,j);diff(x(:,j))];
+            incidence1=patchIncidence(:,j);
 
             plot(timevect,incidence1,color1(j,:))
 
@@ -435,13 +424,9 @@ for rank1=topmodels1
 
         end
 
-        y=sum(x,2);
 
-        totinc=[y(1,1);diff(y(:,1))];
 
-        totinc(1)=totinc(1)-(npatches-1);
-
-        bestfit=totinc;
+        % Keep bootstrap curves separate from the saved original-data fit.
 
         fittedcurves(:,realization)=totinc;
 
@@ -541,13 +526,14 @@ for rank1=topmodels1
 
     nexttile(cc1+2)
 
-    resid1=bestfit-data1(:,2);
+    % Retain the existing fitted-minus-observed sign convention.
+    resid1 = bestfit_original - data1(:,2);
 
     stem(timevect,resid1,'b')
     hold on
 
     xlabel('Time (days)')
-    ylabel('Residuals')
+    ylabel('Residuals (fitted - observed)')
 
     axis([timevect(1) timevect(end)+1 min(resid1)-1 max(resid1)+1])
 
@@ -699,43 +685,13 @@ if 0
                 alpha_hat=P(1,end-1);
                 d_hat=P(1,end);
 
-                IC=zeros(npatches,1);
-
-                if onset_thr>0
-                    IC(1,1)=data1(1,2);
-                    IC(2:end,1)=1;
-
-                    invasions=zeros(npatches,1);
-                    timeinvasions=zeros(npatches,1);
-                    Cinvasions=zeros(npatches,1);
-
-                    invasions(1)=1;
-                    timeinvasions(1)=0;
-                    Cinvasions(1)=0;
-                else
-                    IC(1:end,1)=data1(1,2)./length(IC(1:end,1));
-
-                    invasions=zeros(npatches,1);
-                    timeinvasions=zeros(npatches,1);
-                    Cinvasions=zeros(npatches,1);
-
-                    invasions(1:end)=1;
-                    timeinvasions(1:end)=0;
-                    Cinvasions(1:end)=0;
-                end
-
-
-                [~,x]=ode15s(@modifiedLogisticGrowthPatch,timevect,IC,[],rs_hat,ps_hat,as_hat,Ks_hat,npatches,onset_thr,flag1);
+                % Shared initialization, activation reset, and incidence conversion.
+                [~,x,totinc,patchIncidence]=simulateSubepidemic(timevect,data1(1,2),npatches,onset_fixed, ...
+                    onset_thr,flag1,rs_hat,ps_hat,as_hat,Ks_hat);
 
 
 
-                y=sum(x,2);
 
-                totinc=[y(1,1);diff(y(:,1))];
-
-                if onset_fixed==0
-                    totinc(1)=totinc(1)-(npatches-1);
-                end
                 %
 
                 fittedCurve1=totinc;
