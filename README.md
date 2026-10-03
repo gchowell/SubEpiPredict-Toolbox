@@ -257,7 +257,7 @@ The arguments are growth flag, `r`, `p`, `a`, `K`, component count, threshold, i
 | `4` | `4` | Negative-binomial objective | `Var = mu + alpha * mu^2` |
 | `5` | `5` | Negative-binomial objective | `Var = mu + alpha * mu^d` |
 
-The options function maps methods 1, 3, 4, and 5 to the matching distribution. **Changing `dist1` under `method1 = 0` does not introduce likelihood fitting or inverse-variance weighting.** Method 2 is mentioned in legacy comments but has no active objective branch; do not select it. Method 6 (absolute deviations/Laplace sampling) exists in helper functions, but the main candidate-search bounds switch does not initialize its required error-parameter slots. It is not a ready-to-use main-runner option without a code correction.
+The options function maps methods 1, 3, 4, and 5 to the matching distribution. **Changing `dist1` under `method1 = 0` does not introduce likelihood fitting or inverse-variance weighting.** 
 
 For standard count-likelihood analyses, use nonnegative integer observations and `smoothfactor1 = 1`. Moving-average smoothing can produce fractional values; the negative-binomial helper preserves a historical fractional-data convention rather than a standard count likelihood for those values. This preprocessing choice does not resolve the separate refitting and sampling issues noted below.
 
