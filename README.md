@@ -229,7 +229,7 @@ For an active component with cumulative state `C`, the derivative branches in [m
 | `4` | Richards | `r * C * (1 - (C/K)^a)` |
 | `5` | Gompertz | `r * C * log(K/C)` |
 
-The default is `flag1 = 1`. Flag 3 is logistic, **not linear**, despite an older options-file comment. For flag 2, the exponent is outside the entire saturation term; do not substitute a differently parameterized generalized Richards equation when interpreting or reproducing results.
+The default is `flag1 = 1`. Flag 3 is logistic. For flag 2, the exponent is outside the entire saturation term; do not substitute a differently parameterized generalized Richards equation when interpreting or reproducing results.
 
 With asynchronous activation, a later component is triggered when its predecessor reaches the candidate threshold `C_thr`. Candidate fitting scans threshold values as well as component counts. With synchronous activation, all components begin at the initial time.
 
