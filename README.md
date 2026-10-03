@@ -1,232 +1,454 @@
-# SubEpiPredict Toolbox
+# SubEpiPredict
 
-SubEpiPredict-Toolbox is an open-source MATLAB package for fitting and forecasting epidemic trajectories using the n-sub-epidemic modeling framework. The toolbox implements a flexible family of growth models that decompose epidemic waves into multiple overlapping sub-epidemics, capturing complex dynamics such as multi-wave behavior, resurgence, and varying epidemic growth profiles.
+**Fit epidemic growth curves, quantify uncertainty, and generate ranked-model and ensemble forecasts in MATLAB.**
 
-📄 **Tutorial Paper**  
-Chowell et al. (2024), *SubEpiPredict: A tutorial-based primer and toolbox for fitting and forecasting growth trajectories using the ensemble n-sub-epidemic modeling framework*, Infectious Disease Modelling.  
-👉 [Read the paper](https://www.sciencedirect.com/science/article/pii/S2468042724000125)
+SubEpiPredict represents an epidemic trajectory as the sum of overlapping sub-epidemics. It searches over candidate configurations, ranks them using the corrected Akaike Information Criterion (AICc), and uses bootstrap refitting to construct parameter summaries and probabilistic forecasts. The framework accommodates single waves, plateaus, and resurgences without requiring a compartmental transmission model.
 
-🎥 **Video Tutorial**  
-👉 [Watch on YouTube](https://www.youtube.com/watch?v=lj_-2Kre1qw)
+**Workflow:** observed counts → candidate sub-epidemic models → AICc ranking → bootstrap refitting → individual and ensemble forecasts.
 
----
+[Paper](https://doi.org/10.1016/j.idm.2024.02.001) · [Video tutorial](https://www.youtube.com/watch?v=lj_-2Kre1qw) · [Quick start](#quick-start) · [Input data](#input-data) · [Outputs](#outputs) · [Implementation notes](#important-implementation-notes) · [Citation](#citation)
 
+## What the toolbox does
 
-## Features
+| Task | Main entry point |
+|---|---|
+| Simulate a specified sub-epidemic trajectory | `plot_nsubepidemic` |
+| Search, rank, and bootstrap candidate models | `Run_Fit_subepidemicFramework` |
+| Inspect fitted curves, residuals, and parameter distributions | `plotFit_subepidemicFramework` |
+| Inspect ranked configurations and their AICc values | `plotRankings_subepidemicFramework` |
+| Generate ranked-model and ensemble forecasts | `plotForecast_subepidemicFramework` |
+| Derive effective reproduction-number trajectories | `plotReproductionNumber` |
 
-The toolbox offers the following capabilities:
+**A sub-epidemic is a component; an ensemble member is a complete fitted model.** For example, `npatches_fixed = 2` permits candidates containing up to two components, while `topmodelsx = 4` retains four ranked candidate configurations. `Ensemble(4)` combines those four models; it does not mean a single four-component model.
 
-- **Fitting models to time series data**
-- **Estimating parameters with quantified uncertainty**
-- **Plotting model fits, sub-epidemic profiles, and residuals of top-ranked models**
-- **Visualizing empirical distributions of model parameters for each sub-epidemic**
-- **Assessing calibration performance metrics of top-ranked models**
-- **Analyzing AICc values, relative likelihoods, and evidence ratios**
-- **Generating forecasts from top-ranked and ensemble models**
-- **Evaluating forecasting performance metrics**
-- **Estimating and plotting the effective reproduction number (Rt) from top-ranked models**
+These are phenomenological growth models. Individual components should not automatically be interpreted as identified variants, locations, or transmission chains. Forecasts remain conditional on the fitted structure and observation assumptions.
 
-**Additional features include:**
+## Requirements
 
-- **Support for different parameter estimation approaches (least squares, maximum likelihood estimation)**
-- **Flexibility in error structures (normal, Poisson, negative binomial)**
-- **Choice of sub-epidemic building block functions:**
-  - **Generalized Logistic Model (GLM)**
-  - **Richards Model**
-  - **Generalized Richards Model (GRM)**
-- **Option to model sub-epidemics starting synchronously at time 0 or asynchronously using parameter `C_thr`**
+| MATLAB product | Functions used in the workflow |
+|---|---|
+| MATLAB | `ode15s`, `smoothdata`, tables, and graphics including `tiledlayout` |
+| Optimization Toolbox | `fmincon`, `optimoptions` |
+| Global Optimization Toolbox | `MultiStart`, `createOptimProblem`, and start-point sets |
+| Statistics and Machine Learning Toolbox | `poissrnd`, `nbinrnd`, `normrnd`, `datasample`, and generation-interval distribution functions |
 
----
+The candidate search explicitly disables parallel `MultiStart` execution. Parallel Computing Toolbox is not required for that workflow. Do not assume that the surrounding code, which uses global variables, is safe for parallel execution without additional validation.
 
+A tested minimum MATLAB release is not established here. Confirm that the required functions and licenses are available in your installation; MATLAB-compatible alternatives have not been validated by this documentation.
 
-# Installation requirements
+## Installation
 
-The n-subepidemic framework toolbox requires a MATLAB installation.
+Clone the repository, or select **Code → Download ZIP** on GitHub:
 
-# Configure the options files
-
-Set these before running:
-
-- **[options.m](./ensemble%20n-subepidemic%20code%20v1.0/options.m)** — dataset tags, temporal step, smoothing/calibration, estimator (`method1`), error model (`dist1`), max sub-epidemics, kernel choice.
-- **[options_forecast.m](./ensemble%20n-subepidemic%20code%20v1.0/options_forecast.m)** — forecast horizon, metrics, ensemble weighting.
-- **[options_Rt.m](./ensemble%20n-subepidemic%20code%20v1.0/options_Rt.m)** — generation-interval (GI) family and parameters (use the **same time unit** as your data).
-
-
-# Input file format
-
-Place a text file in `./input/` named `<dataset>.txt` containing the observed epidemic series.
-
-The data file may contain multiple columns (headerless):
-
-Column 1: time index (0, 1, 2, …)
-
-Columns 2+: observed series
-
-
-# Quick reference
-
-| Setting                            | Where                | What it controls                                                                              | Typical values                                                                                                                                                  |
-| ---------------------------------- | -------------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `cumulative1`                      | `options.m`          | Whether the **input** file is cumulative (`type-1`) or incidence (`type-0`)                   | `0` or `1`                                                                                                                                                      |
-| `DT`                               | `options.m`          | Temporal step / filename tag                                                                  | `1` (daily), `7` (weekly), `365` (yearly)                                                                                                                       |
-| `outbreakx`                        | `options.m`          | **Column/area index** to analyze when file has multiple areas (**not in the input filename**) | integer (e.g., `52`)                                                                                                                                            |
-| `method1` / `dist1`                | `options.m`          | Estimator & observation model                                                                 | `method1`: `0`=LSQ, `1`=MLE Poisson, `2`=Pearson χ², `3/4/5`=MLE NegBin; `dist1`: `0`=Normal, `1`=Poisson, `2`=NegBin (LSQ-like), `3/4/5`=NegBin (MLE variants) |
-| `flag1`                            | `options.m`          | Growth kernel                                                                                 | `0`=GGM, `1`=GLM, `2`=GRM, `3`=LM, `4`=RICH                                                                                                                     |
-| `npatches_fixed`                   | `options.m`          | Max sub-epidemics (model complexity)                                                          | `1..N` (e.g., `2`)                                                                                                                                              |
-| `smoothfactor1`                    | `options.m`          | Moving-average smoothing span (`1` = no smoothing)                                            | e.g., `7`                                                                                                                                                       |
-| `calibrationperiod1`               | `options.m`          | # most-recent points used for calibration                                                     | e.g., `90`                                                                                                                                                      |
-| `forecastingperiod`                | `options_forecast.m` | Steps ahead to predict                                                                        | e.g., `30`                                                                                                                                                      |
-| `weight_type1`                     | `options_forecast.m` | Ensemble weighting                                                                            | `-1`, `0`, `1`, or `2`                                                                                                                                          |
-| `type_GId1`, `mean_GI1`, `var_GI1` | `options_Rt.m`       | GI family & parameters for Rt (**same unit as `DT`**)                                         | `1/2/3`, numbers                                                                                                                                                |
-
-
-# Fitting the model to your data
-
-To use the toolbox to fit the ensemble n-subepidemic framework to your data, you just need to:
-
-<ul>
-    <li>download the code </li>
-    <li>create 'input' folder in your working directory where your data is located </li>
-    <li>create 'output' folder in your working directory where the output files will be stored</li>   
-    <li>open a MATLAB session </li>
-    <li>define the model parameter values and time series parameters by editing <code>options.m</code> </li>
-    <li>run the function <code>Run_Fit_subepidemicFramework.m</code> </li>
-</ul>
-
-
-  ```matlab
-   Run_Fit_subepidemicFramework.m
-  ```
-
-# Plotting the fits of the top-ranked models and parameter estimates
-
-After fitting the model to your data, you can use the toolbox to plot the model fits and parameter estimates as follows:
-
-<ul>
-    <li>run the function <code>plotFit_subepidemicFramework.m</code> </li>
-</ul>
-    
-The function also outputs a file with the calibration performance metrics of the top-ranked models.
-
- ## Example outputs
-   <p align="center">
-  <img src="docs/images/model_fit.png" width="48%">
-  <img src="docs/images/parameters.png" width="48%">
-</p>
-
-   <p align="center">
-  <img src="docs/images/performance_calibration.png" width="48%">
-</p>
-
-Top-ranked sub-epidemic model fit (rank 1 by AICc) vs observed incidence. Shaded band shows 95% bootstrap CI for the fitted trajectory.
-
-
-# Plotting the top-ranked subepidemic model profiles and the corresponding AIC values
-
-After fitting the model to your data, you can use the toolbox to plot the subepidemic profiles and AICc values as follows:
-
-<ul>
-    <li>run the function <code>plotRankings_subepidemicFramework.m</code></li>
-</ul>
-
-```matlab
-plotRankings_subepidemicFramework.m
+```bash
+git clone https://github.com/gchowell/SubEpiPredict-Toolbox.git
 ```
 
- ## Example outputs
-   <p align="center">
-  <img src="docs/images/rankings.png" width="48%">
-  <img src="docs/images/relativelikelihood.png" width="48%">
-</p>
-
-
-# Generating and plotting forecasts of the top-ranked and ensemble subepidemic models
-
-After fitting the model to your data, you can use the toolbox to plot forecasts derived from the top-ranked and ensemble subepidemic models as follows:
-
-<ul>
-    <li>define the forecasting parameters by editing <code>options_forecast.m</code></li>
-    <li>run the function <code>plotForecast_subepidemicFramework.m</code></li>
-</ul>
+In MATLAB, set **Current Folder** to the repository root, then run:
 
 ```matlab
-plotForecast_subepidemicFramework.m
+codeDir = fullfile(pwd, 'ensemble n-subepidemic code v1.0');
+assert(isfolder(codeDir), 'Set Current Folder to the repository root first.');
+addpath(codeDir);
+cd(codeDir);
+
+if ~isfolder('input'), mkdir('input'); end
+if ~isfolder('output'), mkdir('output'); end
+
+which options -all
+which fmincon
+which MultiStart
+which nbinrnd
 ```
 
-The function also outputs files with the fit and forecasts of the top-ranked and ensemble models as well as the forecasting performance metrics for the top-ranked and ensemble models.
+Run the entry points from `ensemble n-subepidemic code v1.0`, because the code uses relative `./input/` and `./output/` paths. Avoid adding several toolbox copies to the MATLAB path: the generic function name `options` can otherwise resolve to the wrong file.
 
- ## Example outputs
-   <p align="center">
-  <img src="docs/images/forecasts.png" width="48%">
-  <img src="docs/images/forecasts2.png" width="48%">
-</p>
+## Quick start
 
- <p align="center">
-  <img src="docs/images/ensembles.png" width="48%">
-  <img src="docs/images/performance_ensemble.png" width="48%">
-</p>
+### 1. Check the example configuration
 
-Ensemble forecast (top k models; weighting per weight_type1) with 50% and 95% prediction intervals over a forecastingperiod of H steps.
+The bundled example uses cumulative U.S. COVID-19 death counts, with column 52 selected in:
 
+```text
+input/cumulative-daily-coronavirus-deaths-USA-05-11-2020.txt
+```
 
-# Generating and plotting reproduction number forecasts from the top-ranked models
-
-After generating forecasts from top-ranked models, you can use the toolbox to generate and plot forecasts of the effective reproduction number from the top-ranked models as follows:
-
-<ul>
-    <li>define the generation interval parameters by editing the function <code>options_rt.m</code></li>
-    <li>run the function <code>plotReproductionNumber.m</code></li>
-</ul>
+In [options.m][fit-options], confirm the following existing settings. Edit assignments inside the options function; do not paste them only into the Command Window, because each entry point reloads that function.
 
 ```matlab
- plotReproductionNumber.m
+cumulative1 = 1;
+outbreakx = 52;
+caddate1 = '05-11-2020';
+cadregion = 'USA';
+caddisease = 'coronavirus';
+datatype = 'deaths';
+DT = 1;
+datevecfirst1 = [2020 02 27];
+
+smoothfactor1 = 7;
+calibrationperiod1 = 90;
+method1 = 0;
+dist1 = 0;
+numstartpoints = 20;
+B = 40;
+npatches_fixed = 2;
+topmodelsx = 4;
+flag1 = 1;
+onset_fixed = 0;
 ```
 
- ## Example outputs
-   <p align="center">
-  <img src="docs/images/reproductionnumber.png" width="48%">
+This example file contains 75 observations. Requesting a 90-observation calibration window therefore uses the available series, subject to the leading-zero handling described below. `B = 40` is a small demonstration setting, not an established precision target for scientific interval estimates.
+
+In [options_forecast.m][forecast-options], use:
+
+```matlab
+getperformance = 0;       % Forecast without loading future observations.
+deletetempfiles = 0;      % Retain forecast MAT files for inspection.
+forecastingperiod = 4;    % Four observations ahead; four days here.
+weight_type1 = 1;         % Akaike weights.
+```
+
+The supplied forecast options instead default to `deletetempfiles = 1` and `weight_type1 = 0`. The settings above are deliberate changes for this example; they do not describe the shipped defaults. See [ensemble weights](#ensemble-weights) for the distinction.
+
+### 2. Fit, inspect, and forecast
+
+```matlab
+rng(1, 'twister');
+Run_Fit_subepidemicFramework(52, '05-11-2020');
+
+plotFit_subepidemicFramework(52, '05-11-2020');
+plotRankings_subepidemicFramework(52, '05-11-2020');
+
+rng(2, 'twister');
+plotForecast_subepidemicFramework(52, '05-11-2020', 4, 1);
+```
+
+Call functions **without the `.m` suffix**. The final two forecast arguments are the horizon and weighting code. Calling these functions without arguments uses the corresponding options-file settings.
+
+Unlike the fitting entry point, `plotForecast_subepidemicFramework` loads the saved bootstrap fits and propagates them forward; it does **not** repeat the candidate search and calibration. Keep fitting settings consistent between fitting and plotting, and rerun fitting after changing the data, estimator, smoothing, or candidate-model configuration.
+
+The examples call the forecast function without capturing its return values; use the exported files for the documented output interface.
+
+### 3. Inspect the results
+
+Look in `output/` for fit MAT files, parameter summaries, forecast CSVs, and calibration-performance tables. Future observations are `NaN` when forecast evaluation is disabled.
+
+<p align="center">
+  <img src="docs/images/model_fit.png" width="920" alt="Bundled illustration showing four ranked models, bootstrap simulations, component curves, and residuals">
 </p>
 
-Time-varying effective reproduction number, Rt, computed from the fitted trajectory under the specified GI (see options_Rt.m). Median and 95% credible band shown.
+*Bundled illustration of ranked fits and diagnostics. This is an existing example image, not a newly generated result of the commands above. The observation-simulation envelope in the fit panel is not a Bayesian credible interval.*
 
-## Output Files & Naming Conventions
+> **Before scientific use:** check optimizer behavior, interval stability, and the [implementation notes](#important-implementation-notes). A successful example run is not, by itself, a validation of model ranking or uncertainty coverage.
 
-**Rt CSVs** are produced by `plotReproductionNumber.m` (fit-period Rt).
+## Input data
 
-| File prefix                                                        | Produced by  | Purpose                                                                                    | Key columns / contents                                                                           |
-| ------------------------------------------------------------------ | ------------ | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
-| `ranked(k)-… .csv`                                                 | Forecast     | **Point (central) forecast** from the **k-th top-ranked model** (AICc).                    | `time`, `mean`, `median` (optionally `sd`).                                                      |
-| `Ensemble(k)-… .csv`                                               | Forecast     | **Point forecast** from the **ensemble of top k models** (weights per `options_forecast`). | `time`, `mean`, `median` (optionally `sd`).                                                      |
-| `quantileTimes-ranked(k)-… .csv` / `quantile-ranked(k)-… .csv`     | Forecast     | **Forecast quantiles** for model **rank k**.                                               | `time`, `q0.025`, `q0.25`, `q0.50`, `q0.75`, `q0.975` (set may vary).                            |
-| `quantileTimes-Ensemble(k)-… .csv` / `quantile-Ensemble(k)-… .csv` | Forecast     | **Ensemble forecast quantiles** (top k models).                                            | `time`, `q0.025`, `q0.25`, `q0.50`, `q0.75`, `q0.975`.                                           |
-| `doublingTimes-ranked(k)-… .csv`                                   | Forecast     | **Doubling-time series** implied by model **rank k** (if applicable).                      | `time`, `median` + quantiles (e.g., `q0.025`, `q0.975`).                                         |
-| `doublingTimes-Ensemble(k)-… .csv`                                 | Forecast     | **Doubling-time series** implied by the **ensemble**.                                      | `time`, `median` + quantiles.                                                                    |
-| `performance-forecasting-topRanked-… .csv`                         | Forecast     | **Out-of-sample forecast metrics** for **top-ranked models**.                              | `model_rank`, `horizon`, `MAE`, `RMSE`, `MAPE`, `PI_coverage`, `PI_width`, `WIS` (set may vary). |
-| `performance-forecastingEnsemble-… .csv`                           | Forecast     | **Out-of-sample metrics** for the **ensemble**.                                            | `horizon`, `MAE`, `RMSE`, `MAPE`, `PI_coverage`, `PI_width`, `WIS`.                              |
-| `performance-calibration-topRanked-… .csv`                         | Fit/Forecast | **In-sample (calibration) metrics** for **top-ranked models**.                             | `model_rank`, `horizon` (if present), `MAE`, `RMSE`, `MAPE`, `PI_coverage`, `PI_width`, …        |
-| `param-<p>-ranked(k)-… .csv`                                       | Fit/Forecast | **Parameter summaries** for parameter `<p>` (e.g., `r`, `a`, `K`) from model **rank k**.   | For each `<p>`: `mean`, `95% CI LB`, `95% CI UB` (often `SCI = log10(UB/LB)`).                   |
-| `Rt-ranked(k)-… .csv`                                              | Rt           | **Effective reproduction number** series from model **rank k** using your GI assumptions.  | `time`, `Rt_median`/`Rt_mean`, quantiles (e.g., `q0.025`, `q0.975`).                             |
+### Counts only: do not prepend a time column
+
+The input is a numeric, header-free text matrix with **rows representing successive observations and columns representing areas or groups**. The loader selects raw column `outbreakx`; it does not remove a time-index column.
+
+For example, a two-series incidence file could begin:
+
+```text
+4   2
+5   3
+8   4
+11  6
+15  8
+```
+
+Here, `outbreakx = 1` selects `4, 5, 8, 11, 15`, and `outbreakx = 2` selects the second series. These five rows illustrate the format only; they are not a suitable multi-component calibration example.
+
+For a single series, use one column and `outbreakx = 1`. Analyze one selected column per run; the main entry point does not jointly estimate a multivariate or spatial transmission model from all columns.
+
+### Required filename convention
+
+The filename is assembled from the settings; it is not an arbitrary dataset name.
+
+| `cumulative1` | Required pattern under `input/` |
+|---:|---|
+| `0` | `<temporal>-<disease>-<datatype>-<region>-<date>.txt` |
+| `1` | `cumulative-<temporal>-<disease>-<datatype>-<region>-<date>.txt` |
+
+`<temporal>` is `daily`, `weekly`, or `yearly` for `DT = 1`, `7`, or `365`. The remaining tags come from `caddisease`, `datatype`, `cadregion`, and `caddate1`. Use the date format `mm-dd-yyyy` consistently.
+
+For example:
+
+```text
+daily-influenza-cases-ExampleRegion-03-31-2024.txt
+```
+
+requires `cumulative1 = 0`, `DT = 1`, `caddisease = 'influenza'`, `datatype = 'cases'`, `cadregion = 'ExampleRegion'`, and `caddate1 = '03-31-2024'`.
+
+### Incidence, cumulative counts, and dates
+
+With `cumulative1 = 1`, the selected series is converted to incidence using:
+
+```matlab
+incidence = [cumulativeCounts(1); diff(cumulativeCounts)];
+```
+
+The first cumulative value is therefore treated as the first incidence observation. Account for this convention when preparing a series that begins after an outbreak has already accumulated cases. Resolve negative revisions and missing values upstream rather than passing negative differences, `NaN`, or `Inf` into count-likelihood fitting.
+
+`datevecfirst1` is the date represented by the first input row. `caddate1` is the dated input snapshot used for fitting and calendar labeling. These dates must agree with the number and spacing of observations. `datevecend1` identifies the later data snapshot used for evaluation; it is **not** a command to truncate the fitting file at that date.
+
+For retrospective forecasting, supply a fitting snapshot containing only observations available at the intended forecast origin. Merely changing a filename date does not remove future observations.
+
+### Calibration and time units
+
+The runner restricts fitting to the most recent `calibrationperiod1` observations and then removes leading zeros until the first positive observation. The retained sample can therefore be shorter than requested. An all-zero retained series is not supported.
+
+The fitted ODE grid advances in **observation steps**: `0, 1, 2, ...`. `DT` controls calendar spacing and filename tags; it does not convert that fitted grid to days. Thus a four-step horizon means four days for daily data, four weeks for weekly data, or four annual observations for yearly data. Express fitted rates and generation-interval assumptions in the corresponding model-time units.
+
+## Configuration
+
+| File | Configure here |
+|---|---|
+| [options.m][fit-options] | Dataset, calendar metadata, calibration length, smoothing, estimator, bootstrap size, and candidate models |
+| [options_forecast.m][forecast-options] | Forecast horizon, evaluation, retention of forecast MAT files, and ensemble weighting |
+| [options_Rt.m][rt-options] | Generation-interval distribution and parameters for reproduction-number calculations |
+
+| Setting | Meaning |
+|---|---|
+| `npatches_fixed` | Maximum number of components searched, from 1 through this value |
+| `topmodelsx` | Number of ranked candidate configurations to retain and bootstrap |
+| `onset_fixed` | `1`: synchronous activation at the initial time; `0`: threshold-triggered activation |
+| `flag1` | One scalar growth-model code used for the components |
+| `numstartpoints` | Candidate-search optimization-start setting; not the bootstrap refit start count |
+| `B` | Number of synthetic datasets refitted per retained model |
+| `smoothfactor1` | Moving-average span; `1` disables smoothing |
+| `calibrationperiod1` | Maximum number of most recent observations used for fitting |
+| `getperformance` | `1` loads later observations for forecast evaluation; `0` skips it |
+| `deletetempfiles` | `1` deletes the intermediate ranked forecast MAT files after use |
+
+For initial ensemble analyses, keep `topmodelsx` within 2–4 and no larger than the available admissible configurations. Some ensemble plot layouts assume at most `Ensemble(4)`. The options function forces one retained model when `npatches_fixed = 1` and caps the retained-model count at `npatches_fixed` for synchronous models.
+
+## Growth models
+
+For an active component with cumulative state `C`, the derivative branches in [modifiedLogisticGrowthPatch.m][kernel] are:
+
+| `flag1` | Model | Implemented growth expression |
+|---:|---|---|
+| `0` | Generalized growth | `r * C^p` |
+| `1` | Generalized logistic | `r * C^p * (1 - C/K)` |
+| `2` | Generalized Richards label; outer-power variant | `r * C^p * (1 - C/K)^a` |
+| `3` | Logistic | `r * C * (1 - C/K)` |
+| `4` | Richards | `r * C * (1 - (C/K)^a)` |
+| `5` | Gompertz | `r * C * log(K/C)` |
+
+The default is `flag1 = 1`. Flag 3 is logistic, **not linear**, despite an older options-file comment. For flag 2, the exponent is outside the entire saturation term; do not substitute a differently parameterized generalized Richards equation when interpreting or reproducing results.
+
+With asynchronous activation, a later component is triggered when its predecessor reaches the candidate threshold `C_thr`. Candidate fitting scans threshold values as well as component counts. With synchronous activation, all components begin at the initial time.
+
+To inspect a trajectory without fitting data:
+
+```matlab
+plot_nsubepidemic(1, ...
+    [0.18 0.18 0.18], [0.98 0.98 0.98], [], ...
+    [10000 5000 1000], 3, 100, 1, 220, 0);
+```
+
+The arguments are growth flag, `r`, `p`, `a`, `K`, component count, threshold, initial observation, simulation duration, and onset mode. The explicit final `0` requests asynchronous activation. This example uses the GLM branch; some other branches of the plotting wrapper retain legacy `q_pass` checks for an argument that is not in its signature. For direct programmatic simulation, use [simulateSubepidemic.m][simulator], which manages activation events and incidence conversion; do not call the derivative as though it controlled activation itself.
+
+## Estimation and observation models
+
+`method1` selects the fitting objective. `dist1` selects observation-noise sampling for bootstrap datasets and predictive simulations. Let `mu` denote the fitted observation mean, `alpha` a negative-binomial dispersion parameter, and `d` its variance exponent.
+
+| `method1` | `dist1` | Fitting objective | Observation model or variance |
+|---:|---:|---|---|
+| `0` | `0` | Unweighted sum of squared residuals | Normal |
+| `0` | `1` | Unweighted sum of squared residuals | Poisson |
+| `0` | `2` | Unweighted sum of squared residuals | Negative binomial: `Var = factor1 * mu` |
+| `1` | `1` | Poisson negative log-likelihood, excluding data-only constants | Poisson |
+| `3` | `3` | Negative-binomial objective | `Var = mu + alpha * mu` |
+| `4` | `4` | Negative-binomial objective | `Var = mu + alpha * mu^2` |
+| `5` | `5` | Negative-binomial objective | `Var = mu + alpha * mu^d` |
+
+The options function maps methods 1, 3, 4, and 5 to the matching distribution. **Changing `dist1` under `method1 = 0` does not introduce likelihood fitting or inverse-variance weighting.** Method 2 is mentioned in legacy comments but has no active objective branch; do not select it. Method 6 (absolute deviations/Laplace sampling) exists in helper functions, but the main candidate-search bounds switch does not initialize its required error-parameter slots. It is not a ready-to-use main-runner option without a code correction.
+
+For standard count-likelihood analyses, use nonnegative integer observations and `smoothfactor1 = 1`. Moving-average smoothing can produce fractional values; the negative-binomial helper preserves a historical fractional-data convention rather than a standard count likelihood for those values. This preprocessing choice does not resolve the separate refitting and sampling issues noted below.
+
+## Bootstrap uncertainty
+
+For each retained candidate configuration, the workflow fits the observations, simulates `B` synthetic datasets, and refits them. Forecasting propagates the resulting parameter draws and adds observation noise.
+
+| Stored object | Interpretation |
+|---|---|
+| `Phatss` in a fitted-model MAT file | Bootstrap parameter estimates |
+| `curves` in a fitted-model MAT file | Synthetic observations generated around the fitted trajectory |
+| `curvesforecasts1` in a forecast MAT file | ODE trajectories propagated from bootstrap parameter estimates |
+| `curvesforecasts2` in a forecast MAT file | Predictive simulations after adding observation noise |
+
+The forecast routine currently generates 20 observation-noise realizations per propagated parameter draw. These are not 20 additional independent bootstrap refits.
+
+Parameter confidence intervals, uncertainty in fitted trajectories, and prediction intervals for observations are different summaries. The observation-simulation envelope in the fit plots should not be presented as parameter uncertainty alone. None of these draws is a Bayesian posterior sample.
+
+The current bootstrap holds the selected component count and threshold fixed. It therefore describes uncertainty **conditional on that configuration**, rather than repeating the entire candidate-selection procedure. Increase `B` and assess quantile stability for the intended analysis; simply adding more noise realizations does not increase the number of parameter refits.
+
+## Ensemble weights
+
+`Ensemble(k)` pools sampled trajectories from the first `k` ranked models. It is a sampled mixture, not a weighted average of model parameters or a pointwise average of interval endpoints.
+
+| `weight_type1` | Implemented weighting |
+|---:|---|
+| `-1` | Equal weights |
+| `0` | Normalized reciprocal AICc: `w_i ∝ 1/AICc_i` — shipped default |
+| `1` | Akaike weights: `w_i ∝ exp(-(AICc_i - AICc_min)/2)` |
+| `2` | Normalized reciprocal calibration WIS: `w_i ∝ 1/WIS_calibration_i` |
+
+For AICc-based ensembles, use code **1** to request Akaike weights. Code 0 is legacy reciprocal-AICc weighting, not an equivalent formula; it depends on the score origin and can misbehave for zero or negative AICc values. Check that all selected scores and resulting weights are finite and valid.
+
+Calibration-WIS weighting uses in-sample performance, not held-out forecast performance. Code 3 appears in internal code but is not a documented, validated rolling-origin weighting workflow.
+
+The sampler allocates a rounded number of trajectories to each member, so small sample sizes can change the realized mixture proportions or omit low-weight members.
+
+<p align="center">
+  <img src="docs/images/ensembles.png" width="1000" alt="Bundled illustration of Ensemble(2), Ensemble(3), and Ensemble(4) forecasts with shaded observation prediction intervals">
+</p>
+
+*Existing example ensemble forecasts. The shaded envelopes represent observation prediction intervals, not Bayesian credible bands.*
+
+## Forecast evaluation
+
+To evaluate a retrospective forecast, set `getperformance = 1` in `options_forecast.m` and provide a later data snapshot covering the complete requested horizon. [getData.m][data-loader] builds that filename from `datevecend1`, using the same tags and column selection as the fitting snapshot.
+
+For the daily example, `datevecend1 = [2022 05 09]` refers to:
+
+```text
+input/cumulative-daily-coronavirus-deaths-USA-05-09-2022.txt
+```
+
+The evaluation snapshot must begin at the same `datevecfirst1` and preserve the same column meanings. A missing snapshot or insufficient follow-up produces an error rather than automatic partial-horizon scoring.
+
+The default performance tables contain **MAE, MSE, 95% prediction-interval coverage, and weighted interval score (WIS)**. Coverage is expressed as a percentage. RMSE and mean interval score are calculated internally, but are not default columns in these tables; MAPE is not a default output.
+
+The scoring helper evaluates cumulative leads `1:h`, and the forecast summary tables retain the full requested horizon. A horizon-4 summary therefore evaluates the four forecast observations together, not only lead 4.
+
+**Point-summary caveat:** current MAE/MSE calculations use the median of the propagated trajectories (`curvesforecasts1`), while forecast CSVs report the median of the noisy predictive simulations (`curvesforecasts2`). Those medians need not agree. See the additional scoring convention below before attempting to reproduce all metrics from CSVs alone.
+
+## Effective reproduction number
+
+Configure [options_Rt.m][rt-options], then run the script:
+
+```matlab
+plotReproductionNumber
+```
+
+The script loads the fitted-model files and computes reproduction-number trajectories from bootstrap model curves over the calibration period and configured forecast extension. It does not require the intermediate forecast MAT files to be retained. It begins with `clear` and `close all`, so save unrelated workspace variables first.
+
+Supported generation-interval families are gamma (`type_GId1 = 1`), exponential (`2`), and a fixed interval (`3`). Specify the mean in **observation-step units** and the variance in squared observation-step units. For example, convert a day-scale mean to weeks by dividing by 7 and a day-squared variance by 49 for weekly data. The conversion is not automatic.
+
+The default generation-interval values are illustrative settings, not universal pathogen parameters. These reproduction-number trajectories are conditional model-derived quantities; neither the generation-interval distribution nor its parameters are estimated from the count series by this script. Early estimates can be sensitive to the limited incidence history.
+
+## Outputs
+
+Files are written to `ensemble n-subepidemic code v1.0/output/`. Read the header of the file actually generated: filenames and schemas differ between routines, and the repository also contains historical outputs.
+
+| Prefix | Main contents |
+|---|---|
+| `ABC-ensem-*.mat` | Candidate-search results, parameter rows, and search diagnostics |
+| `modifiedLogisticPatch-ensem-*.mat` | Saved ranked fit, bootstrap parameters, and synthetic observations |
+| `Forecast-modifiedLogisticPatch-*.mat` | Propagated and noisy forecast trajectories, time grid, and selected metadata; deleted when `deletetempfiles = 1` |
+| `param-r-ranked(k)-*.csv`, `param-p-ranked(k)-*.csv`, `param-a-ranked(k)-*.csv`, `param-K-ranked(k)-*.csv` | Per-component parameter means, 2.5th/97.5th percentiles, and SCI diagnostics |
+| `param-NB-alpha-ranked(k)-*.csv`, `param-NB-d-ranked(k)-*.csv` | Dispersion/exponent summaries when applicable |
+| `ranked(k)-*.csv` | Ranked-model observation forecasts; daily/weekly columns are `year`, `month`, `day`, `data`, `median`, `LB`, `UB` |
+| `Ensemble(k)-*.csv` | Ensemble observation forecasts, with calendar fields, observations, predictive median, and 95% bounds |
+| `quantile-ranked(k)-*.csv` | Ranked-model calibration and forecast quantiles; 23 columns from `Q_0.010` through `Q_0.990` |
+| `quantileTimes-Ensemble(k)-*.csv` | Ensemble calibration and forecast quantiles using the same 23 levels |
+| `performance-calibration-topRanked-*.csv` | Ranked-model calibration metrics; the fit plotter also adds AICc and relative likelihood |
+| `performance-calibration-Ensemble-*.csv` | Ensemble calibration metrics |
+| `performance-forecasting-topRanked-*.csv` | Ranked-model forecast metrics, AICc, and relative likelihood when evaluation is enabled |
+| `performance-forecasting-Ensemble-*.csv` | Ensemble forecast metrics when evaluation is enabled |
+| `doublingTimes-ranked(k)-*.csv`, `doublingTimes-Ensemble(k)-*.csv` | Sequential doubling summaries: doubling index, mean, percentile bounds, and fraction of trajectories reaching that doubling |
+| `Rt-ranked(k)-*.csv` | Relative model time, reproduction-number median, and percentile bounds |
+
+**Interpretation details:**
+
+- Quantile CSVs contain calibration rows followed by forecast rows, but **no explicit time column**, including files whose prefix contains `quantileTimes`. Align them with the corresponding point-forecast file or saved model grid.
+- Parameter summaries here use arithmetic **means**, not the median convention of some other toolboxes. `SCI` is the legacy `log10(upper/lower)` interval-ratio diagnostic; it is undefined or uninformative when its bounds are unsuitable and is not a stand-alone identifiability test.
+- Daily/weekly point forecasts contain calendar components. The annual ranked branch uses a sequential index under the header `year`; do not interpret that column as a calendar year without reconstructing it from the input metadata.
+- Output names do not encode every analysis choice. Repeated runs can overwrite files. In particular, the fit and forecast plotters can overwrite the same ranked calibration-performance CSV with different column sets. Archive each run separately.
+
+<details>
+<summary>More bundled illustrations: candidate rankings and parameter distributions</summary>
+
+![Ranked candidate configurations and their AICc values](docs/images/rankings.png)
+
+![Bootstrap parameter histograms for an example ranked model](docs/images/parameters.png)
+
+These existing images illustrate the available displays; they are not regression-test results for the current source revision.
+
+</details>
+
+## Reproducibility
+
+Set the MATLAB random seed before fitting and before stochastic forecasting. Record the source commit, MATLAB and toolbox versions, input snapshots, all three options files, actual retained observations, growth flag, onset mode, search bounds, optimizer settings, `B`, forecast horizon, and weighting code.
+
+Keep the ranked-fit MAT files and set `deletetempfiles = 0` when retaining propagated forecast arrays matters. Archive the entire `output/` directory after each configuration, because some filename patterns omit settings such as the bootstrap size or forecast horizon.
+
+For repeated forecast origins, run separate dated input snapshots using only the observations available at each origin. The standard forecast call processes one origin; it is not an automatic rolling-window backtest. Do not treat historical MAT files bundled in the repository as proof that the current source reproduces those results.
 
 
-All results are written to ./output/. Filenames carry run metadata (kernel, method, dist, horizon, type, disease, region, etc.) so artifacts are self-describing. See the “Output Files & Naming Conventions” table below in this README for exact file names and columns (ranked models, ensembles, quantiles, performance, Rt, doubling time). Rt CSVs are produced by plotReproductionNumber.m (fit-period Rt) and, when applicable, its forecast counterpart.
+## Troubleshooting
 
+| Symptom | What to check |
+|---|---|
+| Input file not found | Working directory, complete filename tags, four-digit year, and `cumulative1` |
+| The wrong series is fitted | `outbreakx` is a raw observation-column index; remove any prepended time column |
+| MATLAB resolves the wrong options | Run `which options -all`; remove competing toolbox copies from the path |
+| Fitting stops on an empty or all-zero series | Check the selected column and the retained calibration window |
+| Parameter-count error or invalid AICc | Increase the actual observation count or reduce model complexity; verify `n > k + 1` |
+| Requested rank is unavailable | Reduce `topmodelsx` to the available admissible configurations |
+| Plotter cannot find saved fits | Fit first using exactly matching options, data tags, and date |
+| Evaluation snapshot missing or horizon too long | Set the later snapshot/date correctly, shorten the horizon, or use `getperformance = 0` |
+| Forecast MAT files disappear | Set `deletetempfiles = 0` before forecasting |
+| Weekly/annual dates or reproduction numbers look inconsistent | Check row spacing, calendar metadata, generation-interval units, and export conventions |
 
-## How to cite
+For a reproducible report, open an [issue](https://github.com/gchowell/SubEpiPredict-Toolbox/issues) with the source revision, MATLAB/toolbox versions, exact command and error, options files, and a minimal shareable dataset. Do not include private or identifiable health data.
 
-If you use SubEpiPredict, please cite:
+## Citation
 
-Chowell, G., Dahal, S., Bleichrodt, A., Tariq, A., Hyman, J. M., & Luo, R. (2024). SubEpiPredict: A tutorial-based primer and toolbox for fitting and forecasting growth trajectories using the ensemble n-sub-epidemic modeling framework. Infectious Disease Modelling, 9(2), 411-436. https://pmc.ncbi.nlm.nih.gov/articles/PMC10879680/
+Please cite the toolbox tutorial:
 
+Chowell G, Dahal S, Bleichrodt A, Tariq A, Hyman JM, Luo R. **SubEpiPredict: A tutorial-based primer and toolbox for fitting and forecasting growth trajectories using the ensemble n-sub-epidemic modeling framework.** *Infectious Disease Modelling*. 2024;9(2):411–436. [doi:10.1016/j.idm.2024.02.001](https://doi.org/10.1016/j.idm.2024.02.001).
+
+```bibtex
+@article{Chowell2024SubEpiPredict,
+  author  = {Chowell, Gerardo and Dahal, Sushma and Bleichrodt, Amanda
+             and Tariq, Amna and Hyman, James M. and Luo, Ruiyan},
+  title   = {{SubEpiPredict}: A tutorial-based primer and toolbox for fitting
+             and forecasting growth trajectories using the ensemble
+             n-sub-epidemic modeling framework},
+  journal = {Infectious Disease Modelling},
+  year    = {2024},
+  volume  = {9},
+  number  = {2},
+  pages   = {411--436},
+  doi     = {10.1016/j.idm.2024.02.001}
+}
+```
+
+For the underlying ensemble framework, also see Chowell et al. (2022), *An ensemble n-sub-epidemic modeling framework for short-term forecasting epidemic trajectories: Application to the COVID-19 pandemic in the USA*, *PLOS Computational Biology*, 18(10):e1010602. [doi:10.1371/journal.pcbi.1010602](https://doi.org/10.1371/journal.pcbi.1010602).
+
+Report the source revision and analysis configuration alongside the scientific citation.
 
 ## License
 
-This project is licensed under the terms of the **GNU General Public License v3.0**.  
-See the [LICENSE](LICENSE) file for more information.
-
----
+The repository is distributed under the **GNU General Public License, version 3.0**. See [LICENSE](LICENSE) for the complete terms.
 
 ## Contact
 
-For questions or feedback, please contact:  
-**Gerardo Chowell**  
-[https://github.com/gchowell](https://github.com/gchowell)
+Gerardo Chowell — [GitHub profile](https://github.com/gchowell). For software questions and reproducible bug reports, use the repository's [issue tracker](https://github.com/gchowell/SubEpiPredict-Toolbox/issues).
+
+[fit-options]: ensemble%20n-subepidemic%20code%20v1.0/options.m
+[forecast-options]: ensemble%20n-subepidemic%20code%20v1.0/options_forecast.m
+[rt-options]: ensemble%20n-subepidemic%20code%20v1.0/options_Rt.m
+[kernel]: ensemble%20n-subepidemic%20code%20v1.0/modifiedLogisticGrowthPatch.m
+[simulator]: ensemble%20n-subepidemic%20code%20v1.0/simulateSubepidemic.m
+[data-loader]: ensemble%20n-subepidemic%20code%20v1.0/getData.m
+[bootstrap]: ensemble%20n-subepidemic%20code%20v1.0/fittingModifiedLogisticFunctionPatchMultiple.m
+[aicc]: ensemble%20n-subepidemic%20code%20v1.0/getAICc.m
+[noise]: ensemble%20n-subepidemic%20code%20v1.0/AddPoissonError.m
+[wis]: ensemble%20n-subepidemic%20code%20v1.0/computeWIS.m
+[performance]: ensemble%20n-subepidemic%20code%20v1.0/computeforecastperformance.m
+[doubling]: ensemble%20n-subepidemic%20code%20v1.0/getDoublingTimeCurve.m
