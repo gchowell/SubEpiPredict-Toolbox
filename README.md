@@ -133,7 +133,6 @@ Look in `output/` for fit MAT files, parameter summaries, forecast CSVs, and cal
 
 *Bundled illustration of ranked fits and diagnostics. This is an existing example image, not a newly generated result of the commands above. The observation-simulation envelope in the fit panel is not a Bayesian credible interval.*
 
-> **Before scientific use:** check optimizer behavior, interval stability, and the [implementation notes](#important-implementation-notes). A successful example run is not, by itself, a validation of model ranking or uncertainty coverage.
 
 ## Input data
 
