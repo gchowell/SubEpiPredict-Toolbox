@@ -21,7 +21,7 @@ SubEpiPredict represents an epidemic trajectory as the sum of overlapping sub-ep
 
 **A sub-epidemic is a component; an ensemble member is a complete fitted model.** For example, `npatches_fixed = 2` permits candidates containing up to two components, while `topmodelsx = 4` retains four ranked candidate configurations. `Ensemble(4)` combines those four models; it does not mean a single four-component model.
 
-These are phenomenological growth models. Individual components should not automatically be interpreted as identified variants, locations, or transmission chains. Forecasts remain conditional on the fitted structure and observation assumptions.
+These are semi-mechanistic growth models. Individual components should not automatically be interpreted as identified variants, locations, or transmission chains. Forecasts remain conditional on the fitted structure and observation assumptions.
 
 ## Requirements
 
@@ -31,10 +31,6 @@ These are phenomenological growth models. Individual components should not autom
 | Optimization Toolbox | `fmincon`, `optimoptions` |
 | Global Optimization Toolbox | `MultiStart`, `createOptimProblem`, and start-point sets |
 | Statistics and Machine Learning Toolbox | `poissrnd`, `nbinrnd`, `normrnd`, `datasample`, and generation-interval distribution functions |
-
-The candidate search explicitly disables parallel `MultiStart` execution. Parallel Computing Toolbox is not required for that workflow. Do not assume that the surrounding code, which uses global variables, is safe for parallel execution without additional validation.
-
-A tested minimum MATLAB release is not established here. Confirm that the required functions and licenses are available in your installation; MATLAB-compatible alternatives have not been validated by this documentation.
 
 ## Installation
 
@@ -60,8 +56,6 @@ which fmincon
 which MultiStart
 which nbinrnd
 ```
-
-Run the entry points from `ensemble n-subepidemic code v1.0`, because the code uses relative `./input/` and `./output/` paths. Avoid adding several toolbox copies to the MATLAB path: the generic function name `options` can otherwise resolve to the wrong file.
 
 ## Quick start
 
