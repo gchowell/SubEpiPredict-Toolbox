@@ -317,7 +317,6 @@ The default performance tables contain **MAE, MSE, 95% prediction-interval cover
 
 The scoring helper evaluates cumulative leads `1:h`, and the forecast summary tables retain the full requested horizon. A horizon-4 summary therefore evaluates the four forecast observations together, not only lead 4.
 
-**Point-summary caveat:** current MAE/MSE calculations use the median of the propagated trajectories (`curvesforecasts1`), while forecast CSVs report the median of the noisy predictive simulations (`curvesforecasts2`). Those medians need not agree. See the additional scoring convention below before attempting to reproduce all metrics from CSVs alone.
 
 ## Effective reproduction number
 
@@ -397,7 +396,6 @@ For repeated forecast origins, run separate dated input snapshots using only the
 | Forecast MAT files disappear | Set `deletetempfiles = 0` before forecasting |
 | Weekly/annual dates or reproduction numbers look inconsistent | Check row spacing, calendar metadata, generation-interval units, and export conventions |
 
-For a reproducible report, open an [issue](https://github.com/gchowell/SubEpiPredict-Toolbox/issues) with the source revision, MATLAB/toolbox versions, exact command and error, options files, and a minimal shareable dataset. Do not include private or identifiable health data.
 
 ## Citation
 
