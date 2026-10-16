@@ -257,6 +257,9 @@ LB=[LB1 LBe]; %r p a K alpha d
 UB=[UB1 UBe];
  
 
+% Bootstrap counts for user-facing diagnostics only.
+acceptedBootstrap = 0;
+
 for real=1:M
      
     yirData=AddPoissonError(yi,1,dist1,factor1,d_hat);
@@ -299,7 +302,15 @@ for real=1:M
     
     [P,fval,flagg,outpt,allmins] = run(ms,problem,allpts);
     
+    acceptedBootstrap = acceptedBootstrap + (flagg > 0 && isfinite(fval));
+    
     Phatss(real,:)=P;
     
 end
+
+% Print bootstrap counts only; do not change fitting or retained results.
+fprintf('\nBootstrap summary for ranked model %d:\n', rank1);
+fprintf('Requested bootstrap datasets: %d\n', M);
+fprintf('Accepted bootstrap datasets: %d\n', acceptedBootstrap);
+fprintf('Unresolved bootstrap datasets: %d\n\n', M - acceptedBootstrap);
 
