@@ -37,8 +37,8 @@ else
 
         index1=length(datenum1):1:length(datenum1)+forecastingperiod-1;
 
-        index1
-        length(data1)
+        index1;
+        length(data1);
 
         if index1(end)>length(data1)
             error('Forecasting period is too long and cannot be evaluated with the available data.')

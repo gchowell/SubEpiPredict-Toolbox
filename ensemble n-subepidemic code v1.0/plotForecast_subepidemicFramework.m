@@ -2,7 +2,20 @@
 % < Author: Gerardo Chowell  ==================================================>
 % <============================================================================>
 
-function [performanceTop, performanceEns]=plotForecast_subepidemicFramework(outbreakx_pass,caddate1_pass,forecastingperiod_pass,weight_type1_pass)
+function [performanceTop, performanceEns, performanceBaseline, scoresByHorizonOut]=plotForecast_subepidemicFramework(outbreakx_pass,caddate1_pass,forecastingperiod_pass,weight_type1_pass)
+
+% Revision 2026-11-16: both outputs always have a value. Before, performanceEns
+% was never assigned (the ensemble table is built as performanceEnsF), so a
+% call with two outputs ended in an error after all the work was done, and
+% neither output was assigned when no forecast performance was requested.
+performanceTop=[];
+performanceEns=[];
+
+% Revision j: fourth output, the scores at every horizon as written to the file
+% performance-forecasting-byHorizon-...csv. Columns: model (0 = baseline, k =
+% ranked k, 100+k = Ensemble(k)), horizon, MAE, MSE, coverage of the 95% PI,
+% WIS, WIS relative to the baseline. Used by subepidemicRollingForecast.m.
+scoresByHorizonOut=[];
 
 % generate short-term forecasts using best fitting models and derive ensemble model
 
@@ -123,18 +136,27 @@ if npatches_fixed==1
     topmodels1=1;
 end
 
-factors=factor(length(topmodels1));
-if length(factors)==1
-    rows=factors;
-    cols=1;
+% Revision i: warnings of this run are collected and listed at its end.
+subepidemicWarningLog('start');
 
-elseif length(factors)==3
-    rows=factors(1)*factors(2);
-    cols=factors(3);
-else
-    rows=factors(1);
-    cols=factors(2);
-end
+% Revision h: use the ranked models the saved fit holds, if options.m asks for
+% more (subepidemicAvailableTopModels.m).
+topmodels1=subepidemicAvailableTopModels(topmodels1,npatches_fixed,onset_fixed,smoothfactor1, ...
+    strcat(cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-state-',num2str(outbreakx),'-',caddate1), ...
+    flag1_INP,method1,dist1,calibrationperiod1);
+
+% Random seed, if the setting rngSeed is given (subepidemicSeed.m).
+rngInfo=subepidemicSeed('plotForecast_subepidemicFramework');
+
+% Panel grid for the ranked models. subepidemicPanelGrid.m gives the grid
+% used before whenever that grid has enough panels; for 16, 24, 32, ... top
+% models the earlier rule returned too few and the script stopped.
+[rows,cols]=subepidemicPanelGrid(length(topmodels1));
+
+% Grid of the ensemble figure (figure 500), one panel per ensemble: 1 by 3 as
+% before for up to four top models, more rows of three beyond that. It was
+% fixed at 1 by 3, so a fifth top model stopped the run.
+ensemblePanelGrid=[max(1,ceil((length(topmodels1)-1)/3)) 3];
 
 
 % <==============================================================================>
@@ -187,6 +209,11 @@ PIFSS=[];
 MISFSS=[];
 
 WISCSS=[];
+
+% Revision i: forecast scores of every horizon, one row per model and horizon:
+% [model horizon MAE MSE coverage WIS], model = rank, or 100 + k for Ensemble(k).
+scoresByHorizon=[];
+performanceBaseline=[];
 WISFSS=[];
 
 quantilescs=[];
@@ -224,7 +251,7 @@ for run_id=-1
 
     for rankx=topmodels1
 
-        rankx
+        rankx;
 
         % Resetting the array for quantiles
         combinedQuantiles = [];
@@ -247,7 +274,7 @@ for run_id=-1
         getperformance=getperformance_INP2;
 
 
-        rankx
+        rankx;
         AICc_rank1=[AICc_rank1;[rank1 AICc_best]];
         relativelik_rank1=[relativelik_rank1;[rank1 relativelik_i(rankx)]];
 
@@ -281,6 +308,10 @@ for run_id=-1
         end
 
         % generate forecast curves from each bootstrap realization
+
+        nSimulationsSkipped=0; % refits left out because their curve could not be simulated
+        firstSkipMessage='';
+
         for realization=1:M
 
             rs_hat=Phatss(realization,1:npatches);
@@ -305,10 +336,17 @@ for run_id=-1
 
 
             % Shared initialization, activation reset, and incidence conversion.
-            [~,x,totinc,patchIncidence]=simulateSubepidemic(timevect2,data1(1,2),npatches,onset_fixed, ...
+            % A refit whose curve cannot be simulated to the end of the forecast
+            % period is left out and counted (subepidemicSimulateRefit.m); what
+            % happens then is decided after the loop (subepidemicSkippedRefits.m).
+            [simulated,x,totinc,patchIncidence,skipMessage]=subepidemicSimulateRefit(timevect2,data1(1,2),npatches,onset_fixed, ...
                 onset_thr,flag1,rs_hat,ps_hat,as_hat,Ks_hat);
 
-            if length(x(:,1))~=length(timevect2)
+            if ~simulated
+                nSimulationsSkipped=nSimulationsSkipped+1;
+                if isempty(firstSkipMessage)
+                    firstSkipMessage=sprintf('refit %d: %s',realization,skipMessage);
+                end
                 continue
             end
 
@@ -346,6 +384,12 @@ for run_id=-1
         end
 
 
+        % Number of refits the forecast of this ranked model rests on, and the
+        % policy for those left out: warning up to the share allowed by the
+        % setting maxSkippedRefitFraction, error beyond it or when none is left.
+        nForecastCurves=size(curvesforecasts1,2);
+        subepidemicSkippedRefits('Forecast',rank1,nSimulationsSkipped,M,firstSkipMessage);
+
         [quantilesc,quantilesf]=computeQuantiles(data1,curvesforecasts2,forecastingperiod);
 
         quantilescs=[quantilescs;quantilesc];
@@ -365,15 +409,18 @@ for run_id=-1
 
         % compute doubling times
 
-        meandoublingtime=zeros(M,1);
+        % Revision 2026-11-16: meandoublingtime starts empty. It used to start as M zeros
+        % and the M values were appended after them, which halved the mean and put the
+        % lower limit at 0. Curves with no doubling give NaN and are left out.
+        meandoublingtime=[];
 
-        doublingtimess=zeros(30,M)+NaN;
+        doublingtimess=zeros(30,nForecastCurves)+NaN; % one column per curve (revision g: was M)
 
         maxd=1;
 
 
 
-        for j=1:M
+        for j=1:nForecastCurves
 
             [tds,C0data,curve,doublingtimes]=getDoublingTimeCurve(max(curvesforecasts1(:,j),0),DT,0);
 
@@ -386,7 +433,7 @@ for run_id=-1
             meandoublingtime=[meandoublingtime;mean(doublingtimes)];
         end
 
-        doublingtimess=doublingtimess(1:maxd,1:M);
+        doublingtimess=doublingtimess(1:maxd,1:nForecastCurves);
 
         seq_doublingtimes=[];
 
@@ -398,12 +445,19 @@ for run_id=-1
 
         end
 
-        seq_doublingtimes % [ith doubling, mean, 95%CI LB, 95%CI UB, prob. i_th doubling]
+        seq_doublingtimes; % [ith doubling, mean, 95%CI LB, 95%CI UB, prob. i_th doubling]
 
         % Mean doubling times
-        dmean=mean(meandoublingtime);
-        dLB=quantile(meandoublingtime,0.025);
-        dUB=quantile(meandoublingtime,0.975);
+        meandoublingtime=meandoublingtime(~isnan(meandoublingtime));
+        if isempty(meandoublingtime) % no curve doubled
+            dmean=NaN;
+            dLB=NaN;
+            dUB=NaN;
+        else
+            dmean=mean(meandoublingtime);
+            dLB=quantile(meandoublingtime,0.025);
+            dUB=quantile(meandoublingtime,0.975);
+        end
 
         param_doubling=[dmean dLB dUB]
 
@@ -452,12 +506,12 @@ for run_id=-1
             wave=[datevecfirst1 datevec1(1:3)];
 
             % plot dates in x axis
-            'day='
+            'day=';
             datenum1=datenum(wave(1:3))+timelags*DT; % start of fall wave (reference date)
-            datestr(datenum1)
+            datestr(datenum1);
 
             datenumIni=datenum1;
-            datenumEnd=datenum(wave(4:6))
+            datenumEnd=datenum(wave(4:6));
 
             dates1=datestr(datenumIni:DT:datenumEnd,'mm-dd');
 
@@ -520,7 +574,7 @@ for run_id=-1
 
             hold on
 
-            h=area(timevect2',[LB1' UB1'-LB1'])
+            h=area(timevect2',[LB1' UB1'-LB1']);
             hold on
 
             h(1).FaceColor = [1 1 1];
@@ -551,12 +605,12 @@ for run_id=-1
 
 
             % plot dates in x axis
-            'day='
+            'day=';
             datenum1=datenum(wave(1:3))+timelags*DT; % start of fall wave (reference date)
-            datestr(datenum1)
+            datestr(datenum1);
 
             datenumIni=datenum1;
-            datenumEnd=datenum(wave(4:6))
+            datenumEnd=datenum(wave(4:6));
 
             dates1=datestr(datenumIni:DT:datenumEnd,'mm-dd');
 
@@ -604,7 +658,7 @@ for run_id=-1
         % <================================ Save short-term forecast results ==================================>
         % <=========================================================================================>
 
-        save(strcat('./output/Forecast-modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-',num2str(onset_fixed),'-smoothing-',num2str(smoothfactor1),'-',cadfilename2,'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-forecastingperiod-',num2str(forecastingperiod),'-rank-',num2str(rankx),'.mat'),'curvesforecasts1','curvesforecasts2','datevecfirst1','datevecend1','timevect2','timelags','cadtemporal')
+        save(strcat('./output/Forecast-modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-',num2str(onset_fixed),'-smoothing-',num2str(smoothfactor1),'-',cadfilename2,'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-forecastingperiod-',num2str(forecastingperiod),'-rank-',num2str(rankx),'.mat'),'curvesforecasts1','curvesforecasts2','datevecfirst1','datevecend1','timevect2','timelags','cadtemporal','nSimulationsSkipped','nForecastCurves')
 
         % <=============================================================================================>
         % <=================== Plot data for the forecast period (if getperformance=1) ===================================>
@@ -627,7 +681,7 @@ for run_id=-1
 
             if printscreen1
 
-                line2=plot(timevect2,data2,'ro')
+                line2=plot(timevect2,data2,'ro');
                 set(line2,'LineWidth',2)
 
             end
@@ -677,11 +731,11 @@ for run_id=-1
 
             else
 
-                length([str2num(datestr((datenumIni:DT:datenumEnd)','yyyy')) str2num(datestr((datenumIni:DT:datenumEnd)','mm')) str2num(datestr((datenumIni:DT:datenumEnd)','dd'))])
+                length([str2num(datestr((datenumIni:DT:datenumEnd)','yyyy')) str2num(datestr((datenumIni:DT:datenumEnd)','mm')) str2num(datestr((datenumIni:DT:datenumEnd)','dd'))]);
 
-                length([data1(:,2);zeros(forecastingperiod,1)+NaN])
+                length([data1(:,2);zeros(forecastingperiod,1)+NaN]);
 
-                length(LB1)
+                length(LB1);
 
 
                 forecastdata=[str2num(datestr((datenumIni:DT:datenumEnd)','yyyy')) str2num(datestr((datenumIni:DT:datenumEnd)','mm')) str2num(datestr((datenumIni:DT:datenumEnd)','dd')) [data1(:,2);zeros(forecastingperiod,1)+NaN] median(curvesforecasts2,2) LB1' UB1'];
@@ -730,6 +784,9 @@ for run_id=-1
 
             WISFSS=[WISFSS;[rankx outbreakx datenum(caddate1) WISFS(end,end)]];
 
+            % every horizon, not only the last (revision i)
+            scoresByHorizon=[scoresByHorizon;[rankx+zeros(forecastingperiod,1) MAEFS_model1(:,1) MAEFS_model1(:,2) MSEFS_model1(:,2) PIFS_model1(:,2) WISFS(:,2)]]; %#ok<AGROW>
+
         end
 
 
@@ -743,9 +800,9 @@ for run_id=-1
         if rankx>1
 
             if run_id==0
-                [RMSECS_model1 MSECS_model1 MAECS_model1  PICS_model1 MISCS_model1 WISC RMSEFS_model1 MSEFS_model1 MAEFS_model1 PIFS_model1 MISFS_model1 WISFS forecast1 quantilesc quantilesf]=getensemblesubepidemicmodels(cumulative1,cadfilename2,datevecfirst1,npatches_fixed,onset_fixed,smoothfactor1,outbreakx,cadregion,caddate1,caddisease,datatype,flag1,method1,dist1,calibrationperiod1,1:rankx,forecastingperiod,getperformance,weight_type1,WISC_hash,WISC_hash,printscreen1);
+                [RMSECS_model1 MSECS_model1 MAECS_model1  PICS_model1 MISCS_model1 WISC RMSEFS_model1 MSEFS_model1 MAEFS_model1 PIFS_model1 MISFS_model1 WISFS forecast1 quantilesc quantilesf]=getensemblesubepidemicmodels(cumulative1,cadfilename2,datevecfirst1,npatches_fixed,onset_fixed,smoothfactor1,outbreakx,cadregion,caddate1,caddisease,datatype,flag1,method1,dist1,calibrationperiod1,1:rankx,forecastingperiod,getperformance,weight_type1,WISC_hash,WISC_hash,printscreen1,ensemblePanelGrid);
             else
-                [RMSECS_model1 MSECS_model1 MAECS_model1  PICS_model1 MISCS_model1 WISC RMSEFS_model1 MSEFS_model1 MAEFS_model1 PIFS_model1 MISFS_model1 WISFS forecast1 quantilesc quantilesf]=getensemblesubepidemicmodels(cumulative1,cadfilename2,datevecfirst1,npatches_fixed,onset_fixed,smoothfactor1,outbreakx,cadregion,caddate1,caddisease,datatype,flag1,method1,dist1,calibrationperiod1,1:rankx,forecastingperiod,getperformance,weight_type1,WISC_hash,WISF_hash(:,run_id),printscreen1);
+                [RMSECS_model1 MSECS_model1 MAECS_model1  PICS_model1 MISCS_model1 WISC RMSEFS_model1 MSEFS_model1 MAEFS_model1 PIFS_model1 MISFS_model1 WISFS forecast1 quantilesc quantilesf]=getensemblesubepidemicmodels(cumulative1,cadfilename2,datevecfirst1,npatches_fixed,onset_fixed,smoothfactor1,outbreakx,cadregion,caddate1,caddisease,datatype,flag1,method1,dist1,calibrationperiod1,1:rankx,forecastingperiod,getperformance,weight_type1,WISC_hash,WISF_hash(:,run_id),printscreen1,ensemblePanelGrid);
             end
 
             quantilescs=[quantilescs;quantilesc];
@@ -773,6 +830,9 @@ for run_id=-1
                 MISFSS=[MISFSS;[100+rankx outbreakx datenum(caddate1) MISFS_model1(end,end)]];
 
                 WISFSS=[WISFSS;[100+rankx outbreakx datenum(caddate1) WISFS(end,end)]];
+
+                % every horizon, not only the last (revision i)
+                scoresByHorizon=[scoresByHorizon;[100+rankx+zeros(forecastingperiod,1) MAEFS_model1(:,1) MAEFS_model1(:,2) MSEFS_model1(:,2) PIFS_model1(:,2) WISFS(:,2)]]; %#ok<AGROW>
             end
 
 
@@ -819,7 +879,7 @@ if getperformance
     tiledlayout(2,2,'Padding','compact','TileSpacing','compact');
 
     nexttile(1)
-    line1=plot(MAEFSS(index2,1),MAEFSS(index2,4),'k-o')
+    line1=plot(MAEFSS(index2,1),MAEFSS(index2,4),'k-o');
     set(line1,'linewidth',2)
     xlabel('i_{th}Ranked Model')
     ylabel('MAE')
@@ -828,7 +888,7 @@ if getperformance
     set(gcf,'color','white')
 
     nexttile(2)
-    line1=plot(MSEFSS(index2,1),MSEFSS(index2,4),'k-o')
+    line1=plot(MSEFSS(index2,1),MSEFSS(index2,4),'k-o');
     set(line1,'linewidth',2)
     xlabel('i_{th}Ranked Model')
     ylabel('MSE')
@@ -837,7 +897,7 @@ if getperformance
     set(gcf,'color','white')
 
     nexttile(3)
-    line1=plot(PIFSS(index2,1),PIFSS(index2,4),'k-o')
+    line1=plot(PIFSS(index2,1),PIFSS(index2,4),'k-o');
     set(line1,'linewidth',2)
     xlabel('i_{th}Ranked Model')
     ylabel('Coverage of the 95% PI')
@@ -847,7 +907,7 @@ if getperformance
 
     nexttile(4)
 
-    line1=plot(WISFSS(index2,1),WISFSS(index2,4),'k-o')
+    line1=plot(WISFSS(index2,1),WISFSS(index2,4),'k-o');
     set(line1,'linewidth',2)
     xlabel('i_{th}Ranked Model')
     ylabel('WIS')
@@ -876,7 +936,7 @@ if getperformance
 
         nexttile(1)
 
-        line1=plot((1+(1:length(index1)))',MAEFSS(index1,4),'k-o')
+        line1=plot((1+(1:length(index1)))',MAEFSS(index1,4),'k-o');
         set(line1,'linewidth',2)
         xlabel('Ensemble(i) model')
         ylabel('MAE')
@@ -885,7 +945,7 @@ if getperformance
         set(gcf,'color','white')
 
         nexttile(2)
-        line1=plot((1+(1:length(index1)))',MSEFSS(index1,4),'k-o')
+        line1=plot((1+(1:length(index1)))',MSEFSS(index1,4),'k-o');
         set(line1,'linewidth',2)
         xlabel('Ensemble(i) model')
         ylabel('MSE')
@@ -894,7 +954,7 @@ if getperformance
         set(gcf,'color','white')
 
         nexttile(3)
-        line1=plot((1+(1:length(index1)))',PIFSS(index1,4),'k-o')
+        line1=plot((1+(1:length(index1)))',PIFSS(index1,4),'k-o');
         set(line1,'linewidth',2)
         xlabel('Ensemble(i) model')
         ylabel('Coverage of the 95% PI')
@@ -904,7 +964,7 @@ if getperformance
 
         nexttile(4)
 
-        line1=plot((1+(1:length(index1)))',WISFSS(index1,4),'k-o')
+        line1=plot((1+(1:length(index1)))',WISFSS(index1,4),'k-o');
         set(line1,'linewidth',2)
         xlabel('Ensemble(i) model')
         ylabel('WIS')
@@ -919,11 +979,89 @@ if getperformance
     % <=============================================================================================>
 
     performanceEnsF=[(1+(1:length(index1)))' MAEFSS(index1,4) MSEFSS(index1,4) PIFSS(index1,4) WISFSS(index1,4)];
+    performanceEns=performanceEnsF; % second output of the function
 
     T = array2table(performanceEnsF);
     T.Properties.VariableNames(1:5) = {'Ensemble(i) model','MAE','MSE','Coverage 95%PI','WIS'};
     writetable(T,strcat('./output/performance-forecasting-Ensemble-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-horizon-',num2str(forecastingperiod),'-weight_type-',num2str(weight_type1),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
 
+    % <=============================================================================================>
+    % <======= Revision i: flat baseline, and the forecast scores of every horizon ====================>
+    % <=============================================================================================>
+    % The baseline (subepidemicBaselineForecast.m) repeats the mean of the last
+    % observations, with uncertainty from the errors the same rule made earlier
+    % in the calibration data. It is scored with the functions that score the
+    % models, so its rows can be compared with theirs. A model is worth using at
+    % a horizon when its WIS there is below the baseline's.
+    if forecastingperiod>0
+
+        baselineSettings=subepidemicFitSettings();
+        baselineWindow=baselineSettings.baselineWindow;
+        if isempty(baselineWindow)
+            if DT==1
+                baselineWindow=7; % daily data: one week, to average the weekly reporting cycle
+            else
+                baselineWindow=1; % weekly or yearly data: the last observation
+            end
+        end
+
+        baseline=subepidemicBaselineForecast(data1(:,2),forecastingperiod,baselineWindow);
+
+        % curves in the layout of the model curves: calibration rows hold the data
+        % (they are not scored), forecast rows hold the baseline
+        baselineCurves1=[data1(:,2);baseline.point];
+        baselineCurves2=[repmat(data1(:,2),1,size(baseline.samples,2));baseline.samples];
+
+        [~,~,~,~,~,~,MSEFS_base,MAEFS_base,PIFS_base]=computeforecastperformance(data1,datalatest2,baselineCurves1,baselineCurves2,forecastingperiod);
+
+        if all(isfinite(baseline.samples(:)))
+            [~,WISFS_base]=computeWIS(data1,datalatest2,baselineCurves2,forecastingperiod);
+        else
+            % too few past errors for an interval: point scores only
+            WISFS_base=[(1:forecastingperiod)' NaN(forecastingperiod,1)];
+            PIFS_base(:,2)=NaN;
+            subepidemicWarning('SubEpiPredict:BaselineWithoutInterval', ...
+                ['The calibration series is too short to give the flat baseline an interval at every horizon ', ...
+                 '(%d observations, window %d, horizon %d). Its MAE and MSE are reported; its WIS and coverage are not.'], ...
+                size(data1,1),baseline.window,forecastingperiod);
+        end
+
+        % model code 0 = baseline; then the ranked models, then the ensembles (100 + k)
+        scoresByHorizon=[[zeros(forecastingperiod,1) MAEFS_base(:,1) MAEFS_base(:,2) MSEFS_base(:,2) PIFS_base(:,2) WISFS_base(:,2)];scoresByHorizon];
+        scoresByHorizon=sortrows(scoresByHorizon,[1 2]);
+
+        % WIS of each row relative to the baseline at the same horizon (below 1 = better than the baseline)
+        relativeWIS=scoresByHorizon(:,6)./WISFS_base(scoresByHorizon(:,2),2);
+
+        T = array2table([scoresByHorizon relativeWIS]);
+        T.Properties.VariableNames(1:7) = {'model','horizon','MAE','MSE','Coverage 95%PI','WIS','WIS relative to baseline'};
+        writetable(T,strcat('./output/performance-forecasting-byHorizon-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-horizon-',num2str(forecastingperiod),'-weight_type-',num2str(weight_type1),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
+
+        % fourth output of the function: the table just written
+        scoresByHorizonOut=[scoresByHorizon relativeWIS];
+
+        % third output of the function: the baseline at the full horizon
+        performanceBaseline=[MAEFS_base(end,2) MSEFS_base(end,2) PIFS_base(end,2) WISFS_base(end,2)];
+
+        % the full horizon on the screen: baseline first, then the models
+        atEnd=scoresByHorizon(:,2)==forecastingperiod;
+        rowsEnd=[scoresByHorizon(atEnd,:) relativeWIS(atEnd)];
+        fprintf('\nForecast scores over %d time unit(s). Baseline: flat at %.6g, the mean of the last %d observation(s).\n', ...
+            forecastingperiod,baseline.level,baseline.window);
+        fprintf('  %-14s %10s %10s %10s %14s\n','model','MAE','coverage','WIS','WIS/baseline');
+        for rowEnd=1:size(rowsEnd,1)
+            if rowsEnd(rowEnd,1)==0
+                modelLabel='baseline';
+            elseif rowsEnd(rowEnd,1)>100
+                modelLabel=sprintf('Ensemble(%d)',rowsEnd(rowEnd,1)-100);
+            else
+                modelLabel=sprintf('ranked %d',rowsEnd(rowEnd,1));
+            end
+            fprintf('  %-14s %10.2f %10.1f %10.2f %14.2f\n',modelLabel,rowsEnd(rowEnd,3),rowsEnd(rowEnd,5),rowsEnd(rowEnd,6),rowsEnd(rowEnd,7));
+        end
+        fprintf('  (scores of every horizon from 1 to %d are in the file performance-forecasting-byHorizon-... in ./output)\n',forecastingperiod);
+
+    end
 
 end
 
@@ -931,7 +1069,7 @@ end
 % <============================== Save file with top-ranked performance metrics (calibration) ====================>
 % <=============================================================================================>
 
-MAECSS(:,1)
+MAECSS(:,1);
 
 index2=find(MAECSS(:,1)<100);
 
@@ -949,3 +1087,6 @@ performanceEnsC=[MAECSS(index1,1)-100 MAECSS(index1,4) MSECSS(index1,4) PICSS(in
 T = array2table(performanceEnsC);
 T.Properties.VariableNames(1:5) = {'Ensemble(i) model','MAE','MSE','Coverage 95%PI','WIS'};
 writetable(T,strcat('./output/performance-calibration-Ensemble-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-horizon-',num2str(forecastingperiod),'-weight_type-',num2str(weight_type1),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
+
+% Revision i: list the toolbox's warnings of this run once more (subepidemicWarningLog.m).
+subepidemicWarningLog('summary','plotForecast_subepidemicFramework');

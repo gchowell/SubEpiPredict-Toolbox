@@ -36,7 +36,15 @@ global calibrationperiod1
 [getperformance_INP, deletetempfiles_INP, forecastingperiod_INP, weight_type1_INP]=options_forecast;
 
 %options_Rt.m
-[type_GId1_INP,mean_GI1_INP,var_GI1_INP]=options_Rt
+% A fourth output of options_Rt.m, if the file has one, is the minimum share of
+% the generation-interval distribution that the curve must cover before Rt is
+% reported (see get_Rt.m). An options_Rt.m with three outputs still works.
+if nargout('options_Rt')>=4
+    [type_GId1_INP,mean_GI1_INP,var_GI1_INP,minGIcoverage_INP]=options_Rt;
+else
+    [type_GId1_INP,mean_GI1_INP,var_GI1_INP]=options_Rt;
+    minGIcoverage_INP=0.99;
+end
 
 % <============================================================================>
 % <================================ Dataset ===================================>
@@ -113,6 +121,18 @@ if npatches_fixed==1
     topmodels1=1;
 end
 
+% Revision i: warnings of this run are collected and listed at its end.
+subepidemicWarningLog('start');
+
+% Revision h: use the ranked models the saved fit holds, if options.m asks for
+% more (subepidemicAvailableTopModels.m).
+topmodels1=subepidemicAvailableTopModels(topmodels1,npatches_fixed,onset_fixed,smoothfactor1, ...
+    strcat(cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-state-',num2str(outbreakx),'-',caddate1), ...
+    flag1_INP,method1,dist1,calibrationperiod1);
+
+% Random seed, if the setting rngSeed is given (subepidemicSeed.m).
+rngInfo=subepidemicSeed('plotReproductionNumber');
+
 factors=factor(length(topmodels1));
 if length(factors)==1
     rows=factors;
@@ -160,6 +180,8 @@ mean_GI1=mean_GI1_INP;  % mean of the generation interval distribution
 
 var_GI1=var_GI1_INP; % variance of the generation interval distribution
 
+minGIcoverage=minGIcoverage_INP; % Rt is blank until the curve covers this share of the generation interval
+
 
 RMSES=[];
 MAES=[];
@@ -184,7 +206,7 @@ for run_id=-1
         % <================================ Load model results ====================================>
         % <========================================================================================>
 
-        load (strcat('./output/modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-0-smoothing-',num2str(smoothfactor1),'-',cadfilename2,'-flag1-',num2str(flagss2(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-rank-',num2str(rankx),'.mat'))
+        load (strcat('./output/modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-',num2str(onset_fixed),'-smoothing-',num2str(smoothfactor1),'-',cadfilename2,'-flag1-',num2str(flagss2(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-rank-',num2str(rankx),'.mat'))
 
         datevecfirst1=datevecfirst1_INP2;
 
@@ -224,6 +246,10 @@ for run_id=-1
         subplot(1,length(topmodels1),cc1)
 
         % generate forecast curves from each bootstrap realization
+
+        nSimulationsSkipped=0; % refits left out because their curve could not be simulated (revision h)
+        firstSkipMessage='';
+
         for realization=1:M
 
 
@@ -246,8 +272,20 @@ for run_id=-1
 
 
             % Shared initialization, activation reset, and incidence conversion.
-            [~,x,totinc,patchIncidence]=simulateSubepidemic(timevect2,data1(1,2),npatches,onset_fixed, ...
+            % Revision h: the same policy as the forecast script for a refit whose
+            % curve cannot be simulated over the forecast period
+            % (subepidemicSimulateRefit.m, subepidemicSkippedRefits.m). Before,
+            % one such refit stopped this script.
+            [simulated,x,totinc,patchIncidence,skipMessage]=subepidemicSimulateRefit(timevect2,data1(1,2),npatches,onset_fixed, ...
                 onset_thr,flag1,rs_hat,ps_hat,as_hat,Ks_hat);
+
+            if ~simulated
+                nSimulationsSkipped=nSimulationsSkipped+1;
+                if isempty(firstSkipMessage)
+                    firstSkipMessage=sprintf('refit %d: %s',realization,skipMessage);
+                end
+                continue
+            end
 
 
             for j=1:npatches
@@ -280,11 +318,13 @@ for run_id=-1
             % <================================ Estimate R_t ===========================================>
             % <=========================================================================================>
 
-            [Rs,ts]=get_Rt(timevect2,totinc,type_GId1,mean_GI1,var_GI1);
+            [Rs,ts]=get_Rt(timevect2,totinc,type_GId1,mean_GI1,var_GI1,minGIcoverage);
 
             Rss=[Rss Rs];
 
         end
+
+        subepidemicSkippedRefits('Rt',rank1,nSimulationsSkipped,M,firstSkipMessage);
 
 
         % <=============================================================================================>
@@ -317,12 +357,12 @@ for run_id=-1
         wave=[datevecfirst1 datevec1(1:3)];
 
         % plot dates in x axis
-        'day='
+        'day=';
         datenum1=datenum(wave(1:3))+timelags*DT; % start of fall wave (reference date)
-        datestr(datenum1)
+        datestr(datenum1);
 
         datenumIni=datenum1;
-        datenumEnd=datenum(wave(4:6))
+        datenumEnd=datenum(wave(4:6));
 
         dates1=datestr(datenumIni:DT:datenumEnd,'mm-dd');
 
@@ -366,6 +406,19 @@ for run_id=-1
         % <================================ Plot R_t ===============================================>
         % <=========================================================================================>
 
+        % Early values are blank (NaN) while the curve covers less than
+        % minGIcoverage of the generation interval; see get_Rt.m.
+        firstRt=find(any(isfinite(Rss),2),1,'first');
+        if isempty(firstRt)
+            subepidemicWarning('SubEpiPredict:RtNotEstimable', ...
+                ['Ranked model %d: the curve is shorter than the generation interval needs ', ...
+                 '(coverage below %g everywhere), so no Rt value is reported. Check the units ', ...
+                 'and values in options_Rt.m.'],rank1,minGIcoverage);
+        else
+            fprintf('Ranked model %d: Rt is reported from time %.2f on (generation-interval coverage of at least %g).\n', ...
+                rank1,ts(firstRt+1),minGIcoverage);
+        end
+
         Rtmedian=quantile(Rss',0.5);
         RtLB=quantile(Rss',0.025);
         RtUB=quantile(Rss',0.975);
@@ -392,7 +445,7 @@ for run_id=-1
 
         axis([0 length(timevect2)-1 0 max(data1(:,2))*4])
         line2=[timevect(end) 0;timevect(end) max(data1(:,2))*4];
-        line1=plot(line2(:,1),line2(:,2),'k--')
+        line1=plot(line2(:,1),line2(:,2),'k--');
         set(line1,'LineWidth',2)
 
         ylabel('R_t')
@@ -432,12 +485,22 @@ for run_id=-1
         % <============================== Save file with R_t estimates ======================================>
         % <=============================================================================================>
 
-        Rtdata=[ts(2:100:end)' Rtmedian(2:100:end)' RtLB(2:100:end)' RtUB(2:100:end)'];
-        Rtdata=[Rtdata;[ts(end)' Rtmedian(end)' RtLB(end)' RtUB(end)']];
+        % Revision h: one row per whole time unit, 1, 2, ..., the last time.
+        % Rtmedian(k) is the value at ts(k+1), and ts has 100 steps per time
+        % unit, so the value at whole time j is entry 100*j. Before, the time
+        % column held 0.01, 1.01, ... and each value belonged to the time
+        % 0.01 later. Time 0 has no row: Rt needs earlier incidence.
+        wholeTimes=1:floor(round((ts(end)-ts(1))*100)/100);
+        rowsRt=round(wholeTimes*100);
+        Rtdata=[ts(rowsRt+1)' Rtmedian(rowsRt)' RtLB(rowsRt)' RtUB(rowsRt)'];
 
         T = array2table(Rtdata);
         T.Properties.VariableNames(1:4) = {'time','Rt median','Rt 95%CI LB','Rt 95% CI UB'};
-        writetable(T,strcat('./output/Rt-ranked(', num2str(rank1),')-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
+        % Revision h: onset mode, kernel, method, error structure and horizon are
+        % part of the name, as for the other csv files. Before, the Rt files of
+        % two different fits of one series had the same name and the later run
+        % overwrote the earlier one.
+        writetable(T,strcat('./output/Rt-ranked(', num2str(rank1),')-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-horizon-',num2str(forecastingperiod),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
 
 
         % <=========================================================================================>
@@ -497,12 +560,12 @@ for run_id=-1
         set(line1,'LineWidth',2)
 
         % plot dates in x axis
-        'day='
+        'day=';
         datenum1=datenum(wave(1:3))+timelags*DT; % start of fall wave (reference date)
-        datestr(datenum1)
+        datestr(datenum1);
 
         datenumIni=datenum1;
-        datenumEnd=datenum(wave(4:6))
+        datenumEnd=datenum(wave(4:6));
 
         dates1=datestr(datenumIni:DT:datenumEnd,'mm-dd');
 
@@ -545,3 +608,6 @@ for run_id=-1
     end
 
 end
+
+% Revision i: list the toolbox's warnings of this run once more (subepidemicWarningLog.m).
+subepidemicWarningLog('summary','plotReproductionNumber');

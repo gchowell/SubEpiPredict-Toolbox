@@ -54,6 +54,24 @@ switch method1
         UBe=[10^5 10^2];
 end
 
+% <=============================================================================================>
+% <========= Fitting layer (revision 2026-11: scaled search space) =============================>
+% <=============================================================================================>
+% Every candidate is now fitted by fitSubepidemicModel.m: only the free
+% parameters are optimized, each mapped to [0,1] (r, K and alpha on a log
+% scale), the objective is minimized in log-likelihood units, every local
+% minimum is evaluated again before it is accepted, and each fit returns
+% diagnostics (start agreement, gradient, polish). Bounds and seeds are the
+% legacy ones unless options_fit_settings.m changes them
+% (subepidemicSearchSpace.m). The ODE tolerance is set in
+% subepidemicOdeOptions.m. RMSES, PS and thresholdDiagnostics keep their
+% layout; fitDiagnostics and candidateFitInfo are new and are saved with them.
+% The globals LBe and UBe above are kept for old scripts and are no longer
+% read by the fit.
+
+fitSettings=subepidemicFitSettings();
+odeOptions=subepidemicOdeOptions();
+
 % <==============================================================================>
 % <============ Load data and proceed to parameter estimation ===================>
 % <==============================================================================>
@@ -149,12 +167,34 @@ count1=1;
 thresholdDiagnosticsColumns={'nCandidate','onset_thr','nActive','retained','fval'};
 thresholdDiagnostics=nan(numel(npatchess)*numel(onset_thrs2),5);
 nEvaluated=0;
+candidatesTooLarge=zeros(0,3); % [sub-epidemics, parameters, data points] of sizes left out (revision h)
+
+% One row per fitted candidate, in the same search order as thresholdDiagnostics.
+% candidateFitInfo{k} is the full fitInfo structure of row k.
+fitDiagnosticsColumns={'nCandidate','onset_thr','success','exitflag','startAgreement', ...
+    'gradientInfNorm','polishRun','polishImproved','nLocalRuns','nConvergedRuns','nAtBound'};
+fitDiagnostics=nan(numel(npatchess)*numel(onset_thrs2),numel(fitDiagnosticsColumns));
+candidateFitInfo=cell(numel(npatchess)*numel(onset_thrs2),1);
 
 % <====================================================================================>
 % <==== Evaluate AICc across models with different number of subepidemics and C_thr ==>
 % <====================================================================================>
 
-ydata=smoothdata(data,'movmean',smoothfactor1);
+% Series the objective is fitted to (revision 2026-11-16). Count likelihoods
+% (methods 1, 3, 4, 5) are fitted to the raw counts; least squares and
+% absolute deviations to the moving average, as before. smoothfactor1 still
+% shapes the threshold grid above for every method. See subepidemicFitSeries.m.
+[ydata,fitSeriesInfo]=subepidemicFitSeries(data,smoothfactor1,method1,fitSettings);
+
+if fitSeriesInfo.smoothedCountLikelihood
+    % Only reached when countLikelihoodOnRawData = false in options_fit_settings.m.
+    subepidemicWarning('SubEpiPredict:SmoothedCountLikelihood', ...
+        ['method1 = %d fits a count likelihood to a %g-point moving average. The fitted dispersion ', ...
+         'will be too small and prediction intervals too narrow for the raw counts.'],method1,smoothfactor1);
+elseif any(method1==[1 3 4 5]) && smoothfactor1>1
+    fprintf(['method1 = %d is fitted to the raw counts. smoothfactor1 = %g is used only for the grid of ', ...
+        'onset thresholds.\n'],method1,smoothfactor1);
+end
 
 for npatches2=[npatchess]
     
@@ -162,120 +202,113 @@ for npatches2=[npatchess]
     % nActive is a separate observation, never a replacement for nCandidate.
     nCandidate=npatches2;
     npatches=nCandidate;
+
+    % Revision h. AICc is defined only when the points fitted exceed the
+    % number of parameters by more than one (see getAICc.m). A candidate that
+    % is too large for this series is not fitted: its AICc would be infinite
+    % or, worse, lowered by a negative small-sample term.
+    kCandidate=get_nparams(method1,dist1,nCandidate,flag1,1,onset_fixed);
+    if length(ydata)<=kCandidate+1
+        candidatesTooLarge(end+1,:)=[nCandidate kCandidate length(ydata)]; %#ok<AGROW>
+        subepidemicWarning('SubEpiPredict:CandidateTooLarge', ...
+            ['Models with %d sub-epidemic(s) have %d parameters, too many for the %d data points ', ...
+             '(AICc needs more than %d). They are left out of the screen.'], ...
+            nCandidate,kCandidate,length(ydata),kCandidate+1);
+        continue
+    end
     
     if (onset_fixed==1 | npatches==1)
         onset_thrs=0;
     else
         onset_thrs=onset_thrs2;
-    end
-    
-    % <================================================================================================>
-    % <=========================== Set initial parameter guesses and bounds ===========================>
-    % <================================================================================================>
-    
-    rs1=zeros(1,npatches)+0.1;
-    ps1=zeros(1,npatches)+0.9;
-    Ks1=zeros(1,npatches)+sum(data1(:,2));
-    
-    as1=ones(1,npatches);
-    
-    for j=1:npatches
-        if flag1==3 | flag1==4 | flag1==5 % Logistic model or Richards model (p=1)
-            ps1(j)=1;
+        % A threshold that the preceding sub-epidemic already meets at time
+        % zero starts every sub-epidemic at once, exactly as threshold 0
+        % does: the first sub-epidemic starts at I0 and each later one at 1.
+        % The grid's second value, cumcurve1(1), is usually such a threshold
+        % (always when smoothfactor1 = 1). Fitting it would rank the same
+        % model twice and put it twice into the top-ranked ensemble.
+        if nCandidate==2
+            levelAtStart=I0;
         else
-            ps1(j)=0.9;
+            levelAtStart=min(I0,1);
         end
-        if flag1==5
-            rs1(j)=1-I0/Ks1(j);
-            as1(j)=rs1(j)/log(Ks1(j)/I0);
+        metAtStart=find(onset_thrs<=levelAtStart);
+        if numel(metAtStart)>1
+            % All of these are one model; keep the first (threshold 0).
+            sameAsZero=metAtStart(2:end);
+            fprintf('Onset thresholds dropped as duplicates of threshold %g (already met at time zero): %s\n', ...
+                onset_thrs(metAtStart(1)),mat2str(onset_thrs(sameAsZero),6));
+            onset_thrs(sameAsZero)=[];
         end
     end
     
-    z=[rs1 ps1 as1 Ks1 1 1];
-    
-    [LB1,UB1]=getbounds(npatches,data);
-    
-    LB=[LB1 LBe]; %r p a K alpha d
-    UB=[UB1 UBe];
-    
-    % --- safety: flip any LB>UB just in case --------------------------------
-    flipMask = LB > UB;
-    if any(flipMask)
-        tmp = LB(flipMask); LB(flipMask) = UB(flipMask); UB(flipMask) = tmp;
+    % <================================================================================================>
+    % <=========================== Search space, seed and start points ===============================>
+    % <================================================================================================>
+
+    % Legacy bounds and seed unless options_fit_settings.m overrides them.
+    % isLog marks the coordinates searched on a log scale (r, K, alpha).
+    [LB,UB,isLog,z0]=subepidemicSearchSpace(nCandidate,data,flag1,method1,fitSettings);
+    expectedDimension=4*nCandidate+2;
+    if any([numel(z0),numel(LB),numel(UB)]~=expectedDimension)
+        error('SubEpiPredict:ParameterDimensionMismatch', ...
+            'Seed and bounds must have 4*nCandidate+2 entries.');
     end
-    % ------------------------------------------------------------------------
-    
-    % ========================= CHANGED [2] START =============================
-    % Generate MultiStart initial points ONCE per (npatches, LB/UB)
-    z0   = min(max(z,LB),UB);                 % clamp seed into bounds        %CHANGED [2]
-    dDim = numel(LB);                                                      %CHANGED [2]
-    span = (UB - LB);                                                     %CHANGED [2]
-    nStarts = max(0, floor(numstartpoints));                              %CHANGED [2]
-    
-    if nStarts > 0                                                         %CHANGED [2]
-        if exist('lhsdesign','file') == 2                                  %CHANGED [2]
-            X = lhsdesign(nStarts, dDim, 'criterion','maximin','iterations',50); %CHANGED [2]
-        else                                                               %CHANGED [2]
-            X = rand(nStarts, dDim);                                       %CHANGED [2]
-        end                                                                %CHANGED [2]
-        starts_base = LB + X .* span;                                      %CHANGED [2]
-        starts_base = [starts_base; z0];    % include user seed             %CHANGED [2]
-    else                                                                   %CHANGED [2]
-        starts_base = z0;                                                  %CHANGED [2]
-    end                                                                    %CHANGED [2]
-    starts_base = unique(round(starts_base,6), 'rows');                    %CHANGED [2]
-    inB = all(starts_base >= (LB - 1e-12) & starts_base <= (UB + 1e-12), 2); %CHANGED [2]
-    finiteReal = all(isfinite(starts_base),2) & isreal(starts_base);       %CHANGED [2]
-    starts_base = starts_base(inB & finiteReal, :);                        %CHANGED [2]
-    if isempty(starts_base), starts_base = z0; end                         %CHANGED [2]
-    % ========================== CHANGED [2] END ==============================
-    
+    z=z0; % legacy name of the seed, kept in the saved workspace
+
+    % Start points ONCE per nCandidate, reused for every onset threshold:
+    % numstartpoints Latin-hypercube points in unit coordinates (log-uniform
+    % for r, K and alpha) and the seed. Rows are in original units.
+    unitMap=subepidemicUnitMap('make',struct('z0',z0,'LB',LB,'UB',UB,'isLog',isLog));
+    nStarts=max(0,floor(numstartpoints));
+    starts_base=subepidemicStartPoints(unitMap,nStarts,0,z0);
+
+    % Accepted solution of the previous threshold for this nCandidate
+    % (continuation start); empty until one candidate has been retained.
+    previousP=[];
+
     nloops=length(onset_thrs);
     
     RMSES2=sparse(1000,3);
     count2=1;
 
     for onset_thr=onset_thrs
-        % Legacy objectives read this global. Reset it explicitly, but never
-        % change nCandidate, the bounds, or the starts after a partial fit.
+        % The candidate dimension is fixed for the whole threshold sweep.
         npatches=nCandidate;
-        expectedDimension=4*nCandidate+2;
-        if any([numel(z0),numel(LB),numel(UB),size(starts_base,2)]~=expectedDimension)
-            error('SubEpiPredict:ParameterDimensionMismatch', ...
-                'Seeds, bounds, and starts must all have 4*nCandidate+2 columns.');
+
+        % Explicit fit context: the objective reads nothing from globals.
+        context=struct('timevect',timevect,'ydata',ydata,'I0',I0, ...
+            'npatches',nCandidate,'onset_fixed',onset_fixed,'onset_thr',onset_thr, ...
+            'flag1',flag1,'method1',method1,'odeOptions',odeOptions);
+
+        % The solution of the previous threshold is an excellent start for
+        % this one: for a fixed nCandidate the best fit changes smoothly with
+        % the threshold. It is one more start point, never a replacement.
+        starts=starts_base;
+        if fitSettings.continuationStart && ~isempty(previousP)
+            starts=[starts_base;previousP];
         end
 
-        % ******** MLE estimation method with MultiStart  *********
-        % check multiple initial guesses to ensure global minimum is obtained
-               
-        options=optimoptions('fmincon','Algorithm','sqp','StepTolerance',1.0000e-6,'MaxFunEvals',20000,'MaxIter',20000);
-        
-        f=@plotModifiedLogisticGrowthPatchMethodLogLik;
-        
-        % ========================= CHANGED [2] START =========================
-        % Reuse the base start set for every onset_thr                        %CHANGED [2]
-        problem = createOptimProblem('fmincon','objective',f,'x0',z0,'lb',LB,'ub',UB,'options',options); %CHANGED [2]
-        %useParallel = ~isempty(gcp('nocreate'));                             %CHANGED [2]
-        ms = MultiStart('Display','off','UseParallel',false,'StartPointsToRun','bounds-ineqs'); %CHANGED [2]
-        sp = CustomStartPointSet(starts_base);                               %CHANGED [2]
-        % ========================== CHANGED [2] END ==========================
-        
-        [P,fval,flagg,outpt,allmins] = run(ms,problem,sp);
-        
-        if npatches~=nCandidate
-            error('SubEpiPredict:CandidateDimensionChanged', ...
-                'The optimizer changed the candidate dimension during a threshold fit.');
-        end
-        [rs_hat,ps_hat,as_hat,Ks_hat,alpha_hat,d_hat]= ...
-            unpackSubepidemicParameters(P,nCandidate);
-        P=P(:).';
-
-        % Read activation from THIS simulation, not an inherited global.
-        [~,x,~,~,activation]=simulateSubepidemic(timevect,I0,nCandidate,onset_fixed, ...
-            onset_thr,flag1,rs_hat,ps_hat,as_hat,Ks_hat);
-        nActive=sum(activation.active);
+        [P,fval,fitInfo]=fitSubepidemicModel(context,z0,LB,UB,isLog,starts,nStarts,fitSettings);
 
         nEvaluated=nEvaluated+1;
+        candidateFitInfo{nEvaluated}=fitInfo;
+        fitDiagnostics(nEvaluated,:)=[nCandidate onset_thr double(fitInfo.success) fitInfo.exitflag ...
+            fitInfo.startAgreement fitInfo.gradientInfNorm double(fitInfo.polish.run) ...
+            double(fitInfo.polish.improved) fitInfo.nLocalRuns fitInfo.nConvergedRuns ...
+            numel(fitInfo.atLowerBound)+numel(fitInfo.atUpperBound)];
+
+        % A candidate with no converged, valid local minimum is recorded and
+        % skipped. It is never replaced by its seed.
+        if ~fitInfo.success
+            thresholdDiagnostics(nEvaluated,:)=[nCandidate onset_thr NaN 0 NaN];
+            subepidemicWarning('SubEpiPredict:CandidateRejected', ...
+                'Rejected n=%g, onset_thr=%g: %s',nCandidate,onset_thr,fitInfo.message);
+            continue
+        end
+
+        % Activation is read from the accepted fit's own simulation.
+        nActive=fitInfo.nActive;
         thresholdDiagnostics(nEvaluated,:)=[nCandidate onset_thr nActive ...
             double(nActive==nCandidate) fval];
 
@@ -287,17 +320,27 @@ for npatches2=[npatchess]
             continue
         end
 
+        previousP=P;
+
         AICc=getAICc(method1,dist1,nCandidate,flag1,1,fval,length(ydata),onset_fixed);
 
         RMSES(count1,:)=[nCandidate onset_thr AICc];
         PS(count1,1:expectedDimension)=P;
         count1=count1+1;
-                
+
     end %onset
     
 end %npatches
 
 thresholdDiagnostics=thresholdDiagnostics(1:nEvaluated,:);
+fitDiagnostics=fitDiagnostics(1:nEvaluated,:);
+candidateFitInfo=candidateFitInfo(1:nEvaluated);
+if count1==1 && ~isempty(candidatesTooLarge) && nEvaluated==0
+    error('SubEpiPredict:TooFewDataPoints', ...
+        ['No model can be ranked: the series has %d data points and the smallest model has %d parameters. ', ...
+         'AICc needs more data points than parameters plus one.'], ...
+        length(ydata),min(candidatesTooLarge(:,2)));
+end
 if count1==1
     error('SubEpiPredict:NoFullyActiveCandidates', ...
         'No candidate activated all of its fitted subepidemics during calibration.');
@@ -353,7 +396,7 @@ relativelik_i=exp((AICmin-RMSES(:,3))/2);
 if 0
 
     subplot(1,2,1)
-    line1=plot(RMSES(:,3),'ko-')
+    line1=plot(RMSES(:,3),'ko-');
 
     set(line1,'LineWidth',2)
 
@@ -365,7 +408,7 @@ if 0
     subplot(1,2,2)
 
 
-    line1=plot(relativelik_i,'ko-')
+    line1=plot(relativelik_i,'ko-');
 
     set(line1,'LineWidth',2)
 
@@ -383,7 +426,9 @@ end
 % <=============================================================================================>
 
 
-P=PS(index1,1:npatches*4+2);
+npatches=full(npatches); onset_thr=full(onset_thr); AICc_best=full(AICc_best);
+
+P=full(PS(index1,1:npatches*4+2));
 
 [rs_hat,ps_hat,as_hat,Ks_hat,alpha_hat,d_hat]= ...
     unpackSubepidemicParameters(P,npatches);
@@ -411,7 +456,7 @@ end
 
 % Shared initialization, activation reset, and incidence conversion.
 [~,x,totinc,patchIncidence,bestActivation]=simulateSubepidemic(timevect,I0,npatches,onset_fixed, ...
-    onset_thr,flag1,rs_hat,ps_hat,as_hat,Ks_hat);
+    onset_thr,flag1,rs_hat,ps_hat,as_hat,Ks_hat,odeOptions);
 
 % The stored dimension, parameter vector, and AICc must stay paired. Do not
 % silently shrink the selected model after ranking if reconstruction differs.
@@ -477,7 +522,7 @@ if method1==0
         
         factor1=mean(ratios(index1,1));
         
-        factor1
+        factor1;
         
     end
     

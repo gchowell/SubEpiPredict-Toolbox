@@ -26,8 +26,11 @@ global smoothfactor1 calibrationperiod1
 % <================== Load the parameter values ===============================>
 % <============================================================================>
 
+% Revision i: warnings of this run are collected and listed at its end.
+subepidemicWarningLog('start');
+
 % options.m
-[cumulative1_INP, outbreakx_INP, caddate1_INP, cadregion_INP, caddisease_INP, datatype_INP, DT_INP, datevecfirst1_INP, datevecend1_INP, numstartpoints_INP, topmodelsx_INP, M_INP, flag1_INP]=options
+[cumulative1_INP, outbreakx_INP, caddate1_INP, cadregion_INP, caddisease_INP, datatype_INP, DT_INP, datevecfirst1_INP, datevecend1_INP, numstartpoints_INP, topmodelsx_INP, M_INP, flag1_INP]=options;
 
 % <============================================================================>
 % <================================ Dataset ====================================>
@@ -146,6 +149,14 @@ for run_id=-1
     % remove repeated rows
     [RMSES,index1]=unique(RMSES,'rows','stable');
     PS=PS(index1,:);
+
+    % Revision h: the screen can hold fewer models than topmodelsx.
+    if topmodelsx(end)>size(RMSES,1)
+        subepidemicWarning('SubEpiPredict:TopModelsCapped', ...
+            'options.m asks for %d top-ranked models, but the screen retained %d. Ranks 1 to %d are used.', ...
+            topmodelsx(end),size(RMSES,1),size(RMSES,1));
+        topmodelsx=1:size(RMSES,1);
+    end
     
     
     AICc_bests=[AICc_bests full(RMSES(topmodelsx,3))];
@@ -157,7 +168,7 @@ for run_id=-1
         tiledlayout(1,3,'Padding','compact','TileSpacing','compact');
 
         nexttile(1)
-        line1=plot(RMSES(topmodelsx,3),'ko-')
+        line1=plot(RMSES(topmodelsx,3),'ko-');
         
         set(line1,'LineWidth',2)
         
@@ -169,7 +180,7 @@ for run_id=-1
         
         nexttile(2)
         
-        line1=plot(relativelik_i(topmodelsx),'ko-')
+        line1=plot(relativelik_i(topmodelsx),'ko-');
         
         set(line1,'LineWidth',2)
         
@@ -183,7 +194,7 @@ for run_id=-1
         
         %deltas=AICc_bests-AICc_bests(1);
         
-        line1=plot(1./relativelik_i(topmodelsx),'ko-')
+        line1=plot(1./relativelik_i(topmodelsx),'ko-');
         
         set(line1,'LineWidth',2)
         
@@ -201,19 +212,8 @@ for run_id=-1
     color1=['r-';'b-';'g-';'m-';'c-';'y-';'r-';'b-';'g-';'m-';'c-';'y-';'r-';'b-';'g-';'m-';'c-';'y-';'r-';'b-';'g-';'m-';'c-';'y-';'r-';'b-';'g-';'m-';'c-';'y-';];
     
     
-    factors=factor(length(topmodelsx));
-    
-    if length(factors)==1
-        rows=factors;
-        cols=1;
-        
-    elseif length(factors)==3
-        rows=factors(1)*factors(2);
-        cols=factors(3);
-    else
-        rows=factors(1);
-        cols=factors(2);
-    end
+    % Same grid as before whenever it has enough panels (subepidemicPanelGrid.m).
+    [rows,cols]=subepidemicPanelGrid(length(topmodelsx));
     
    tiledlayout(rows,cols,'Padding','compact','TileSpacing','compact');
 
@@ -292,7 +292,7 @@ for run_id=-1
             
             incidence1=patchIncidence(:,j);
             
-            line1=plot(timevect,incidence1,color1(j,:))
+            line1=plot(timevect,incidence1,color1(j,:));
             
             set(line1,'Linewidth',2)
             hold on
@@ -305,11 +305,11 @@ for run_id=-1
         
         
         hold on
-        line1=plot(timevect,data,'bo')
+        line1=plot(timevect,data,'bo');
         set(line1,'Linewidth',2,'markerSize',8)
         
         
-        line1=plot(timevect,totinc,'k')
+        line1=plot(timevect,totinc,'k');
         set(line1,'Linewidth',3)
         
         
@@ -326,7 +326,7 @@ for run_id=-1
         %legend(strcat('Num. Sub-epidemics=',num2str(npatches)))
         
         
-        [npatches onset_thr]
+        [npatches onset_thr];
         
         
         if (method1==0 & dist1==2)  % calculate the overdispersion factor
@@ -348,7 +348,7 @@ for run_id=-1
             
             factor1=mean(ratios(index1,1));
             
-            factor1
+            factor1;
             
         end
         
@@ -375,7 +375,7 @@ for j=1:cols
 end
 
 
-save(strcat('./output/AICc_bests-modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-0-smoothing-',num2str(smoothfactor1),'-',caddisease,'-',datatype,'-',cadregion,'-state-',num2str(outbreakx),'-dateini-',datestr(datenum(caddate1),'mm-dd-yy'),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-topmodels-',num2str(topmodelsx(end)),'.mat'),'AICc_bests','-mat')
+save(strcat('./output/AICc_bests-modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-',num2str(onset_fixed),'-smoothing-',num2str(smoothfactor1),'-',caddisease,'-',datatype,'-',cadregion,'-state-',num2str(outbreakx),'-dateini-',datestr(datenum(caddate1),'mm-dd-yy'),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-topmodels-',num2str(topmodelsx(end)),'.mat'),'AICc_bests','-mat')
 
 
 % <=====================================================================================================>
@@ -388,5 +388,5 @@ T = array2table(performanceTop);
 T.Properties.VariableNames(1:3) = {'i_th-ranked model','AICc','RelativeLikelihood'};
 writetable(T,strcat('./output/AICc-topRanked-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
 
-
-
+% Revision i: list the toolbox's warnings of this run once more (subepidemicWarningLog.m).
+subepidemicWarningLog('summary','plotRankings_subepidemicFramework');

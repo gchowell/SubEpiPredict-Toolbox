@@ -1,28 +1,32 @@
 function cad1=num2ordinal(num1)
+%NUM2ORDINAL Ordinal text of a positive integer: 1st, 2nd, 3rd, 4th, ..., 11th, 21st.
+%   cad1 = num2ordinal(num1)
+%
+%   Used in the figure titles of the ranked models. The earlier version listed
+%   the cases 1 to 10 and returned nothing for any other number, so the
+%   plotting scripts stopped at the 11th-ranked model. For 1 to 10 the text is
+%   the same as before.
 
-switch num1
-    case 1
-        cad1='1st';
-    case 2
-        cad1='2nd';
+if ~(isnumeric(num1) && isreal(num1) && isscalar(num1) && isfinite(num1) && num1>=1 && num1==fix(num1))
+    error('SubEpiPredict:InvalidRank','num2ordinal needs one positive integer.');
+end
+num1=full(double(num1));
 
-    case 3
-        cad1='3rd';
+lastTwo=mod(num1,100);
+if lastTwo>=11 && lastTwo<=13
+    suffix='th'; % 11th, 12th, 13th, 111th
+else
+    switch mod(num1,10)
+        case 1
+            suffix='st';
+        case 2
+            suffix='nd';
+        case 3
+            suffix='rd';
+        otherwise
+            suffix='th';
+    end
+end
 
-    case 4
-        cad1='4th';
-
-    case 5
-        cad1='5th';
-
-    case 6
-        cad1='6th';
-    case 7
-        cad1='7th';
-    case 8
-        cad1='8th';
-    case 9
-        cad1='9th';
-    case 10
-        cad1='10th';
+cad1=sprintf('%d%s',num1,suffix);
 end

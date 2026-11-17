@@ -8,7 +8,11 @@ function Run_Fit_subepidemicFramework(outbreakx_pass,caddate1_pass)
 % <=================== Declare global variables ===============================>
 % <============================================================================>
 
-clear global
+% Reset the toolbox's own global variables only. A bare "clear global" also
+% deleted every other global variable in the MATLAB session.
+clear global method1 npatches_fixed onset_fixed dist1 factor1 smoothfactor1 calibrationperiod1
+clear global invasions timeinvasions Cinvasions npatches onset_thr flag1 I0
+clear global timevect ydata yfit data LBe UBe
 
 global method1 %Parameter estimation method - LSQ=0, MLE Poisson=1, Pearson chi-squared=2, MLE (Neg Binomial)=3,MLE (Neg Binomial)=4, MLE (Neg Binomial)=5
 global npatches_fixed
@@ -22,7 +26,7 @@ global calibrationperiod1
 % <================== Load the parameter values ===============================>
 % <============================================================================>
 
-[cumulative1_INP, outbreakx_INP, caddate1_INP, cadregion_INP, caddisease_INP, datatype_INP, DT_INP, datevecfirst1_INP, datevecend1_INP, numstartpoints_INP, topmodelsx_INP, M_INP, flag1_INP]=options
+[cumulative1_INP, outbreakx_INP, caddate1_INP, cadregion_INP, caddisease_INP, datatype_INP, DT_INP, datevecfirst1_INP, datevecend1_INP, numstartpoints_INP, topmodelsx_INP, M_INP, flag1_INP]=options;
 
 
 % <============================================================================>
@@ -46,6 +50,35 @@ else
 
 end
 
+
+% <============================================================================>
+% <== Check the settings before anything else: every problem is reported at once ==>
+% <============================================================================>
+
+checkedSettings=struct();
+checkedSettings.method1=method1;
+checkedSettings.dist1=dist1;
+checkedSettings.flag1=flag1_INP;
+checkedSettings.npatches_fixed=npatches_fixed;
+checkedSettings.onset_fixed=onset_fixed;
+checkedSettings.smoothfactor1=smoothfactor1;
+checkedSettings.calibrationperiod1=calibrationperiod1;
+checkedSettings.numstartpoints=numstartpoints_INP;
+checkedSettings.topmodelsx=topmodelsx_INP;
+checkedSettings.B=M_INP;
+checkedSettings.DT=DT_INP;
+checkedSettings.cumulative1=cumulative1_INP;
+checkedSettings.outbreakx=outbreakx;
+subepidemicCheckSettings(checkedSettings);
+
+% Revision i: the settings in one line (the 13 outputs of options.m are no
+% longer displayed one by one), and a fresh list of warnings for this run.
+subepidemicWarningLog('start');
+fprintf(['Settings: method1 = %d, dist1 = %d, flag1 = %d, up to %d sub-epidemic(s), onset_fixed = %d, ', ...
+    'smoothfactor1 = %d, calibrationperiod1 = %d, %d start points, %d top models, B = %d.\n'], ...
+    method1,dist1,flag1_INP,npatches_fixed,onset_fixed,smoothfactor1,calibrationperiod1, ...
+    numstartpoints_INP,topmodelsx_INP,M_INP);
+clear checkedSettings
 
 cadregion=cadregion_INP; % string indicating the region of the time series (USA, Chile, Mexico, Nepal, etc)
 
@@ -161,8 +194,8 @@ flag1=flag1_INP; % Sequence of subepidemic growth models considered in epidemic 
 
 numparams=get_nparams(method1,dist1,npatches_fixed,flag1,1,onset_fixed);
 
-numparams
-calibrationperiod1
+numparams;
+calibrationperiod1;
 
 if numparams>=calibrationperiod1
 
@@ -186,9 +219,39 @@ dataprov=data';
 
 timelags=0; % keeps track of the epidemic onset timing (nonzero case)
 
-for outbreak1=outbreakx
-    
+% Several areas: each area is fitted and saved as if the driver had been
+% called for that area alone. Before, (1) the data matrix was cleared after
+% the first area, so the second one failed; (2) the output file names were
+% built once from the whole vector outbreakx, so every area would have written
+% to the same files; (3) a column vector was not looped over at all.
+outbreakList=outbreakx(:)';
+areasSkipped=[]; % areas with too few data points (revision h)
+topmodelsRequested=topmodelsx; % the setting; topmodelsx can be lowered for one area (revision h)
+
+% Every requested area must be a column of the data file; checked for all
+% areas now, not after the earlier ones have been fitted.
+if any(outbreakList>size(dataprov,1))
+    error('SubEpiPredict:InvalidSettings', ...
+        'outbreakx = %s, but the data file %s has %d column(s).',mat2str(outbreakList),datafilename1,size(dataprov,1));
+end
+
+for outbreak1=outbreakList
+
     close all
+
+    outbreakx=outbreak1; % the saved workspace and the file names refer to this area
+
+    topmodelsx=topmodelsRequested;
+
+    % Random seed (setting rngSeed) and generator state, per area, so that an
+    % area fitted in a call with several areas equals the same area fitted
+    % alone. rngInfo is saved with the results of each ranked model.
+    rngInfo=subepidemicSeed(sprintf('Run_Fit_subepidemicFramework, area %d',outbreak1));
+
+    datafilename2=strcat(cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-state-',num2str(outbreak1),'-',caddate1,'.txt');
+
+    data=load(strcat('./input/',datafilename1));
+    dataprov=data';
 
     data1=dataprov(outbreak1,:)';
 
@@ -261,19 +324,27 @@ for outbreak1=outbreakx
     %         end
     %     end
     
-    outbreakx
+    outbreakx;
     
-    caddate1
+    caddate1;
     
-    data1
+    data1;
     
     % <=============================================================================================>
     % <================ If time series is too short, do not proceed further ==========================================>
     % <=============================================================================================>
     
     if length(data1)<10 && npatches_fixed>1
-        length(data1)
-        'small number of data points..'
+
+        % Revision h: say so. Before, the area was skipped with a printed
+        % string only and the driver ended as if it had been fitted.
+        subepidemicWarning('SubEpiPredict:AreaSkipped', ...
+            ['Area %d has %d data points after the calibration window and the leading zeros are removed. ', ...
+             'At least 10 are needed with npatches_fixed > 1. The area was skipped: nothing was fitted or saved for it.'], ...
+            outbreak1,length(data1));
+        areasSkipped(end+1)=outbreak1; %#ok<AGROW>
+        length(data1);
+        'small number of data points..';
         continue
     end
     
@@ -288,7 +359,7 @@ for outbreak1=outbreakx
         
         factor1=mean(ratios(index1,1));
         
-        factor1
+        factor1;
         
     end
     
@@ -305,7 +376,7 @@ for outbreak1=outbreakx
     
     t_window=1:length(data(:,1));
     
-    data1=data(t_window',:)
+    data1=data(t_window',:);
     
     tiledlayout(1,1,'Padding','compact','TileSpacing','compact');
     nexttile(1)
@@ -316,6 +387,17 @@ for outbreak1=outbreakx
     % <=======================================================================================>
     
     [RMSESx,PS,npatches,onset_thr,~]=fittingModifiedLogisticFunctionPatchABC(datafilename2,data1,DT,t_window,M,flag1,numstartpoints);
+
+    % Revision h. The screen can retain fewer models than topmodelsx (few
+    % onset thresholds, candidates too large for the series, rejected fits).
+    % The lines below indexed 1:topmodelsx and stopped with an index error
+    % after the whole screen.
+    if topmodelsx>size(RMSESx,1)
+        subepidemicWarning('SubEpiPredict:TopModelsCapped', ...
+            ['options.m asks for %d top-ranked models, but the screen of area %d retained %d. ', ...
+             'Only those %d are bootstrapped.'],topmodelsx,outbreak1,size(RMSESx,1),size(RMSESx,1));
+        topmodelsx=size(RMSESx,1);
+    end
 
     AICmin=RMSESx(1,3);
 
@@ -329,7 +411,7 @@ for outbreak1=outbreakx
         tiledlayout(1,3,'Padding','compact','TileSpacing','compact');
 
         nexttile(1)
-        line1=plot(RMSESx(1:topmodelsx,3),'ko-')
+        line1=plot(RMSESx(1:topmodelsx,3),'ko-');
         
         set(line1,'LineWidth',2)
         
@@ -341,7 +423,7 @@ for outbreak1=outbreakx
         
         nexttile(2)
         
-        line1=plot(relativelik_i(1:topmodelsx),'ko-')
+        line1=plot(relativelik_i(1:topmodelsx),'ko-');
         
         set(line1,'LineWidth',2)
         
@@ -357,7 +439,7 @@ for outbreak1=outbreakx
         
         evidenceRatio=1./relativelik_i(1:topmodelsx);
         
-        line1=plot(evidenceRatio,'ko-')
+        line1=plot(evidenceRatio,'ko-');
         
         set(line1,'LineWidth',2)
         
@@ -389,7 +471,7 @@ for outbreak1=outbreakx
    
     for rank1=1:topmodelsx
         
-        [Phatss,npatches,onset_thr,curves,bestfit,data1,P0,AICc_best,factor1,d]=fittingModifiedLogisticFunctionPatchMultiple(RMSESx,PS,data1,DT,t_window,M,flag1,numstartpoints,rank1);
+        [Phatss,npatches,onset_thr,curves,bestfit,data1,P0,AICc_best,factor1,d,bootstrapDiagnostics]=fittingModifiedLogisticFunctionPatchMultiple(RMSESx,PS,data1,DT,t_window,M,flag1,numstartpoints,rank1);
         
         cadfilename1=strcat('./output/modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-',num2str(onset_fixed),'-smoothing-',num2str(smoothfactor1),'-',datafilename2(1:end-4),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-rank-',num2str(rank1),'.mat');
         
@@ -400,6 +482,12 @@ for outbreak1=outbreakx
     
 end
 
+if ~isempty(areasSkipped)
+    fprintf('Areas skipped for too few data points (nothing was saved for them): %s\n',mat2str(areasSkipped));
+end
+
 clear RMSESx PS P
 clear Phatss curves bestfit data1 P0 AICc_best d
 
+% Revision i: list the toolbox's warnings of this run once more (subepidemicWarningLog.m).
+subepidemicWarningLog('summary','Run_Fit_subepidemicFramework');

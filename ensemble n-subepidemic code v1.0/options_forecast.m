@@ -16,7 +16,7 @@ function [getperformance, deletetempfiles, forecastingperiod, weight_type1] = op
 %   forecastingperiod  (int)     Number of steps ahead to predict (horizon)
 %   weight_type1       (int)     Ensemble weighting:
 %                                   -1: Equal weights over the top models
-%                                    0: AICc-based weights (relative support)
+%                                    0: Akaike weights, same as 1 (it used to be 1/AICc, which is not a weight)
 %                                    1: Akaike weights (relative likelihoods)
 %                                    2: WISC-based weights (Weighted Interval Score on calibration)
 %
@@ -32,7 +32,7 @@ function [getperformance, deletetempfiles, forecastingperiod, weight_type1] = op
 % <==============================================================================>
 % Define parameters for forecasting configuration.
 
-getperformance = 0; % Flag to calculate forecasting performance metrics.
+getperformance = 1; % Flag to calculate forecasting performance metrics.
 % 1 = Calculate performance metrics (e.g., error, accuracy).
 % 0 = Skip performance calculations.
 
@@ -47,8 +47,8 @@ forecastingperiod = 4; % Forecast horizon, representing the number of time units
 % <==============================================================================>
 % Define the weighting scheme for constructing ensemble models from the top models.
 
-weight_type1 = 0; % Type of weighting for the ensemble model:
+weight_type1 = -1; % Type of weighting for the ensemble model:
 % -1 = Equal weighting from the top models.
-%  0 = Weighted ensemble based on Akaike Information Criterion corrected (AICc).
+%  0 = Same as 1. It used to be 1/AICc, which is not a weight; the code now warns and uses Akaike weights.
 %  1 = Weighted ensemble based on relative likelihood (Akaike weights).
 %  2 = Weighted ensemble based on the Weighted Interval Score of the calibration period (WISC).

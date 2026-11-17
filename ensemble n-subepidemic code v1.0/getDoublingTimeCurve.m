@@ -48,7 +48,7 @@ curve=curve((1:(1./dt1):end),:);
 
 if print1
     subplot(1,2,1)
-    line1=plot(XX(1:index1(end)),cumulative1(1:index1(end)),'-')
+    line1=plot(XX(1:index1(end)),cumulative1(1:index1(end)),'-');
     xlabel('\fontsize{16}Time')
     ylabel('\fontsize{16}Cumulative cases')
 

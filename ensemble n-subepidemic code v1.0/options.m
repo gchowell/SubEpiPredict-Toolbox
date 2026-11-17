@@ -33,7 +33,7 @@ function [cumulative1, outbreakx, caddate1, cadregion, caddisease, datatype, DT,
 %
 % Globals used/set
 %   method1            Estimator:
-%                        0=LSQ, 1=MLE Poisson, 2=Pearson χ², 3/4/5=MLE NegBin (see below)
+%                        0=LSQ, 1=MLE Poisson, 3/4/5=MLE NegBin, 6=least absolute deviations (see below)
 %   npatches_fixed     Max number of sub-epidemic components (patches)
 %   onset_fixed        1=fixed onset times across patches; 0=asynchronous allowed
 %   dist1              Observation/error model code (mapped below)
@@ -48,21 +48,24 @@ function [cumulative1, outbreakx, caddate1, cadregion, caddisease, datatype, DT,
 %   where <cadtemporal> ∈ {'daily','weekly','yearly'}; columns = areas/groups.
 %
 % Estimation & error models
-%   method1 chooses the estimator; dist1 encodes/weights the observation model:
+%   method1 chooses the estimator; dist1 is the error model that simulates the
+%   bootstrap data and the forecast noise. The fit driver checks the pair before fitting.
 %     method1 = 0  LSQ
-%         choose dist1 ∈ {0,1,2}:
-%           0: Normal (homoscedastic LSQ)
-%           1: Poisson-like weighting (var≈mean; LSQ variant)
-%           2: NegBin-like weighting var=factor1·mean (factor1 estimated empirically)
+%         set dist1 yourself to 0, 1 or 2 (it is NOT set automatically for method1 = 0):
+%           0: Normal noise (homoscedastic LSQ)
+%           1: Poisson noise around the least-squares fit (the fit itself is unweighted)
+%           2: NegBin noise with var=factor1·mean around the unweighted fit (factor1 estimated empirically)
 %     method1 = 1  MLE Poisson                  → dist1 := 1 (automatic)
-%     method1 = 2  Pearson χ² (GOF diagnostic)  → dist1 unchanged (no auto-mapping)
 %     method1 = 3  MLE NegBin var = mean + α·mean    → dist1 := 3 (automatic)
 %     method1 = 4  MLE NegBin var = mean + α·mean^2  → dist1 := 4 (automatic)
 %     method1 = 5  MLE NegBin var = mean + α·mean^d  → dist1 := 5 (automatic)
+%     method1 = 6  least absolute deviations (Laplace errors) → set dist1 = 6 yourself (or 1)
+%     (method1 = 2 is not implemented; the fit driver stops with a message)
 %
 % n-sub-epidemic growth kernels (flag1 codes)
-%   GGM=0 (Generalized Growth), GLM=1 (Logistic), GRM=2 (Generalized Richards),
-%   LM=3 (Linear), RICH=4 (Richards). Set flag1 to one of the above.
+%   GGM=0 (Generalized Growth), GLM=1 (Generalized Logistic), GRM=2 (Generalized Richards),
+%   LM=3 (Logistic), RICH=4 (Richards), 5 (Gompertz). Set flag1 to ONE of these codes;
+%   the same kernel is used for every sub-epidemic.
 %
 % Model search & constraints
 %   npatches_fixed caps the number of sub-epidemic components considered.
@@ -81,7 +84,7 @@ function [cumulative1, outbreakx, caddate1, cadregion, caddisease, datatype, DT,
 % <=================== Declare Global Variables ===============================>
 % <============================================================================>
 % Declare global variables used for parameter estimation and model fitting.
-global method1          % Parameter estimation method: LSQ=0, MLE Poisson=1, Pearson chi-squared=2, MLE (Neg Binomial)=3, 4, 5
+global method1          % Parameter estimation method: LSQ=0, MLE Poisson=1, MLE (Neg Binomial)=3, 4, 5, least absolute deviations=6
 global npatches_fixed   % Maximum number of subepidemics considered in the trajectory
 global onset_fixed      % Flag to indicate if the onset timing of subepidemics is fixed
 global dist1            % Type of error structure
@@ -138,22 +141,24 @@ calibrationperiod1 = 90; % Number of most recent data points used for calibratio
 % <============================================================================>
 % Settings for parameter estimation and error structure.
 
-method1 = 0;            % Parameter estimation method:
+method1 = 3;            % Parameter estimation method:
 % 0 = Nonlinear least squares (LSQ)
 % 1 = MLE Poisson
 % 3 = MLE Negative Binomial (VAR=mean+alpha*mean)
 % 4 = MLE Negative Binomial (VAR=mean+alpha*mean^2)
 % 5 = MLE Negative Binomial (VAR=mean+alpha*mean^d)
+% 6 = Least absolute deviations (Laplace errors); set dist1 = 6
 
-dist1 = 0;              % Error structure type:
+dist1 = 3;              % Error structure type (for method1 = 0 choose 0, 1 or 2 here):
 % 0 = Normal distribution
 % 1 = Poisson error structure
 % 2 = Negative Binomial (VAR=factor1*mean)
 % 3 = MLE Negative Binomial (VAR=mean+alpha*mean)
 % 4 = MLE Negative Binomial (VAR=mean+alpha*mean^2)
 % 5 = MLE Negative Binomial (VAR=mean+alpha*mean^d)
+% 6 = Laplace (with method1 = 6)
 
-% Automatically set dist1 based on method1
+% Automatically set dist1 based on method1 (not for method1 = 0 or 6)
 switch method1
     case 1
         dist1 = 1;
@@ -183,10 +188,11 @@ end
 
 % Growth model types
 GGM = 0;  % Generalized Growth Model
-GLM = 1;  % Logistic Model
+GLM = 1;  % Generalized Logistic Model
 GRM = 2;  % Generalized Richards Model
-LM = 3;   % Linear Model
+LM = 3;   % Logistic Model
 RICH = 4; % Richards Model
+% Gompertz model: flag1 = 5
 
 flag1 = GLM;            % Growth model sequence used in trajectory fitting
 onset_fixed = 0;        % Fix onset timing of subepidemics (1=fixed, 0=not fixed)

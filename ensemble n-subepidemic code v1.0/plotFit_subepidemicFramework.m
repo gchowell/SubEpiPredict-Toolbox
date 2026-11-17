@@ -29,7 +29,7 @@ global calibrationperiod1
 % <============================================================================>
 
 % options.m
-[cumulative1_INP,outbreakx_INP, caddate1_INP, cadregion_INP, caddisease_INP, datatype_INP, DT_INP, datevecfirst1_INP, datevecend1_INP, numstartpoints_INP, topmodelsx_INP, M_INP, flag1_INP]=options
+[cumulative1_INP,outbreakx_INP, caddate1_INP, cadregion_INP, caddisease_INP, datatype_INP, DT_INP, datevecfirst1_INP, datevecend1_INP, numstartpoints_INP, topmodelsx_INP, M_INP, flag1_INP]=options;
 
 % <============================================================================>
 % <================================ Dataset ======================================>
@@ -116,6 +116,18 @@ if npatchess2==1
     topmodels1=1;
 end
 
+% Revision i: warnings of this run are collected and listed at its end.
+subepidemicWarningLog('start');
+
+% Revision h: use the ranked models the saved fit holds, if options.m asks for
+% more (subepidemicAvailableTopModels.m).
+topmodels1=subepidemicAvailableTopModels(topmodels1,npatches_fixed,onset_fixed,smoothfactor1, ...
+    strcat(cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-state-',num2str(outbreakx),'-',caddate1), ...
+    flag1_INP,method1,dist1,calibrationperiod1);
+
+% Random seed, if the setting rngSeed is given (subepidemicSeed.m).
+rngInfo=subepidemicSeed('plotFit_subepidemicFramework');
+
 
 % <=======================================================================================>
 % <========== Initialize variables to store results across top-ranked models ===========================>
@@ -151,7 +163,7 @@ for rank1=topmodels1
 
     cc2=1;
 
-    npatches_fixed=npatchess2
+    npatches_fixed=npatchess2;
 
     flag1=flagss2(cc2,:);
 
@@ -161,7 +173,7 @@ for rank1=topmodels1
     % <========================================================================================>
 
     % Do not retain a previous rank's fit if the current MAT file omits it.
-    clear bestfit bestfit_original
+    clear bestfit bestfit_original P0
     load (strcat('./output/modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-',num2str(onset_fixed),'-smoothing-',num2str(smoothfactor1),'-',cadfilename2,'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-rank-',num2str(rank1),'.mat'))
 
     % Preserve this rank's saved original-data fit for residual diagnostics.
@@ -174,6 +186,16 @@ for rank1=topmodels1
              'one value per calibration data row.'], rank1);
     end
     bestfit_original = bestfit(:);
+
+    % The ranked fit to the observed data. The titles and console lines below
+    % report it as the estimate; the bootstrap refits give the interval.
+    if ~exist('P0','var') || ~isnumeric(P0) || ~isreal(P0) || ...
+            numel(P0) ~= 4*npatches+2 || any(~isfinite(P0(:)))
+        error('plotFit_subepidemicFramework:InvalidSavedEstimate', ...
+            ['Rank %d must contain the fitted parameter vector P0 with ' ...
+             '%d finite values. Rerun the fit.'], rank1, 4*npatches+2);
+    end
+    fittedEstimate = full(double(P0(:)'));
 
      datevecfirst1=datevecfirst1_INP;
 
@@ -205,9 +227,11 @@ for rank1=topmodels1
 
     param_d=[mean(Phatss(:,end)) quantile(Phatss(:,end),0.025) quantile(Phatss(:,end),0.975)];
 
-    cad6=strcat('alpha=',num2str(param_alpha(end,1),3),'(95%CI:',num2str(param_alpha(end,2),3),',',num2str(param_alpha(end,3),3),')')
+    % Estimate of the ranked fit with the bootstrap interval (param_alpha and
+    % param_d keep the bootstrap mean for the csv files below).
+    cad6=subepidemicParameterLabel('alpha',fittedEstimate(end-1),param_alpha(end,2),param_alpha(end,3))
 
-    cad7=strcat('d=',num2str(param_d(end,1),3),'(95%CI:',num2str(param_d(end,2),3),',',num2str(param_d(end,3),3),')')
+    cad7=subepidemicParameterLabel('d',fittedEstimate(end),param_d(end,2),param_d(end,3))
 
     i=1;
 
@@ -225,10 +249,15 @@ for rank1=topmodels1
 
         param_K=[param_K;[mean(Ks(:,j)) quantile(Ks(:,j),0.025) quantile(Ks(:,j),0.975)]];
 
-        cad1=strcat('r_',num2str(j),'=',num2str(param_r(j,1),2),'(95%CI:',num2str(param_r(j,2),2),',',num2str(param_r(j,3),2),')');
-        cad2=strcat('p_',num2str(j),'=',num2str(param_p(j,1),2),'(95%CI:',num2str(param_p(j,2),2),',',num2str(param_p(j,3),2),')')
-        cad3=strcat('a_',num2str(j),'=',num2str(param_a(j,1),2),'(95%CI:',num2str(param_a(j,2),2),',',num2str(param_a(j,3),2),')')
-        cad4=strcat('K_',num2str(j),'=',num2str(param_K(j,1),3),'(95%CI:',num2str(param_K(j,2),3),',',num2str(param_K(j,3),3),')')
+        % Titles: the estimate of the ranked fit (not the bootstrap mean, which
+        % differs from it for a skewed parameter) and the bootstrap interval,
+        % three significant digits. param_r ... param_K keep the bootstrap mean
+        % in their first column; the csv files below report mean, estimate and
+        % median.
+        cad1=subepidemicParameterLabel(sprintf('r_%d',j),fittedEstimate(j),param_r(j,2),param_r(j,3));
+        cad2=subepidemicParameterLabel(sprintf('p_%d',j),fittedEstimate(npatches+j),param_p(j,2),param_p(j,3))
+        cad3=subepidemicParameterLabel(sprintf('a_%d',j),fittedEstimate(2*npatches+j),param_a(j,2),param_a(j,3))
+        cad4=subepidemicParameterLabel(sprintf('K_%d',j),fittedEstimate(3*npatches+j),param_K(j,2),param_K(j,3))
 
 
         nexttile(i)
@@ -247,6 +276,9 @@ for rank1=topmodels1
         line1=plot(line2(:,1),line2(:,2),'r--');
         set(line1,'LineWidth',2)
 
+        % fitted estimate of r_j: black dashed vertical line
+        subepidemicEstimateLine(fittedEstimate(j));
+
         legend(strcat(num2ordinal(rank1),' Ranked Model'))
 
         nexttile(i+1)
@@ -264,6 +296,9 @@ for rank1=topmodels1
         line1=plot(line2(:,1),line2(:,2),'r--');
         set(line1,'LineWidth',2)
 
+        % fitted estimate of p_j: black dashed vertical line
+        subepidemicEstimateLine(fittedEstimate(npatches+j));
+
 
         nexttile(i+2)
         hist(as(:,j))
@@ -279,6 +314,9 @@ for rank1=topmodels1
         line1=plot(line2(:,1),line2(:,2),'r--');
         set(line1,'LineWidth',2)
 
+        % fitted estimate of a_j: black dashed vertical line
+        subepidemicEstimateLine(fittedEstimate(2*npatches+j));
+
 
         nexttile(i+3)
         hist(Ks(:,j))
@@ -290,6 +328,9 @@ for rank1=topmodels1
 
         line1=plot(line2(:,1),line2(:,2),'r--');
         set(line1,'LineWidth',2)
+
+        % fitted estimate of K_j: black dashed vertical line
+        subepidemicEstimateLine(fittedEstimate(3*npatches+j));
 
 
         set(gca,'FontSize', 16);
@@ -306,24 +347,32 @@ for rank1=topmodels1
 
     forecastingperiod=0;
 
-    T = array2table([(1:npatches)' param_r log10(param_r(:,3)./param_r(:,2))]);
+    % Columns 1 to 5 are as before: "mean" is the mean of the bootstrap refits.
+    % SCI is the log10 width of the interval, computed by sci_interval.m, which
+    % returns 6 instead of Inf when the lower limit is 0.
+    % Two columns are added at the end: "estimate", the value in the ranked fit
+    % to the observed data (the number in the histogram title), and "median",
+    % the median of the refits. A few refits with a very large value can move
+    % the mean far from both.
+
+    T = array2table([(1:npatches)' param_r sci_interval(param_r(:,2),param_r(:,3)) fittedEstimate(1:npatches)' median(Phatss(:,1:npatches),1)']);
     T.Properties.VariableNames(1)={'sub-epidemic'};
-    T.Properties.VariableNames(2:5) = {'r mean','r 95% CI LB','r 95% CI UB','r SCI'};
+    T.Properties.VariableNames(2:7) = {'r mean','r 95% CI LB','r 95% CI UB','r SCI','r estimate','r median'};
     writetable(T,strcat('./output/param-r-ranked(', num2str(rank1),')-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-horizon-',num2str(forecastingperiod),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
 
-    T = array2table([(1:npatches)' param_p log10(param_p(:,3)./param_p(:,2))]);
+    T = array2table([(1:npatches)' param_p sci_interval(param_p(:,2),param_p(:,3)) fittedEstimate(npatches+1:2*npatches)' median(Phatss(:,npatches+1:2*npatches),1)']);
     T.Properties.VariableNames(1)={'sub-epidemic'};
-    T.Properties.VariableNames(2:5) = {'p mean','p 95% CI LB','p 95% CI UB','p SCI'};
+    T.Properties.VariableNames(2:7) = {'p mean','p 95% CI LB','p 95% CI UB','p SCI','p estimate','p median'};
     writetable(T,strcat('./output/param-p-ranked(', num2str(rank1),')-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-horizon-',num2str(forecastingperiod),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
 
-    T = array2table([(1:npatches)' param_a log10(param_a(:,3)./param_a(:,2))]);
+    T = array2table([(1:npatches)' param_a sci_interval(param_a(:,2),param_a(:,3)) fittedEstimate(2*npatches+1:3*npatches)' median(Phatss(:,2*npatches+1:3*npatches),1)']);
     T.Properties.VariableNames(1)={'sub-epidemic'};
-    T.Properties.VariableNames(2:5) = {'a mean','a 95% CI LB','a 95% CI UB','a SCI'};
+    T.Properties.VariableNames(2:7) = {'a mean','a 95% CI LB','a 95% CI UB','a SCI','a estimate','a median'};
     writetable(T,strcat('./output/param-a-ranked(', num2str(rank1),')-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-horizon-',num2str(forecastingperiod),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
 
-    T = array2table([(1:npatches)' param_K log10(param_K(:,3)./param_K(:,2))]);
+    T = array2table([(1:npatches)' param_K sci_interval(param_K(:,2),param_K(:,3)) fittedEstimate(3*npatches+1:4*npatches)' median(Phatss(:,3*npatches+1:4*npatches),1)']);
     T.Properties.VariableNames(1)={'sub-epidemic'};
-    T.Properties.VariableNames(2:5) = {'K mean','K 95% CI LB','K 95% CI UB','K SCI'};
+    T.Properties.VariableNames(2:7) = {'K mean','K 95% CI LB','K 95% CI UB','K SCI','K estimate','K median'};
     writetable(T,strcat('./output/param-K-ranked(', num2str(rank1),')-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-horizon-',num2str(forecastingperiod),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
 
     % <==============================================================================================>
@@ -332,16 +381,16 @@ for rank1=topmodels1
 
     if method1==3 || method1==4  %save parameter alpha. VAR=mean+alpha*mean; VAR=mean+alpha*mean^2;
 
-        T = array2table([param_alpha log10(param_alpha(:,3)./param_alpha(:,2))]);
-        T.Properties.VariableNames(1:4) = {'alpha mean','alpha 95% CI LB','alpha 95% CI UB','alpha SCI'};
+        T = array2table([param_alpha sci_interval(param_alpha(:,2),param_alpha(:,3)) fittedEstimate(end-1) median(Phatss(:,end-1),1)]);
+        T.Properties.VariableNames(1:6) = {'alpha mean','alpha 95% CI LB','alpha 95% CI UB','alpha SCI','alpha estimate','alpha median'};
         writetable(T,strcat('./output/param-NB-alpha-ranked(', num2str(rank1),')-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-horizon-',num2str(forecastingperiod),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
     elseif method1==5
-        T = array2table([param_alpha log10(param_alpha(:,3)./param_alpha(:,2))]);
-        T.Properties.VariableNames(1:4) = {'alpha mean','alpha 95% CI LB','alpha 95% CI UB','alpha SCI'};
+        T = array2table([param_alpha sci_interval(param_alpha(:,2),param_alpha(:,3)) fittedEstimate(end-1) median(Phatss(:,end-1),1)]);
+        T.Properties.VariableNames(1:6) = {'alpha mean','alpha 95% CI LB','alpha 95% CI UB','alpha SCI','alpha estimate','alpha median'};
         writetable(T,strcat('./output/param-NB-alpha-ranked(', num2str(rank1),')-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-horizon-',num2str(forecastingperiod),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
 
-        T = array2table([param_d log10(param_d(:,3)./param_d(:,2))]);
-        T.Properties.VariableNames(1:4) = {'d mean','d 95% CI LB','d 95% CI UB','d SCI'};
+        T = array2table([param_d sci_interval(param_d(:,2),param_d(:,3)) fittedEstimate(end) median(Phatss(:,end),1)]);
+        T.Properties.VariableNames(1:6) = {'d mean','d 95% CI LB','d 95% CI UB','d SCI','d estimate','d median'};
         writetable(T,strcat('./output/param-NB-d-ranked(', num2str(rank1),')-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-horizon-',num2str(forecastingperiod),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
     end
 
@@ -470,7 +519,10 @@ for rank1=topmodels1
 
     forecastingperiod=0;
     
-    meandoublingtime=zeros(M,1);
+    % Revision 2026-11-16: meandoublingtime starts empty. It used to start as M zeros
+    % and the M values were appended after them, which halved the mean and put the
+    % lower limit at 0. Curves with no doubling give NaN and are left out.
+    meandoublingtime=[];
 
     doublingtimess=zeros(30,M)+NaN;
 
@@ -504,9 +556,16 @@ for rank1=topmodels1
     seq_doublingtimes % [ith doubling, mean, 95%CI LB, 95%CI UB, prob. i_th doubling]
 
     % Mean doubling times
-    dmean=mean(meandoublingtime);
-    dLB=quantile(meandoublingtime,0.025);
-    dUB=quantile(meandoublingtime,0.975);
+    meandoublingtime=meandoublingtime(~isnan(meandoublingtime));
+    if isempty(meandoublingtime) % no curve doubled
+        dmean=NaN;
+        dLB=NaN;
+        dUB=NaN;
+    else
+        dmean=mean(meandoublingtime);
+        dLB=quantile(meandoublingtime,0.025);
+        dUB=quantile(meandoublingtime,0.975);
+    end
 
     param_doubling=[dmean dLB dUB]
 
@@ -653,7 +712,7 @@ if 0
         forecastingperiod=0;
         getperformance=1;
 
-        weights1=(1./AICc_bests)/(sum(1./AICc_bests));
+        weights1=subepidemicEnsembleWeights(1,AICc_bests,[],[]); % Akaike weights; (1/AICc)/sum(1/AICc) is not a weight
 
         curvesforecasts1ens=[];
         curvesforecasts2ens=[];
@@ -847,3 +906,5 @@ if 0
 
 end
 
+% Revision i: list the toolbox's warnings of this run once more (subepidemicWarningLog.m).
+subepidemicWarningLog('summary','plotFit_subepidemicFramework');

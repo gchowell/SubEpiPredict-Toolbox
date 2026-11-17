@@ -65,6 +65,19 @@ elseif method1==6  % Laplace distribution -- one parameter for scale
 end
 
 
+% Revision h. The small-sample term 2k(k+1)/(n-k-1) is defined only for
+% n > k+1. At n = k+1 it is infinite and below that it is NEGATIVE, so a model
+% with more parameters than the data can support was rewarded (with 10 points
+% and least squares: +16 for one GLM sub-epidemic, -110 for three). Such a
+% model now gets AICc = Inf and can never be ranked ahead of a valid one. The
+% screen (fittingModifiedLogisticFunctionPatchABC.m) does not fit it at all.
+if n-numparams-1<=0
+    AICc=Inf;
+    part1=NaN;
+    part2=Inf;
+    return
+end
+
 switch method1
 
     case 0

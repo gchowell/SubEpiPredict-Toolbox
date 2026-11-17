@@ -239,7 +239,7 @@ for j=1:npatches
 
     incidence1=patchIncidence(:,j);
 
-    line1=plot(timevect,incidence1,color1(j,:))
+    line1=plot(timevect,incidence1,color1(j,:));
 
     set(line1,'Linewidth',2)
     hold on
@@ -249,7 +249,7 @@ end
 
 bestfit=totinc;
 
-line1=plot(timevect,totinc,'k')
+line1=plot(timevect,totinc,'k');
 set(line1,'Linewidth',3)
 
 ylabel('dC(t)/dt')

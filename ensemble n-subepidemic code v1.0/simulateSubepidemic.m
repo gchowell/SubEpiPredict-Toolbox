@@ -10,7 +10,9 @@ function [t,x,totinc,patchIncidence,activation]=simulateSubepidemic(timevect,I0,
 %   events; no seeds are added or removed at an activation. The full requested
 %   grid must start at the calibration initial time (not a forecast-only tail).
 %
-%   Optional odeOptions retains ode15s tolerances and step controls. Events is
+%   Optional odeOptions sets ode15s tolerances and step controls; when it is
+%   omitted or empty, subepidemicOdeOptions() is used (RelTol 1e-8, AbsTol
+%   1e-10), so fits, forecasts and plots share one setting. Events is
 %   reserved for activation; nonempty custom Events, Mass, Jacobian, and
 %   Vectorized='on' are rejected rather than silently misapplied to a changing
 %   activation mask. The default solver remains ode15s.
@@ -39,7 +41,9 @@ global invasions timeinvasions Cinvasions
 invasions=[]; timeinvasions=[]; Cinvasions=[];
 
 if nargin<11 || isempty(odeOptions)
-    odeOptions=odeset();
+    % Revision 2026-11: one shared setting instead of the odeset defaults
+    % (RelTol 1e-3, AbsTol 1e-6). See subepidemicOdeOptions.m.
+    odeOptions=subepidemicOdeOptions();
 end
 [IC,active0,legacyTimes,legacyCounts]= ...
     initializeSubepidemicState(I0,npatches,onset_fixed);

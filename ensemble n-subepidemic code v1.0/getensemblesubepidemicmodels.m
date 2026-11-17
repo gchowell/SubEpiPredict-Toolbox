@@ -1,6 +1,6 @@
 
 
-function [RMSECS_model1 MSECS_model1 MAECS_model1  PICS_model1 MISCS_model1 WISC RMSEFS_model1 MSEFS_model1 MAEFS_model1 PIFS_model1 MISFS_model1 WISFS forecast1 quantilesc quantilesf]=getensemblesubepidemics(cumulative1,cadfilename1,datevecfirst1,npatches_fixed,onset_fixed,smoothfactor1,outbreakx,cadregion,caddate1,caddisease,datatype,flag1,method1,dist1,calibrationperiod1,topmodels1,forecastingperiod,getperformance,weight_type1,WISC_hash,WISF_hash,printscreen1)
+function [RMSECS_model1 MSECS_model1 MAECS_model1  PICS_model1 MISCS_model1 WISC RMSEFS_model1 MSEFS_model1 MAEFS_model1 PIFS_model1 MISFS_model1 WISFS forecast1 quantilesc quantilesf]=getensemblesubepidemics(cumulative1,cadfilename1,datevecfirst1,npatches_fixed,onset_fixed,smoothfactor1,outbreakx,cadregion,caddate1,caddisease,datatype,flag1,method1,dist1,calibrationperiod1,topmodels1,forecastingperiod,getperformance,weight_type1,WISC_hash,WISF_hash,printscreen1,ensemblePanelGrid)
 
 load(strcat('./output/ABC-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-',num2str(onset_fixed),'-smoothing-',num2str(smoothfactor1),'-',cadfilename1,'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'.mat'),'-mat')
 
@@ -16,35 +16,18 @@ PS=PS(index1,:);
 %RMSES(:,3) % AICc
 
 
-switch weight_type1
-
-    case -1 % equally weighted from top models models
-
-        weights1=ones(length(topmodels1),1)./length(topmodels1);
-
-    case 0 % based on AICc
-
-        AICc_best=RMSES(topmodels1,3);
-
-        weights1=(1./AICc_best)/(sum(1./AICc_best)); % weights based on AICc
-
-    case 1 %based on relative likelihood or Akaike weights
-
-        AICmin=RMSES(1,3);
-
-        relativelik_i=exp((AICmin-RMSES(topmodels1,3))/2);
-
-        weights1=relativelik_i./sum(relativelik_i);  % weights based on relative likelihood
-
-    case 2 % based on WISC during calibration of the models
-
-        weights1=(1./WISC_hash(topmodels1))/sum(1./WISC_hash(topmodels1));
-
-    case 3 % based on WISF based on forecasting performance during previous week (time period)
-
-        weights1=(1./WISF_hash(topmodels1))/sum(1./WISF_hash(topmodels1));
-
+% Weights of the member models (subepidemicEnsembleWeights.m): -1 equal,
+% 0 and 1 Akaike weights, 2 inverse WISC, 3 inverse WISF. Code 0 used to be
+% (1/AICc)/sum(1/AICc), which is not a weight; it now gives Akaike weights and
+% warns. The scores are read only for the code that uses them.
+scoresC=[];
+scoresF=[];
+if weight_type1==2
+    scoresC=WISC_hash(topmodels1);
+elseif weight_type1==3
+    scoresF=WISF_hash(topmodels1);
 end
+weights1=subepidemicEnsembleWeights(weight_type1,RMSES(topmodels1,3),scoresC,scoresF);
 
 % weight_type1
 % weights1
@@ -62,8 +45,12 @@ end
 curvesforecasts1ens=[];
 curvesforecasts2ens=[];
 
-'ensemble'
-topmodels1
+% Member with the largest weight (revision h; see the loop below).
+[~,bestMember]=max(weights1(1:numel(topmodels1)));
+bestMember=topmodels1(bestMember);
+
+'ensemble';
+topmodels1;
 
 for rank1=topmodels1
 
@@ -74,7 +61,21 @@ for rank1=topmodels1
 
     M1=length(curvesforecasts1(1,:));
 
-    index1=datasample(1:M1,round(M1*weights1(rank1)),'Replace',false);
+    % Revision h. Each member gives round(number of its curves * weight)
+    % curves. When the refits are few against the number of members, every
+    % such number can round to 0 and the ensemble was empty (index error
+    % further down). The member with the largest weight now gives at least
+    % one curve; nothing changes whenever it already did.
+    nFromMember1=round(M1*weights1(rank1));
+    if rank1==bestMember && nFromMember1<1
+        nFromMember1=1;
+        subepidemicWarning('SubEpiPredict:EnsembleTooFewRefits', ...
+            ['Ensemble of %d models: no member has enough refits for its weight (%d refits, largest weight %.3g). ', ...
+             'One curve of the member with the largest weight is used. Raise B.'], ...
+            numel(topmodels1),M1,weights1(bestMember));
+    end
+
+    index1=datasample(1:M1,nFromMember1,'Replace',false);
 
     if length(index1)>0
         curvesforecasts1ens=[curvesforecasts1ens curvesforecasts1(:,index1)];
@@ -84,7 +85,12 @@ for rank1=topmodels1
 
     M2=length(curvesforecasts2(1,:));
 
-    index2=datasample(1:M2,round(M2*weights1(rank1)),'Replace',false);
+    nFromMember2=round(M2*weights1(rank1));
+    if rank1==bestMember && nFromMember2<1
+        nFromMember2=1;
+    end
+
+    index2=datasample(1:M2,nFromMember2,'Replace',false);
 
     if length(index2)>0
         curvesforecasts2ens=[curvesforecasts2ens curvesforecasts2(:,index2)];
@@ -116,7 +122,18 @@ writetable(combinedQuantilesTable,strcat('./output/quantileTimes-Ensemble(',num2
 if printscreen1
 
     figure(500)
-    subplot(1,3,topmodels1(end)-1)
+
+    % One panel per ensemble, Ensemble(2) in panel 1. The grid was fixed at
+    % 1 by 3, so the ensemble of five models asked for a fourth panel and the
+    % run stopped. The forecast script now passes the grid for all ensembles;
+    % without it, three panels as before, or as many as this ensemble needs.
+    if nargin<23 || isempty(ensemblePanelGrid)
+        ensemblePanelGrid=[1 max(3,topmodels1(end)-1)];
+    end
+    if ensemblePanelGrid(1)*ensemblePanelGrid(2)<topmodels1(end)-1
+        ensemblePanelGrid=[ceil((topmodels1(end)-1)/3) 3];
+    end
+    subplot(ensemblePanelGrid(1),ensemblePanelGrid(2),topmodels1(end)-1)
 
     datenum1=datenum([str2num(caddate1(7:10)) str2num(caddate1(1:2)) str2num(caddate1(4:5))]);
 
@@ -128,7 +145,7 @@ if printscreen1
 
     hold on
 
-    quantile(curvesforecasts2',0.025)
+    quantile(curvesforecasts2',0.025);
 
     LB1=quantile(curvesforecasts2',0.025);
     LB1=(LB1>=0).*LB1;
@@ -136,10 +153,10 @@ if printscreen1
     UB1=quantile(curvesforecasts2',0.975);
     UB1=(UB1>=0).*UB1;
 
-    size(LB1)
-    size(timevect2)
+    size(LB1);
+    size(timevect2);
 
-    h=area(timevect2',[LB1' UB1'-LB1'])
+    h=area(timevect2',[LB1' UB1'-LB1']);
     hold on
 
     h(1).FaceColor = [1 1 1];
@@ -147,22 +164,22 @@ if printscreen1
 
     %line1=plot(timevect2,quantile(curvesforecasts2',0.5),'r-')
 
-    line1=plot(timevect2,median(curvesforecasts2,2),'r-')
+    line1=plot(timevect2,median(curvesforecasts2,2),'r-');
 
     set(line1,'LineWidth',2)
 
     if  1
-        line1=plot(timevect2,LB1,'k--')
+        line1=plot(timevect2,LB1,'k--');
         set(line1,'LineWidth',2)
 
-        line1=plot(timevect2,UB1,'k--')
+        line1=plot(timevect2,UB1,'k--');
         set(line1,'LineWidth',2)
     end
 
     gray1=gray(10);
 
     % plot time series datalatest
-    line1=plot(data1(:,1),data1(:,2),'ko')
+    line1=plot(data1(:,1),data1(:,2),'ko');
     set(line1,'LineWidth',2)
 
 
@@ -172,17 +189,17 @@ if printscreen1
 
     box on
 
-    line1=plot(line2(:,1),line2(:,2),'k--')
+    line1=plot(line2(:,1),line2(:,2),'k--');
     set(line1,'LineWidth',2)
 
 
     % plot dates in x axis
-    'day='
+    'day=';
     datenum1=datenum(wave(1:3))+timelags*DT; % start of fall wave (reference date)
-    datestr(datenum1)
+    datestr(datenum1);
 
     datenumIni=datenum1;
-    datenumEnd=datenum(wave(4:6))
+    datenumEnd=datenum(wave(4:6));
 
     dates1=datestr(datenumIni:DT:datenumEnd,'mm-dd');
 
@@ -220,7 +237,10 @@ end
 
 % compute doubling times
 
-meandoublingtime=zeros(M1,1);
+% Revision 2026-11-16: meandoublingtime starts empty. It used to start as M zeros
+% and the M values were appended after them, which halved the mean and put the
+% lower limit at 0. Curves with no doubling give NaN and are left out.
+meandoublingtime=[];
 
 doublingtimess=zeros(30,M1)+NaN;
 
@@ -253,12 +273,19 @@ for j=1:maxd
 
 end
 
-seq_doublingtimes % [ith doubling, mean, 95%CI LB, 95%CI UB, prob. i_th doubling]
+seq_doublingtimes; % [ith doubling, mean, 95%CI LB, 95%CI UB, prob. i_th doubling]
 
 % Mean doubling times
-dmean=mean(meandoublingtime);
-dLB=quantile(meandoublingtime,0.025);
-dUB=quantile(meandoublingtime,0.975);
+meandoublingtime=meandoublingtime(~isnan(meandoublingtime));
+if isempty(meandoublingtime) % no curve doubled
+    dmean=NaN;
+    dLB=NaN;
+    dUB=NaN;
+else
+    dmean=mean(meandoublingtime);
+    dLB=quantile(meandoublingtime,0.025);
+    dUB=quantile(meandoublingtime,0.975);
+end
 
 param_doubling=[dmean dLB dUB]
 
@@ -284,12 +311,12 @@ if getperformance
     end
 
     if getperformance
-        data2=getData(cumulative1,cadtemporal,caddisease,datatype,cadregion,DT,datevecfirst1,datevecend1,datevec(datenum1),outbreakx,forecastingperiod*getperformance)
+        data2=getData(cumulative1,cadtemporal,caddisease,datatype,cadregion,DT,datevecfirst1,datevecend1,datevec(datenum1),outbreakx,forecastingperiod*getperformance);
 
         timevect2=(data1(end,1)+1:(data1(end,1)+1+getperformance*forecastingperiod-1));
 
         if printscreen1
-            line2=plot(timevect2,data2,'ro')
+            line2=plot(timevect2,data2,'ro');
             set(line2,'LineWidth',2)
         end
 

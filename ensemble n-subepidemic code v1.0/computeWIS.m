@@ -39,7 +39,7 @@ for i=1:length(datac)
         
         w_k=alpha/2;
         
-        [alpha/2  1-alpha/2]
+        [alpha/2  1-alpha/2];
         
         
         % (1-lpha)x100 % prediction coverage
