@@ -327,3 +327,20 @@ end
 bootstrapDiagnostics.rankedAtBound=rankedAtBound;
 bootstrapDiagnostics.boundReport=boundReport;
 
+% <================================================================================================>
+% <=========================== Parameter identifiability (PII) ====================================>
+% <================================================================================================>
+% The measures of the QuantDiffForecast toolbox for every parameter of this
+% ranked model (subepidemicIdentifiability.m): PII = log10(UB/LB) of the 95%
+% bootstrap interval, the share of the search range the interval covers, the
+% largest PII the bounds allow and the ratio to it, the share of the refits
+% at each bound, and the Monte Carlo error of the interval and of the PII.
+% The search bounds are saved with them, so plotFit_subepidemicFramework.m
+% reports against the bounds this fit used.
+bootstrapDiagnostics.searchLB=LB;
+bootstrapDiagnostics.searchUB=UB;
+bootstrapDiagnostics.searchIsLog=isLog;
+bootstrapDiagnostics.identifiability=subepidemicIdentifiability(Phatss,LB,UB,npatches,P0,fitSettings.PIIscale);
+subepidemicPrintPII(bootstrapDiagnostics.identifiability, ...
+    sprintf('Parameter identifiability (PII) of ranked model %d',rank1));
+

@@ -70,4 +70,14 @@ U = struct();
 % observations of daily data (DT = 1) and the last one otherwise. Another
 % window:
 % U.baselineWindow = 14;
+% ---- identifiability report (PII) ------------------------------------------------
+% The fit and plotFit_subepidemicFramework report, for every parameter, the
+% parameter identifiability index PII = log10(UB/LB) of its 95% bootstrap
+% interval and its companions (subepidemicIdentifiability.m). The headline
+% measure is the PII where the lower search bound is positive (r, K, alpha, d)
+% and the share of the search range otherwise (p, and a of the GRM and Richards
+% kernels). To choose it yourself give one entry per parameter type,
+% [r p a K alpha d]: 1 = log scale, 0 = range fraction, NaN = automatic.
+% Range fraction for r, automatic for the rest:
+% U.PIIscale = [0 NaN NaN NaN NaN NaN];
 end

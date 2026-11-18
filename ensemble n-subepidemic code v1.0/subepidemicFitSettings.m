@@ -57,6 +57,17 @@ function S = subepidemicFitSettings()
 %     bootstrapStarts   1: Latin-hypercube start points per bootstrap refit, in
 %                       addition to the fitted vector and one jittered copy of it.
 %
+%   IDENTIFIABILITY REPORT (subepidemicIdentifiability.m)
+%     PIIscale          []: the headline measure of each parameter is chosen
+%                       automatically, the PII = log10(UB/LB) of the 95%
+%                       interval when the lower search bound is positive (r, K,
+%                       alpha, d) and the range fraction otherwise (p, and a
+%                       of the GRM and Richards kernels). A vector of 6
+%                       entries, one per parameter type [r p a K alpha d],
+%                       overrides it: 1 = log scale, 0 = range fraction,
+%                       NaN = automatic. It changes PII_scale and PII_ratio
+%                       of the report only, never the fit.
+%
 %   See also fitSubepidemicModel, subepidemicSearchSpace, subepidemicOdeOptions
 
 S = struct( ...
@@ -73,7 +84,8 @@ S = struct( ...
     'bootstrapStarts',1, ...
     'rngSeed',[], ...
     'maxSkippedRefitFraction',0.05, ...
-    'baselineWindow',[]);
+    'baselineWindow',[], ...
+    'PIIscale',[]);
 
 if exist('options_fit_settings','file')==2
     U = options_fit_settings();
@@ -138,6 +150,11 @@ end
 v = S.maxSkippedRefitFraction;
 if ~(isnumeric(v) && isreal(v) && isscalar(v) && v>=0 && v<=1)
     error('SubEpiPredict:FitSettings','Setting maxSkippedRefitFraction must be a number from 0 to 1.');
+end
+v = S.PIIscale;
+if ~(isempty(v) || (isnumeric(v) && isreal(v) && numel(v)==6 && all(isnan(v(:)) | v(:)==0 | v(:)==1)))
+    error('SubEpiPredict:FitSettings', ...
+        'Setting PIIscale must be empty or 6 entries [r p a K alpha d], each 1 (log scale), 0 (range fraction) or NaN (automatic).');
 end
 if ~(isstruct(S.optimOptions) && isscalar(S.optimOptions))
     error('SubEpiPredict:FitSettings','Setting optimOptions must be a struct of fmincon options.');

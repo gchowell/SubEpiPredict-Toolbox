@@ -155,6 +155,8 @@ param_ds=[];
 AICc_rank1=[];
 relativelik_rank1=[];
 
+piiRanked={}; % PII metrics of each ranked model (subepidemicIdentifiability.m)
+
 figure(300+topmodels1(end)+1)
 
 tiledlayout(length(topmodels1),3,'Padding','compact','TileSpacing','compact');
@@ -173,7 +175,7 @@ for rank1=topmodels1
     % <========================================================================================>
 
     % Do not retain a previous rank's fit if the current MAT file omits it.
-    clear bestfit bestfit_original P0
+    clear bestfit bestfit_original P0 bootstrapDiagnostics
     load (strcat('./output/modifiedLogisticPatch-ensem-npatchesfixed-',num2str(npatches_fixed),'-onsetfixed-',num2str(onset_fixed),'-smoothing-',num2str(smoothfactor1),'-',cadfilename2,'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-calibrationperiod-',num2str(calibrationperiod1),'-rank-',num2str(rank1),'.mat'))
 
     % Preserve this rank's saved original-data fit for residual diagnostics.
@@ -394,6 +396,40 @@ for rank1=topmodels1
         writetable(T,strcat('./output/param-NB-d-ranked(', num2str(rank1),')-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-horizon-',num2str(forecastingperiod),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
     end
 
+
+    % <==============================================================================================>
+    % <=============== Parameter identifiability (PII) of this ranked model =========================>
+    % <==============================================================================================>
+    % The measures the QuantDiffForecast toolbox reports (subepidemicIdentifiability.m),
+    % one row per parameter:
+    %   PII            log10(UB/LB) of the 95% bootstrap interval; NaN when the lower
+    %                  limit is <= 0 (the SCI column above gives 6 there)
+    %   PII_rangeFrac  interval width as a share of the search range, in [0,1]
+    %   PII_scale      headline measure: 1 = PII (lower bound > 0), 0 = PII_rangeFrac
+    %   PII_box        log10(UB/LB) of the search bounds, the largest PII they allow
+    %   PII_ratio      ~1 => the interval is the search range (censored by the bounds)
+    %   fracLB, fracUB share of the bootstrap refits at the lower, upper bound
+    %   MCSE_*         Monte Carlo SE of the interval limits and of the PII
+    % The bounds are those saved by the fit. A fit saved before this report
+    % existed does not hold them; they are then rebuilt from the current settings.
+    piiSettings=subepidemicFitSettings();
+    if exist('bootstrapDiagnostics','var') && isstruct(bootstrapDiagnostics) && ...
+            isfield(bootstrapDiagnostics,'searchLB') && isfield(bootstrapDiagnostics,'searchUB') && ...
+            numel(bootstrapDiagnostics.searchLB)==4*npatches+2 && numel(bootstrapDiagnostics.searchUB)==4*npatches+2
+        piiLB=bootstrapDiagnostics.searchLB;
+        piiUB=bootstrapDiagnostics.searchUB;
+    else
+        [piiLB,piiUB]=subepidemicSearchSpace(npatches,data1(:,2),flag1(1),method1,piiSettings);
+        subepidemicWarning('SubEpiPredict:PIIBoundsRebuilt', ...
+            ['Ranked model %d was saved without its search bounds. The PII report uses the bounds of the ', ...
+             'current settings; if the bound settings changed since the fit, rerun the fit.'],rank1);
+    end
+
+    piiRanked{end+1}=subepidemicIdentifiability(Phatss,piiLB,piiUB,npatches,fittedEstimate,piiSettings.PIIscale); %#ok<AGROW>
+
+    subepidemicPrintPII(piiRanked{end},sprintf('Parameter identifiability (PII) of ranked model %d',rank1));
+
+    subepidemicWritePII(strcat('./output/PII-ranked(', num2str(rank1),')-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-horizon-',num2str(forecastingperiod),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'),piiRanked{end});
 
 
     % <========================================================================================>
@@ -694,6 +730,15 @@ performance=[topmodels1' MAES MSES PIS WISS AICc_rank1(:,2) relativelik_rank1(:,
 T = array2table(performance);
 T.Properties.VariableNames(1:7) = {'i_th-ranked model','MAE','MSE','Coverage 95%PI','WIS','AICc','RelativeLikelihood'};
 writetable(T,strcat('./output/performance-calibration-topRanked-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'))
+
+
+% <=============================================================================================>
+% <============================== Save file with the PII metrics of all top-ranked models ======>
+% <=============================================================================================>
+% The rows of the PII-ranked(k) files together, with the rank and the number
+% of sub-epidemics of each model in the first two columns.
+
+subepidemicWritePII(strcat('./output/PII-topRanked-onsetfixed-',num2str(onset_fixed),'-flag1-',num2str(flag1(1)),'-method-',num2str(method1),'-dist-',num2str(dist1),'-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',caddate1,'.csv'),piiRanked,topmodels1);
 
 
 %%
