@@ -285,11 +285,25 @@ for npatches2=[npatchess]
         % this one: for a fixed nCandidate the best fit changes smoothly with
         % the threshold. It is one more start point, never a replacement.
         starts=starts_base;
+        nStartsThisFit=nStarts;
         if fitSettings.continuationStart && ~isempty(previousP)
             starts=[starts_base;previousP];
+        elseif isempty(previousP) && fitSettings.firstThresholdStartFactor>1 && nStarts>0
+            % Revision m. A fit without a solution of a previous threshold to
+            % start from (the first threshold of the sweep, and any later one
+            % until a candidate has been retained) depends on the random
+            % start points alone. With 20 of them the search of the first
+            % threshold of the COVID-19 example ended in a poor local optimum
+            % for about 1 seed in 10, and a model with an evidence ratio of 2
+            % dropped out of the ranking. Such a fit gets
+            % firstThresholdStartFactor times the start points (default 3).
+            nExtra=ceil((fitSettings.firstThresholdStartFactor-1)*nStarts);
+            extraStarts=subepidemicStartPoints(unitMap,nExtra,0,z0);
+            starts=[extraStarts(1:end-1,:);starts_base]; % the seed is already the last row of starts_base
+            nStartsThisFit=nStarts+nExtra;
         end
 
-        [P,fval,fitInfo]=fitSubepidemicModel(context,z0,LB,UB,isLog,starts,nStarts,fitSettings);
+        [P,fval,fitInfo]=fitSubepidemicModel(context,z0,LB,UB,isLog,starts,nStartsThisFit,fitSettings);
 
         nEvaluated=nEvaluated+1;
         candidateFitInfo{nEvaluated}=fitInfo;
@@ -319,6 +333,11 @@ for npatches2=[npatchess]
         if nActive~=nCandidate
             continue
         end
+
+        % Revision m: sub-epidemics that start together are interchangeable;
+        % give them a fixed order (subepidemicOrderLabels.m). The curve and
+        % the AICc do not change.
+        P=subepidemicOrderLabels(P,nCandidate,onset_fixed,onset_thr,I0);
 
         previousP=P;
 
@@ -497,7 +516,7 @@ xlabel('Time (days)');
 ylabel('Incidence')
 
 title('best fit')
-[npatches onset_thr]
+fprintf('Best model of the screen: %d sub-epidemic(s), onset threshold %g.\n',full(npatches),full(onset_thr));
 
 
 if method1==0

@@ -48,12 +48,13 @@ U = struct();
 % U.bootstrapStarts = 3;
 
 % ---- repeatable runs ----------------------------------------------------------
-% Reset the random number generator with this seed at the start of the fit
+% The random number generator is reset with this seed at the start of the fit
 % (once per area) and of the forecast, fit-plot and Rt scripts, so the same
-% call on the same files gives the same numbers again. Empty (the default)
-% leaves the generator alone; the fit then still saves the generator state
-% with its results (see subepidemicSeed.m):
-% U.rngSeed = 1;
+% call on the same files gives the same numbers again. The default is 1 since
+% revision l (it was empty before). Empty leaves the generator alone, so every
+% run draws new bootstrap data and forecast noise; the fit then still saves
+% the generator state with its results (see subepidemicSeed.m):
+% U.rngSeed = [];
 
 % ---- refits that cannot be simulated in a forecast ------------------------------
 % The forecast and Rt scripts extend every bootstrap refit past the
@@ -80,4 +81,23 @@ U = struct();
 % [r p a K alpha d]: 1 = log scale, 0 = range fraction, NaN = automatic.
 % Range fraction for r, automatic for the rest:
 % U.PIIscale = [0 NaN NaN NaN NaN NaN];
+
+% ---- weakly supported top models --------------------------------------------------
+% The fit reports the evidence ratio of each top-ranked model against ranked
+% model 1, exp(dAICc/2), and warns (SubEpiPredict:WeakTopModel) when it is at
+% least this value; default 100, an AICc difference of 9.2. Report only: the
+% top models are kept. Inf turns the warning off:
+% U.evidenceRatioLimit = 1000;
+
+% ---- start points of the first threshold --------------------------------------------
+% A fit of the screen without a solution of a previous onset threshold to
+% start from (the first threshold of each sweep) gets this many times
+% numstartpoints start points; default 3. 1 gives no extra start points:
+% U.firstThresholdStartFactor = 1;
+
+% ---- parameters that are not identified ------------------------------------------
+% A parameter whose 95% bootstrap interval covers at least this share of what
+% the search bounds allow is reported as not identified (warning
+% SubEpiPredict:NotIdentified); default 0.5. Inf turns the warning off:
+% U.notIdentifiedRatio = 0.8;
 end

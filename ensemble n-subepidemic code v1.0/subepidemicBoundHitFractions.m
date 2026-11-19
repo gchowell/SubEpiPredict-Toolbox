@@ -34,9 +34,9 @@ function [fracLB, fracUB, hitLB, hitUB] = subepidemicBoundHitFractions(Phatss, L
 %     both large          refits split between the two bounds, typical of a
 %                         flat or bimodal likelihood over the whole range.
 %
-%   The rule differs from subepidemicBoundSummary.m, which counts a refit
-%   only when its unit coordinate is within 1e-6 of a bound (the optimizer's
-%   own rule). The fractions here are therefore at least as large.
+%   Since revision m subepidemicBoundSummary.m (the bootstrap summary of the
+%   fit) counts with this function, so both give the same numbers. Until
+%   revision l it counted a refit only within 1e-6 of the search range.
 %
 %   See also subepidemicPII, subepidemicIdentifiability, subepidemicBoundSummary
 %

@@ -19,11 +19,23 @@ function R = subepidemicRollingForecast(forecastDates,forecastingperiod,outbreak
 %   outbreakx          one area, a column of the data file ([] = options.m)
 %   weight_type1       ensemble weights ([] = options_forecast.m)
 %   'refit'            false (default): a date whose fit is already in ./output,
-%                      made with the same B, numstartpoints and topmodelsx
-%                      and complete, is not fitted again, so an interrupted run can
+%                      made with the same B, numstartpoints and topmodelsx,
+%                      by the same fit revision with the same fit settings
+%                      (subepidemicFitSignature.m) and complete, is not
+%                      fitted again, so an interrupted run can
 %                      be continued. true: every date is fitted again.
 %   'closeFigures'     true (default): the figures a date opens are closed
 %                      before the next date.
+%   'quiet'            false (default): each date prints what a fit and a
+%                      forecast print. true: that text goes to a log file per
+%                      date in ./output (rolling-log-...txt) and each date
+%                      prints a few lines: data, fit, warnings, the score of
+%                      ranked model 1 and the time. (Revision m.)
+%   'keepReplaced'     true (default): before a date is fitted again, the fit
+%                      files of that date already in ./output are copied to
+%                      ./output/replaced-by-rolling/, unless a copy is there
+%                      already. So the fit you made of a date with other
+%                      settings is not lost. (Revision m.)
 %
 %   DATA. The data of every date come from one file: the file of the most
 %   recent date (datevecend1 in options.m), which also supplies the later
@@ -67,6 +79,8 @@ if nargin<3, outbreakx=[]; end
 if nargin<4, weight_type1=[]; end
 refit=false;
 closeFigures=true;
+quiet=false;
+keepReplaced=true;
 if mod(numel(varargin),2)~=0
     error('SubEpiPredict:RollingInput','Options are given as name and value pairs, e.g. ''refit'',true.');
 end
@@ -76,8 +90,12 @@ for k=1:2:numel(varargin)
             refit=logical(varargin{k+1});
         case 'closefigures'
             closeFigures=logical(varargin{k+1});
+        case 'quiet'
+            quiet=logical(varargin{k+1});
+        case 'keepreplaced'
+            keepReplaced=logical(varargin{k+1});
         otherwise
-            error('SubEpiPredict:RollingInput','Unknown option ''%s''. The options are ''refit'' and ''closeFigures''.',char(varargin{k}));
+            error('SubEpiPredict:RollingInput','Unknown option ''%s''. The options are ''refit'', ''closeFigures'', ''quiet'' and ''keepReplaced''.',char(varargin{k}));
     end
 end
 
@@ -251,7 +269,7 @@ for k=1:nDates
             % points and number of top models, and if it is complete: the file of
             % its last rank exists (an interrupted fit leaves the first ranks only).
             inFile=whos('-file',fitName);
-            wanted={'M','numstartpoints','topmodelsx','topmodelsRequested'};
+            wanted={'M','numstartpoints','topmodelsx','topmodelsRequested','fitSignature'};
             wanted=wanted(ismember(wanted,{inFile.name}));
             saved=load(fitName,wanted{:});
             sameSettings=isfield(saved,'M') && isfield(saved,'numstartpoints') && isequal(saved.M,B) && isequal(saved.numstartpoints,numstartpoints);
@@ -264,9 +282,18 @@ for k=1:nDates
                 lastRank=topmodelsSetting;
             end
             complete=exist(strcat(fitName(1:end-5),num2str(lastRank),'.mat'),'file')==2;
+            % Revision m1: the fit must also have been made by the current fit
+            % revision with the same fit settings (subepidemicFitSignature.m).
+            if isfield(saved,'fitSignature')
+                [sameSignature,signatureDifferences]=subepidemicFitSignature(saved.fitSignature);
+            else
+                [sameSignature,signatureDifferences]=subepidemicFitSignature([]);
+            end
             clear saved
-            if sameSettings && complete
+            if sameSettings && complete && sameSignature
                 reuse=true;
+            elseif sameSettings && complete
+                fprintf('Fit: the saved fit of this date is not reused (%s); the date is fitted again.\n',strjoin(signatureDifferences,', '));
             elseif ~sameSettings
                 fprintf('Fit: a saved fit of this date was made with other values of B, numstartpoints or topmodelsx; the date is fitted again.\n');
             else
@@ -274,19 +301,69 @@ for k=1:nDates
             end
         end
         nWarnings=0;
+        consoleText='';
         if reuse
             status(k,4)=2;
             fprintf('Fit: the saved fit of this date is used (give ''refit'',true to fit every date again).\n');
         else
-            Run_Fit_subepidemicFramework(outbreakx,dateString);
+            % ---- revision m: keep a copy of the fit files this fit replaces
+            if keepReplaced
+                screenName=strrep(strrep(fitName,'modifiedLogisticPatch-ensem-','ABC-ensem-'),'-rank-1.mat','.mat');
+                existingFiles=[dir(strcat(fitName(1:end-5),'*.mat'));dir(screenName)];
+                nCopied=0;
+                for q=1:numel(existingFiles)
+                    if exist('./output/replaced-by-rolling','dir')~=7
+                        mkdir('./output/replaced-by-rolling');
+                    end
+                    copyName=fullfile('./output/replaced-by-rolling',existingFiles(q).name);
+                    if exist(copyName,'file')~=2
+                        copyfile(fullfile('./output',existingFiles(q).name),copyName);
+                        nCopied=nCopied+1;
+                    end
+                end
+                if nCopied>0
+                    fprintf('Fit: %d fit file(s) of this date already in ./output were copied to ./output/replaced-by-rolling/ before the new fit.\n',nCopied);
+                end
+            end
+            if quiet
+                consoleText=evalc('Run_Fit_subepidemicFramework(outbreakx,dateString);');
+            else
+                Run_Fit_subepidemicFramework(outbreakx,dateString);
+            end
             status(k,4)=1;
             nWarnings=nWarnings+numel(subepidemicWarningLog('get'));
+            if quiet
+                fprintf('Fit: new (%d kind(s) of warning).\n',nWarnings);
+            end
         end
 
         % ---- forecast and scores
-        [~,~,~,byHorizon]=plotForecast_subepidemicFramework(outbreakx,dateString,forecastingperiod,weight_type1);
-        nWarnings=nWarnings+numel(subepidemicWarningLog('get'));
+        byHorizon=[];
+        if quiet
+            consoleText=[consoleText evalc('[~,~,~,byHorizon]=plotForecast_subepidemicFramework(outbreakx,dateString,forecastingperiod,weight_type1);')];
+            logName=strcat('./output/rolling-log-',cadtemporal,'-',caddisease,'-',datatype,'-',cadregion,'-area-',num2str(outbreakx),'-',dateString,'.txt');
+            fid=fopen(logName,'w');
+            if fid>0
+                fwrite(fid,consoleText);
+                fclose(fid);
+            end
+        else
+            [~,~,~,byHorizon]=plotForecast_subepidemicFramework(outbreakx,dateString,forecastingperiod,weight_type1);
+        end
+        nWarningsForecast=numel(subepidemicWarningLog('get'));
+        nWarnings=nWarnings+nWarningsForecast;
         status(k,6)=nWarnings;
+        if quiet
+            scoreText='no scores';
+            if ~isempty(byHorizon)
+                rowBase=byHorizon(byHorizon(:,1)==0 & byHorizon(:,2)==forecastingperiod,:);
+                rowOne=byHorizon(byHorizon(:,1)==1 & byHorizon(:,2)==forecastingperiod,:);
+                if ~isempty(rowBase) && ~isempty(rowOne)
+                    scoreText=sprintf('WIS over %d time unit(s): ranked 1 %.2f, baseline %.2f, ratio %.2f',forecastingperiod,rowOne(1,6),rowBase(1,6),rowOne(1,6)/rowBase(1,6));
+                end
+            end
+            fprintf('Forecast: %s (%d kind(s) of warning). %.0f s for this date.\nLog: %s\n',scoreText,nWarningsForecast,toc(timeStart),logName);
+        end
         if isempty(byHorizon)
             notes{k}=strtrim([notes{k} ' no scores were returned']);
         else

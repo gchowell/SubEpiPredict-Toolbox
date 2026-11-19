@@ -218,9 +218,9 @@ set(gcf,'color','white')
 % <======================== Vector with parameter estimates ====================================>
 % <=============================================================================================>
 
-Ptrue=[rs_hat ps_hat as_hat Ks_hat alpha_hat d_hat]
-
-'generate simulation study to derive parameter uncertainty..'
+Ptrue=[rs_hat ps_hat as_hat Ks_hat alpha_hat d_hat];
+fprintf('\nRanked model %d, estimates [r p a K alpha d]: %s\n',rank1,mat2str(full(Ptrue),5));
+fprintf('Bootstrap: %d refits of ranked model %d ...\n',M,rank1);
 
 % <=============================================================================================>
 % <========== Generate parameter uncertainty via parametric bootstrapping ======================>
@@ -296,7 +296,9 @@ for real=1:M
     bootstrapDiagnostics.nAtBound(real)=numel(bootInfo.atLowerBound)+numel(bootInfo.atUpperBound);
     bootstrapDiagnostics.fval(real)=fvalBoot;
     
-    Phatss(real,:)=Pboot;
+    % Revision m: the same fixed order of interchangeable sub-epidemics as
+    % in the screen, so a refit cannot swap their labels.
+    Phatss(real,:)=subepidemicOrderLabels(Pboot,npatches,onset_fixed,onset_thr,data(1));
     
 end
 
@@ -306,24 +308,15 @@ fprintf('Requested bootstrap datasets: %d\n', M);
 fprintf('Accepted bootstrap datasets: %d\n', acceptedBootstrap);
 fprintf('Unresolved bootstrap datasets: %d\n', M - acceptedBootstrap);
 fprintf('Refits with fewer than %d active sub-epidemics: %d\n', npatches, sum(bootstrapDiagnostics.nActive<npatches));
-fprintf('Refits with a parameter at a bound: %d\n', sum(bootstrapDiagnostics.nAtBound>0));
-[boundReport,boundLines]=subepidemicBoundSummary(Phatss,LB,UB,isLog,npatches);
+% Revision m: one rule for "at a bound", that of the PII table
+% (subepidemicBoundHitFractions.m: within 0.1% of the bound).
+[boundReport,boundLines,nRefitsAtBound]=subepidemicBoundSummary(Phatss,LB,UB,isLog,npatches);
+fprintf('Refits with a parameter at a bound: %d\n', nRefitsAtBound);
 for k=1:numel(boundLines)
     fprintf('   %s refits\n',boundLines{k});
 end
 fprintf('Refits in which the polish ran: %d\n\n', sum(bootstrapDiagnostics.polishRun));
 
-% More than 2.5% of the refits at a limit of r or K: the 95% percentile
-% interval of that parameter ends at the limit instead of where the data put it.
-for k=1:numel(boundReport)
-    if boundReport(k).isSearchLimit && boundReport(k).fraction>0.025
-        subepidemicWarning('SubEpiPredict:BootstrapAtBound', ...
-            ['Ranked model %d: %d of %d bootstrap refits have %s at its %s limit (%g), so its 95%% interval ', ...
-             'ends at the limit. Set %s in options_fit_settings.m to move it.'], ...
-            rank1,boundReport(k).count,boundReport(k).total,boundReport(k).name,boundReport(k).side, ...
-            boundReport(k).limit,boundReport(k).setting);
-    end
-end
 bootstrapDiagnostics.rankedAtBound=rankedAtBound;
 bootstrapDiagnostics.boundReport=boundReport;
 
@@ -343,4 +336,39 @@ bootstrapDiagnostics.searchIsLog=isLog;
 bootstrapDiagnostics.identifiability=subepidemicIdentifiability(Phatss,LB,UB,npatches,P0,fitSettings.PIIscale);
 subepidemicPrintPII(bootstrapDiagnostics.identifiability, ...
     sprintf('Parameter identifiability (PII) of ranked model %d',rank1));
+
+% Revision m. A parameter whose 95% interval covers at least
+% notIdentifiedRatio (default 0.5) of what the search bounds allow is not
+% identified by the data: its interval is the search range, wherever the
+% bounds are put. It gets its own warning, and the advice to move a bound
+% (below) is kept for parameters that are identified apart from the bound.
+piiReport=bootstrapDiagnostics.identifiability;
+notIdentified=find(~piiReport.fixed(:) & piiReport.PII_ratio(:)>=fitSettings.notIdentifiedRatio)';
+for k=notIdentified
+    if piiReport.PII_scale(k)==1
+        coverText=sprintf('%.0f%% of the search range on the log scale (%.1f of %.1f decades)', ...
+            100*piiReport.PII_ratio(k),piiReport.PII(k),piiReport.PII_box(k));
+    else
+        coverText=sprintf('%.0f%% of the search range',100*piiReport.PII_ratio(k));
+    end
+    subepidemicWarning('SubEpiPredict:NotIdentified', ...
+        ['Ranked model %d: %s is not identified by these data. Its 95%% interval, %.4g to %.4g, covers %s, ', ...
+         'so it reflects the search bounds, not the data; moving a bound moves the interval. ', ...
+         'Do not interpret its estimate (%.4g).'], ...
+        rank1,piiReport.name{k},piiReport.CI_LB(k),piiReport.CI_UB(k),coverText,piiReport.estimate(k));
+end
+bootstrapDiagnostics.notIdentified=piiReport.name(notIdentified);
+notIdentifiedColumns=piiReport.column(notIdentified);
+
+% More than 2.5% of the refits at a limit of r or K: the 95% percentile
+% interval of that parameter ends at the limit instead of where the data put it.
+for k=1:numel(boundReport)
+    if boundReport(k).isSearchLimit && boundReport(k).fraction>0.025 && ~any(notIdentifiedColumns==boundReport(k).index)
+        subepidemicWarning('SubEpiPredict:BootstrapAtBound', ...
+            ['Ranked model %d: %d of %d bootstrap refits have %s at its %s limit (%g), so its 95%% interval ', ...
+             'ends at the limit. Set %s in options_fit_settings.m to move it.'], ...
+            rank1,boundReport(k).count,boundReport(k).total,boundReport(k).name,boundReport(k).side, ...
+            boundReport(k).limit,boundReport(k).setting);
+    end
+end
 

@@ -57,6 +57,37 @@ function S = subepidemicFitSettings()
 %     bootstrapStarts   1: Latin-hypercube start points per bootstrap refit, in
 %                       addition to the fitted vector and one jittered copy of it.
 %
+%   REPEATABLE RUNS (subepidemicSeed.m)
+%     rngSeed           1: the random number generator is reset with this
+%                       seed at the start of the fit (once per area) and of
+%                       the forecast, fit-plot and Rt scripts, so the same call
+%                       on the same files gives the same numbers. [] leaves
+%                       the generator alone: every run draws new bootstrap
+%                       data and forecast noise. Until revision l the default
+%                       was [].
+%
+%   SCREEN (fittingModifiedLogisticFunctionPatchABC.m)
+%     firstThresholdStartFactor 3: a fit of the screen that has no solution of
+%                       a previous onset threshold to start from (the first
+%                       threshold of each sweep) gets this many times
+%                       numstartpoints start points. 1: no extra start points,
+%                       as until revision l.
+%
+%   IDENTIFIABILITY WARNING (fittingModifiedLogisticFunctionPatchMultiple.m)
+%     notIdentifiedRatio 0.5: a parameter whose 95% bootstrap interval covers
+%                       at least this share of what the search bounds allow
+%                       (PII_ratio of the PII report) is reported as not
+%                       identified (warning SubEpiPredict:NotIdentified).
+%                       Inf turns the warning off.
+%
+%   RANKING (subepidemicEvidenceRatios.m)
+%     evidenceRatioLimit 100: a top-ranked model whose evidence ratio against
+%                       ranked model 1, exp(dAICc/2), is at least this value
+%                       is reported as weakly supported (warning
+%                       SubEpiPredict:WeakTopModel). 100 is an AICc difference
+%                       of 9.2. Report only: the top models are kept. Inf
+%                       turns the warning off.
+%
 %   IDENTIFIABILITY REPORT (subepidemicIdentifiability.m)
 %     PIIscale          []: the headline measure of each parameter is chosen
 %                       automatically, the PII = log10(UB/LB) of the 95%
@@ -82,10 +113,13 @@ S = struct( ...
     'agreementTol',1e-2, ...
     'continuationStart',true, ...
     'bootstrapStarts',1, ...
-    'rngSeed',[], ...
+    'rngSeed',1, ...
     'maxSkippedRefitFraction',0.05, ...
     'baselineWindow',[], ...
-    'PIIscale',[]);
+    'PIIscale',[], ...
+    'evidenceRatioLimit',100, ...
+    'firstThresholdStartFactor',3, ...
+    'notIdentifiedRatio',0.5);
 
 if exist('options_fit_settings','file')==2
     U = options_fit_settings();
@@ -150,6 +184,18 @@ end
 v = S.maxSkippedRefitFraction;
 if ~(isnumeric(v) && isreal(v) && isscalar(v) && v>=0 && v<=1)
     error('SubEpiPredict:FitSettings','Setting maxSkippedRefitFraction must be a number from 0 to 1.');
+end
+v = S.firstThresholdStartFactor;
+if ~(isnumeric(v) && isreal(v) && isscalar(v) && isfinite(v) && v>=1)
+    error('SubEpiPredict:FitSettings','Setting firstThresholdStartFactor must be a number of at least 1 (1: no extra start points).');
+end
+v = S.notIdentifiedRatio;
+if ~(isnumeric(v) && isreal(v) && isscalar(v) && ~isnan(v) && v>0)
+    error('SubEpiPredict:FitSettings','Setting notIdentifiedRatio must be a positive number (Inf turns the warning off).');
+end
+v = S.evidenceRatioLimit;
+if ~(isnumeric(v) && isreal(v) && isscalar(v) && ~isnan(v) && v>1)
+    error('SubEpiPredict:FitSettings','Setting evidenceRatioLimit must be a number above 1 (Inf turns the warning off).');
 end
 v = S.PIIscale;
 if ~(isempty(v) || (isnumeric(v) && isreal(v) && numel(v)==6 && all(isnan(v(:)) | v(:)==0 | v(:)==1)))

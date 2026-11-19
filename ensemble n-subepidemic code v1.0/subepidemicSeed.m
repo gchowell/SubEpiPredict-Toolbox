@@ -3,11 +3,11 @@ function info = subepidemicSeed(label)
 %   info = subepidemicSeed(label) is called at the start of the fit driver
 %   (once per area) and of the forecast, fit-plot and Rt scripts.
 %
-%   Setting rngSeed (options_fit_settings.m; default empty):
-%     empty      the generator is left as it is, as before. Results differ
-%                from run to run.
+%   Setting rngSeed (options_fit_settings.m; default 1 since revision l):
 %     an integer the generator is reset with rng(rngSeed), so the same call
 %                on the same files gives the same numbers again.
+%     empty      the generator is left as it is (the default until revision
+%                k). Results differ from run to run.
 %
 %   info.seed   the seed used, or [] when none was set
 %   info.state  the generator state at this point (the output of rng). The

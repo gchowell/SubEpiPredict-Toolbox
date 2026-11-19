@@ -1,4 +1,4 @@
-function [report,lines] = subepidemicBoundSummary(P,LB,UB,isLog,npatches)
+function [report,lines,nRowsAtBound] = subepidemicBoundSummary(P,LB,UB,isLog,npatches)
 %SUBEPIDEMICBOUNDSUMMARY Parameters that sit at a bound, and in how many fits.
 %   [report,lines] = subepidemicBoundSummary(P,LB,UB,isLog,npatches)
 %
@@ -59,13 +59,18 @@ total = size(P,1);
 report = struct('name',{},'index',{},'side',{},'limit',{},'count',{},'total',{}, ...
     'fraction',{},'setting',{},'isSearchLimit',{});
 lines = {};
+nRowsAtBound = 0;
 if total==0
     return
 end
 
 map = subepidemicUnitMap('make',struct('z0',LB,'LB',LB,'UB',UB,'isLog',isLog));
-U = subepidemicUnitMap('toU',P,map);          % total-by-nFree, clipped to [0,1]
-tol = 1e-6;                                   % as in fitSubepidemicModel
+% Revision m: the rule of the PII table (subepidemicBoundHitFractions.m), a
+% value within 0.1% of the bound, so the bootstrap summary and the columns
+% atLB/atUB of the PII table give the same counts. Until revision l this
+% function counted values within 1e-6 of the search range.
+[~,~,hitLB,hitUB] = subepidemicBoundHitFractions(P,LB,UB);
+nRowsAtBound = sum(any(hitLB(:,map.free) | hitUB(:,map.free),2));
 
 letters = 'rpaK';
 for f = 1:map.nFree
@@ -80,7 +85,7 @@ for f = 1:map.nFree
     else
         name = 'd'; prefix = ''; searchLimit = false;
     end
-    counts = [sum(U(:,f)<=tol) sum(U(:,f)>=1-tol)];
+    counts = [sum(hitLB(:,j)) sum(hitUB(:,j))];
     sides = {'lower','upper'};
     limits = [LB(j) UB(j)];
     suffix = {'LB','UB'};

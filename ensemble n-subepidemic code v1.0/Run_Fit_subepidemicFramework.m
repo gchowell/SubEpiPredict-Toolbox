@@ -402,6 +402,17 @@ for outbreak1=outbreakList
     AICmin=RMSESx(1,3);
 
     relativelik_i=exp((AICmin-RMSESx(:,3))/2);
+
+    % Revision l: evidence ratios of the top models against ranked model 1,
+    % with a warning for those the data hardly support (report only; the
+    % number of top models does not change). See subepidemicEvidenceRatios.m.
+    fitSettingsArea=subepidemicFitSettings();
+    % Revision m1: what made this fit (revision and settings); saved with every
+    % ranked file and compared by subepidemicRollingForecast.m before a fit is reused.
+    fitSignature=subepidemicFitSignature(); %#ok<NASGU>
+    evidenceRatio=subepidemicEvidenceRatios(RMSESx(:,3),topmodelsx,outbreak1,fitSettingsArea.evidenceRatioLimit);
+    fprintf('Evidence ratios of ranked models 1 to %d against ranked model 1: %s\n',topmodelsx, ...
+        strtrim(sprintf('%.3g  ',full(evidenceRatio))));
     
     
     if 1  %plot relative likelihoods of the models
@@ -437,7 +448,7 @@ for outbreak1=outbreakList
         
         %deltas=AICc_bests-AICc_bests(1);
         
-        evidenceRatio=1./relativelik_i(1:topmodelsx);
+        % evidenceRatio is computed above (subepidemicEvidenceRatios.m)
         
         line1=plot(evidenceRatio,'ko-');
         
@@ -451,19 +462,11 @@ for outbreak1=outbreakList
         
     end
     
-    index1=find(evidenceRatio<100); %check top models with evidence ratio < 100
-    
-    %if length(index1)>2 %if there are more than two top models with evidence ratio < 100
-        
-    %    topmodelsx=length(index1);
-        
-    %else
-        
-    %    topmodelsx=2;
-        
-    %end
-    
-    
+    % Before revision l a line here found the top models with an evidence ratio
+    % below 100 and did nothing with them (the code that would have reduced
+    % topmodelsx was commented out). The ratio is now reported above.
+
+
     % <===========================================================================================>
     % <=============== Derive uncertainty for the <topmodelsx> best fitting models and save results =====================>
     % <===========================================================================================>
@@ -477,7 +480,7 @@ for outbreak1=outbreakList
         
         save(cadfilename1,'-mat')
         
-        strcat('rank-',num2str(rank1),'-complete!')
+        fprintf('Ranked model %d complete.\n',rank1);
     end
     
 end
