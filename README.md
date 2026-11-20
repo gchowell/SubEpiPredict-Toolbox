@@ -8,7 +8,7 @@ SubEpiPredict represents an epidemic trajectory as the sum of overlapping sub-ep
 
 [Paper](https://doi.org/10.1016/j.idm.2024.02.001) · [Video tutorial](https://www.youtube.com/watch?v=lj_-2Kre1qw) · [Quick start](#quick-start) · [Input data](#input-data) · [Outputs](#outputs) · [Citation](#citation)
 
-## What the toolbox does
+## What the toolbox does 
 
 | Task | Main entry point |
 |---|---|
