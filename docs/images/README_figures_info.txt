@@ -1,4 +1,4 @@
-Figures made by make_readme_figures.m on 2026-11-20 14:41
+Figures made by make_readme_figures.m on 2026-11-20 14:49
 MATLAB 24.1.0.2689473 (R2024a) Update 6 | fit revision m1 | random seed 1
 Data: coronavirus deaths USA (daily), area (column) 52, data to 05-11-2020, time step DT = 1
 Fit: method1 = 3, dist1 = 3, flag1 = 1, up to 2 sub-epidemic(s), onset_fixed = 0, smoothfactor1 = 7, calibrationperiod1 = 90, numstartpoints = 20, topmodelsx = 4, B = 40
