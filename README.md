@@ -1,24 +1,22 @@
 # SubEpiPredict
 
-SubEpiPredict is a MATLAB toolbox for fitting epidemic curves and producing short-term probabilistic forecasts. It represents incidence as the sum of overlapping sub-epidemics. It ranks candidate models by the corrected Akaike information criterion (AICc), uses bootstrap refits to quantify uncertainty, and evaluates individual models and their ensembles against a flat baseline.
+SubEpiPredict fits epidemic curves and produces short-term probabilistic forecasts in MATLAB. It models incidence as the sum of overlapping sub-epidemics. Candidate models can fit the same observed curve with different component trajectories. The toolbox ranks these models by the corrected Akaike information criterion (AICc), forecasts from each retained fit, and combines their forecasts in ensembles.
 
 [Quick start](#quick-start) · [Use your own data](#use-your-own-data) · [Model settings](#model-settings) · [Forecast evaluation](#forecast-evaluation) · [Rolling origins](#rolling-origin-evaluation) · [Parameter identifiability](#parameter-identifiability) · [Output files](#output-files) · [Tutorial paper](https://doi.org/10.1016/j.idm.2024.02.001) · [Video tutorial](https://www.youtube.com/watch?v=lj_-2Kre1qw)
 
 ## Quick start
 
-Fit the bundled U.S. COVID-19 death series through **May 11, 2020**, then forecast daily deaths for **May 12–15**. The repository includes both snapshots needed to fit the models and score their forecasts. [Fitting data][fit-data] · [Evaluation data][eval-data]
+Fit daily U.S. COVID-19 deaths through May 11, 2020, then forecast May 12–15. Both the [fitting snapshot][fit-data] and the [later snapshot for scoring][eval-data] are included.
 
-### 1. Open the toolbox
+### 1. Open the code folder
 
-Use MATLAB with **Optimization Toolbox** (`fmincon`), **Global Optimization Toolbox** (`MultiStart`), and **Statistics and Machine Learning Toolbox** (sampling and random variates). The bundled figures were generated with MATLAB R2024a Update 6. Parallel Computing Toolbox is optional. For serial fitting, set `U.useParallel = false;` in [options_fit_settings.m][overrides].
-
-Download and extract the repository ZIP, or clone it from a terminal.
+Download and extract the repository or clone it from a terminal.
 
 ```bash
 git clone https://github.com/gchowell/SubEpiPredict-Toolbox.git
 ```
 
-Set MATLAB's **Current Folder** to the repository root, then run the following. Keep the code folder current throughout the example so the routines can find `input/` and `output/`.
+In MATLAB, set **Current Folder** to the repository root and run the commands below. Keep the code folder current while running the toolbox. It reads `input/` and writes to `output/` relative to that folder.
 
 ```matlab
 cd('ensemble n-subepidemic code v1.0')
@@ -26,14 +24,14 @@ if ~isfolder('output'), mkdir('output'); end
 which options -all
 ```
 
-The first `options.m` listed should be in the current folder.
+The first result should be the toolbox's own `options.m`. Fitting uses Optimization Toolbox (`fmincon`), Global Optimization Toolbox (`MultiStart`), and Statistics and Machine Learning Toolbox. Parallel Computing Toolbox is optional. The shipped settings request a parallel pool and fall back to serial fitting if the pool cannot start. To select serial fitting directly, set `U.useParallel = false;` in [options_fit_settings.m][overrides]. The bundled figures were generated with MATLAB R2024a Update 6.
 
-### 2. Fit the models and forecast four days
+### 2. Fit and forecast
 
 ```matlab
-areaColumn = 52;          % U.S. series in the bundled file
-origin = '05-11-2020';    % Last observation available for fitting
-horizon = 4;              % Four daily observations
+areaColumn = 52;          % U.S. series in the bundled matrix
+origin = '05-11-2020';    % Last day used for fitting
+horizon = 4;              % Four daily observations beyond the origin
 weightCode = -1;          % Equal ensemble weights
 
 Run_Fit_subepidemicFramework(areaColumn, origin);
@@ -41,50 +39,67 @@ Run_Fit_subepidemicFramework(areaColumn, origin);
     plotForecast_subepidemicFramework(areaColumn, origin, horizon, weightCode);
 ```
 
-The fit searches one- and two-component models and retains up to four configurations. The forecast call writes the predictions to `output/` and returns scores. You can reuse the saved fit to try another horizon or weighting scheme.
+Run the fit on the first pass. The repository's `output/` folder also contains examples from earlier configurations. Once the current ranked fits exist, you can repeat the forecast call with a different horizon or weighting scheme. [Fit driver][fit-driver] · [Forecast driver][forecast-driver]
 
-### 3. Read and check the result
+### 3. Check the forecast
 
-The last four rows of the best-ranked model’s forecast CSV contain the target dates, observed deaths (`data`), predictive median (`median`), and lower and upper 95% prediction limits (`LB`, `UB`). Read those rows and compare every model’s score over the same dates.
+The ranked forecast CSV contains the calibration observations followed by the four forecasts. Its final four rows give the target dates, recorded deaths, predictive median, and 95% prediction limits.
 
 ```matlab
 file = ['ranked(1)-onsetfixed-0-flag1-1-method-3-dist-3-horizon-4-' ...
         'daily-coronavirus-deaths-USA-area-52-05-11-2020.csv'];
 forecast = readtable(fullfile('output', file));
-disp(forecast(end-horizon+1:end,:))
+targets = forecast(end-horizon+1:end, :);
+disp(targets)
+assert(isequal(targets.data, [1589; 1735; 1773; 1665]))
+assert(abs(baseline(1) - 63.5) < 1e-8)
+```
 
+The baseline predicts **1,675.71 deaths per day**, the mean of the last seven fitting observations. Its mean absolute error (MAE) over all four targets is **63.5 deaths per day**. Both checks use the input data and are independent of the fitted parameters.
+
+To compare the models at the same horizon, inspect their weighted interval scores (WIS). A relative WIS below 1 favors the model over the baseline.
+
+```matlab
 fourDay = byHorizon(byHorizon(:,2) == horizon, [1 3 6 7]);
 disp(array2table(fourDay, 'VariableNames', ...
     {'ModelCode','MAE','WIS','RelativeWIS'}))
 ```
 
-**Expected results.** The observed counts for May 12–15 are **1,589, 1,735, 1,773, and 1,665**. The baseline repeats the mean of the last seven fitting observations (**1,675.71** deaths per day), so its four-day mean absolute error (MAE) is **63.5**. Find it in `baseline(1)` or in the `ModelCode = 0` row. Code `1` denotes the best-ranked model and `100 + k` denotes the ensemble of ranks 1 through *k* (for example, `102` pools ranks 1 and 2). A relative weighted interval score (WIS) below 1 favors the model over the baseline.
+Code `0` is the baseline, `1` is the best AICc-ranked fit, and `102` is the ensemble of ranks 1 and 2. Ranking uses the calibration period. The scores above use the subsequent four days.
 
-![Four ranked fits to daily U.S. COVID-19 deaths, showing observed incidence, fitted components and residuals](docs/images/model_fit.png)
+![Four ranked fits to U.S. daily deaths, with bootstrap simulations, component trajectories, and residuals](docs/images/model_fit.png)
 
-*Fits through May 11. Each row shows one retained model. To inspect the plots in MATLAB, run `plotFit_subepidemicFramework(areaColumn, origin)`. This also writes the parameter diagnostics.*
+*All four models in the bundled figure have two components. Their onset thresholds differ, and the components peak at different times even where the total fits look similar. Run `plotFit_subepidemicFramework(areaColumn, origin)` to inspect these panels and write the parameter diagnostics.*
 
 ## Use your own data
 
-1. Place a numeric, header-free text file in `input/`. Use one row per regularly spaced observation and one column per area or group. Keep dates in the configuration. The loader treats every column, including the first, as observations.
-2. In [options.m][fit-options], set `outbreakx` to the column to fit (`1` for a single series) and `datevecfirst1` to the date of row 1 as `[year month day]`. Set `DT` to `1` for daily, `7` for weekly, or `365` for annual observations. One forecast step is one observation interval.
-3. Match the filename to `caddisease`, `datatype`, `cadregion`, and `caddate1`, as shown below. The fitting snapshot must end at the forecast origin. The single-origin fit reads the selected file through its last row.
-4. Choose the forecast horizon and evaluation setting in [options_forecast.m][forecast-options]. Use `getperformance = 0` to issue a forecast with future observations left blank (`NaN`). For retrospective scoring, use `getperformance = 1` and set `datevecend1` in `options.m` to the date of a later snapshot with the same first row date and column layout and enough observations for the full horizon. Set this date before fitting. When you change the evaluation snapshot date, rerun the fit so the ranked MAT files carry the new `datevecend1`.
+1. **Prepare the series.** Place a header-free numeric text matrix in `input/`. Each row is one regularly spaced observation and each column is an area or group. Put calendar dates in the configuration. The loader reads the first column as data.
+2. **Match the filename.** In [options.m][fit-options], set the data tags, `caddate1` (the last date in the fitting file, as `mm-dd-yyyy`), `datevecfirst1` (the date of row 1, as `[year month day]`), and `outbreakx` (the column to fit). The single-origin driver reads the chosen column through the **last row of the file**. To hold out later observations, end the fitting file at the intended origin.
+3. **Set the time step and count type.** For daily, weekly, or annual observations, set `DT` to `1`, `7`, or `365` and use `daily`, `weekly`, or `yearly` in the filename. A horizon of 4 means four observations at that frequency.
 
-| Values in each column | `cumulative1` | Filename in `input/` |
+| What each value measures | `cumulative1` | Filename in `input/` |
 |---|---:|---|
-| New events per interval | `0` | `<frequency>-<disease>-<datatype>-<region>-<mm-dd-yyyy>.txt` |
-| Cumulative events | `1` | `cumulative-<frequency>-<disease>-<datatype>-<region>-<mm-dd-yyyy>.txt` |
+| New events in the interval | `0` | `<frequency>-<caddisease>-<datatype>-<cadregion>-<caddate1>.txt` |
+| Total events through the interval | `1` | `cumulative-<frequency>-<caddisease>-<datatype>-<cadregion>-<caddate1>.txt` |
 
-For example, `weekly-influenza-cases-ExampleRegion-03-31-2024.txt` describes weekly incident cases (`DT = 7`, `cumulative1 = 0`) with `caddisease = 'influenza'`, `datatype = 'cases'`, `cadregion = 'ExampleRegion'`, and `caddate1 = '03-31-2024'`. With the options set, call `Run_Fit_subepidemicFramework()` and then `plotForecast_subepidemicFramework()` to use those settings. The fit driver also accepts a vector of columns to fit independently.
+For cumulative data, the fitter uses `[C(1); diff(C)]`. If the first total includes events that occurred before the series began, supply interval counts. Check for missing observations and negative revisions before using a count likelihood.
 
-**Cumulative counts.** The loader computes `[C(1); diff(C)]`, so it treats the first cumulative total as the first interval's count. If that total includes events before the series starts, supply interval counts. Check for missing values and negative revisions before fitting a count likelihood.
+**Choose how the forecast will be used** in [options_forecast.m][forecast-options].
 
-**Calibration window.** The fitter takes up to the last `calibrationperiod1` rows and begins at the first positive count in that window. The example requests 90 observations and uses all 75 available. A multi-component search requires at least 10 retained observations. Each candidate also needs more than `k + 1` observations for its AICc calculation, where `k` is its parameter count.
+| Goal | `getperformance` | Required data and result |
+|---|---:|---|
+| Issue a forecast | `0` | Supply the fitting snapshot. The forecast CSV contains predictions, with `NaN` for future observations. Forecast-score arrays are empty. |
+| Score a historical forecast | `1` | Also supply a later snapshot covering the full horizon, with the same first date and columns. Before fitting, set `datevecend1` in `options.m` to the date in that file's name. The toolbox exports predictions and scores. |
+
+With these settings in place, call `Run_Fit_subepidemicFramework()` and then `plotForecast_subepidemicFramework()`. A vector of columns can be passed to the fit driver to fit each series independently. Forecast one column at a time. If you change the evaluation snapshot date after fitting, rerun the fit so the saved ranks carry the new date.
+
+**Example using annual data.** The repository includes 21 annual COPD death counts for CHATHAM, 2000–2020. The matching settings use `DT = 365`, `outbreakx = 1`, and `cumulative1 = 0`. To try this example in a working copy, use the contents of `options_copd.m` as `options.m` and set `getperformance = 0` in `options_forecast.m` to forecast beyond 2020. The drivers read the active files named `options.m` and `options_forecast.m`. [COPD settings][copd-options] · [Annual data][copd-data]
+
+**Calibration window.** The fitter uses up to the last `calibrationperiod1` rows, starting at the first positive count in that window. The default example requests 90 observations and uses all 75 available. A multi-component search needs at least 10 retained observations. A candidate with `k` parameters needs more than `k + 1` observations for a finite AICc.
 
 ## Model settings
 
-Change the assignments inside these functions. The fit and forecast entry points read them when called.
+Edit the assignments in these four files. The functions read them each time you run the corresponding analysis.
 
 | File | What to set | Bundled example |
 |---|---|---|
@@ -95,7 +110,7 @@ Change the assignments inside these functions. The fit and forecast entry points
 
 A **component** is one sub-epidemic within a fitted curve. An **ensemble member** is a complete fitted model. In the example, `npatches_fixed = 2` permits one or two components. Different onset thresholds can produce several two-component candidates, so `topmodelsx = 4` can retain four distinct models. `Ensemble(4)` pools the forecasts of the first four ranks when all four are available.
 
-With `onset_fixed = 0`, a later component starts when its predecessor reaches a candidate cumulative count. With `onset_fixed = 1`, all components start together. The fitter ranks admissible configurations by increasing AICc. For rank *k*, the evidence ratio `exp((AICc_k − AICc_1)/2)` expresses relative support for rank 1 versus rank *k*. The default threshold of 100 triggers a warning and retains the weaker model. Attributing a fitted component to a location or transmission event requires independent evidence.
+With `onset_fixed = 0`, a later component starts when its predecessor reaches a candidate cumulative count. With `onset_fixed = 1`, all components start together. The fitter ranks admissible configurations by increasing AICc. For rank *k*, the evidence ratio `exp((AICc_k − AICc_1)/2)` expresses relative support for rank 1 versus rank *k*. At the default warning threshold of 100, an equal-weight ensemble still gives that model the same weight as rank 1. The [rankings plotter][rank-driver] exports AICc and relative likelihood for each retained model. Attributing a fitted component to a location or transmission event requires independent evidence.
 
 <details>
 <summary>Growth equations, estimation methods, and optimization settings</summary>
@@ -122,11 +137,11 @@ With `onset_fixed = 0`, a later component starts when its predecessor reaches a 
 | 5 | Negative-binomial likelihood | `5`, variance `μ + αμ^d` |
 | 6 | Least absolute deviations | `6` Laplace or `1` Poisson |
 
-For methods 1, 3, 4, and 5, `options.m` selects the matching `dist1`. These likelihoods use raw counts by default. The example's seven-point moving average helps define the candidate onset thresholds. For methods 0 and 6, `smoothfactor1` also controls the moving average used in the objective. Set the span to 1 to fit the original observations. [Fitting-series selection][fit-series]
+Select both `method1` and `dist1` explicitly for least squares (0) or least absolute deviations (6). For methods 1, 3, 4, and 5, `options.m` selects the matching `dist1`. These likelihoods use raw counts by default. The example's seven-point moving average helps define the candidate onset thresholds. For methods 0 and 6, `smoothfactor1` also controls the moving average used in the objective. Set the span to 1 to fit the original observations. [Fitting-series selection][fit-series]
 
 `numstartpoints` controls the candidate search. The default uses an accepted solution from the preceding threshold as a starting point when available. A search without this starting point uses `firstThresholdStartFactor = 3` times the usual number of starts. `bootstrapStarts` controls additional starts for each bootstrap refit. [Annotated settings example][settings-example]
 
-To inspect a three-component generalized logistic trajectory with threshold-triggered onset, run the following. For direct simulation, see [simulateSubepidemic.m][simulator].
+To plot a three-component generalized logistic curve with a specified onset threshold, run the example below from the code folder. [Simulation function][simulator]
 
 ```matlab
 plot_nsubepidemic(1, [0.18 0.18 0.18], [0.98 0.98 0.98], [], ...
@@ -137,77 +152,91 @@ plot_nsubepidemic(1, [0.18 0.18 0.18], [0.98 0.98 0.98], [], ...
 
 ## Forecast evaluation
 
-The forecast routine propagates each usable bootstrap parameter vector and generates 20 observation-noise realizations per trajectory. The resulting prediction intervals include uncertainty in the trajectory and variation in future observations. `Ensemble(k)` samples trajectories from the first *k* ranked models. Rounding the number drawn per member can omit a low-weight model when the sample is small.
+Each usable bootstrap parameter vector generates a model trajectory and 20 simulated observation series. The forecast CSV reports the median and central 95% interval of the simulated observations. MAE and mean squared error (MSE) use the median of the model trajectories. To reproduce the toolbox's point-error scores, use the trajectory median. WIS and interval coverage use the predictive distribution. [Scoring functions][performance]
 
-| `weight_type1` | Ensemble weights |
-|---:|---|
-| `-1` | Equal weights (default) |
-| `1` | Akaike weights proportional to `exp(−(AICc_k − AICc_min)/2)` |
-| `0` | Compatibility setting. Returns the same Akaike weights as `1` and issues a warning. Older versions used reciprocal AICc |
-| `2` | Weights proportional to the reciprocal of each model's calibration WIS. Scores must be finite and positive |
-
-The weighting helper also accepts code `3`. The current forecast driver passes the **calibration WIS** to both score inputs on its active execution path, including at each rolling origin. Code `3` therefore produces the same weights as `2` in these workflows. Use `2` to specify calibration-WIS weighting explicitly. [Forecast driver][forecast-driver] · [Weight calculations][weights]
-
-With scoring enabled and a positive horizon, the forecast function returns four numeric arrays. With `getperformance = 0`, it writes predictions and returns empty forecast-score arrays.
-
-| Return value | Columns in order |
+| Return from `plotForecast_subepidemicFramework` | Columns in order |
 |---|---|
-| `ranked` | Rank, MAE, mean squared error (MSE), 95% prediction interval coverage (%), WIS, AICc, relative likelihood |
+| `ranked` | Rank, MAE, MSE, 95% coverage (%), WIS, AICc, relative likelihood |
 | `ensembles` | Ensemble size, MAE, MSE, 95% coverage (%), WIS |
 | `baseline` | MAE, MSE, 95% coverage (%), WIS over the full horizon |
 | `byHorizon` | Model code, horizon, MAE, MSE, 95% coverage (%), WIS, WIS relative to baseline |
 
-A row with horizon `h` scores **leads 1 through h together**. Lower MAE, MSE, and WIS indicate better performance. Relative WIS is the model's WIS divided by the baseline's WIS at the same horizon and requires a finite, positive denominator. Coverage is the percentage of observations inside the nominal 95% prediction interval. With four targets, each observation changes coverage by 25 percentage points.
+A `byHorizon` row with horizon `h` scores **leads 1 through h together**. For example, the four-day baseline MAE of 63.5 averages four errors. Lower MAE, MSE, and WIS are better. Relative WIS divides the model's WIS by the baseline WIS at the same horizon. Interpret the ratio only for a finite, positive baseline WIS. Coverage is the percentage of targets inside the nominal 95% interval. With four targets, one observation changes coverage by 25 percentage points.
 
-The daily baseline repeats the mean of the last seven observations. The weekly and annual baselines repeat the last observation. Historical errors of that rule supply its lead-specific intervals. With too little history for intervals, the toolbox reports the baseline's MAE and MSE. For ranked models and ensembles, point-error scores use the median of propagated model trajectories. The `median` in a forecast CSV includes observation noise, so computing MAE from that column can give a different result. [Scoring functions][performance]
+The daily baseline repeats the last seven observations' mean. The weekly and annual baselines repeat the last observation. Historical errors of the same rule supply lead-specific intervals. If history is too short for interval scores, the toolbox still reports baseline MAE and MSE. Set `U.baselineWindow` in `options_fit_settings.m` to change the averaging window. [Baseline calculation][baseline-code]
 
-![Ensembles of the top two, three and four models forecasting daily U.S. deaths over 30 days](docs/images/ensembles.png)
+### Ensemble weights
 
-*Equal-weight ensemble forecasts from May 11. The bundled figure uses a 30-day horizon. The quick start above uses four days. Shading shows 95% prediction intervals for observed counts.*
+`Ensemble(k)` pools sampled trajectories from ranks 1 through *k*. The number drawn from each member is rounded, so a low-weight member can contribute zero trajectories in a small sample.
+
+| `weight_type1` | Weight used by the forecast driver |
+|---:|---|
+| `-1` | Equal weights (default) |
+| `1` | Akaike weights proportional to `exp(−(AICc_k − AICc_min)/2)` |
+| `2` | Inverse calibration WIS. Each calibration WIS must be finite and positive. |
+| `0` | Legacy code that returns the same weights as `1` and issues a warning |
+| `3` | The driver supplies calibration WIS to the earlier-forecast-score argument, giving the same weights as `2` in both single- and rolling-origin runs. |
+
+[Forecast driver][forecast-driver] · [Weight calculations][weights]
+
+![Equal-weight ensembles of two, three, and four models for U.S. daily deaths](docs/images/ensembles.png)
+
+*The bundled figure forecasts 30 days from May 11. The red line is the predictive median, the gray band is the 95% prediction interval, and the red circles are subsequent observations. The quick start scores the first four days of follow-up using a four-day forecast.*
 
 ### Rolling-origin evaluation
 
-To compare forecasts issued on several dates, keep `getperformance = 1` and provide a later snapshot covering the last target date. Run this example from the code folder with the bundled settings.
+With the bundled U.S. settings and `getperformance = 1`, the following example evaluates three four-day forecasts. Each origin already has a fitting snapshot in `input/`. All three use the same later file for evaluation.
 
 ```matlab
-origins = {'05-11-2020', '05-25-2020', '06-08-2020'};
+origins = {'04-20-2020', '04-27-2020', '05-11-2020'};
 R = subepidemicRollingForecast(origins, 4, 52, -1, 'quiet', true);
-disp(R.statusColumns)
-disp(R.status)
-if ~isempty(R.summaryFile), disp(readtable(R.summaryFile)); end
+disp(table(R.dates(:), R.status(:,3), logical(R.status(:,5)), R.notes(:), ...
+    'VariableNames', {'Origin','SnapshotCode','Scored','Note'}))
+if ~isempty(R.summaryFile)
+    disp(readtable(R.summaryFile, 'VariableNamingRule', 'preserve'))
+end
 ```
 
-- **Input at each origin.** The runner uses an existing, correctly sized snapshot. If it is missing, it writes one by truncating the later series. A truncated series includes any subsequent reporting revisions. Use archived snapshots to assess what could have been forecast with data available on each issue date.
-- **Resuming a run.** The runner reuses complete fits with compatible settings and fit revisions. If you replace observations under the same filename or change the evaluation snapshot date, pass `'refit', true` to fit them again. The first replaced fit is backed up in `output/replaced-by-rolling/` by default.
-- **Reading the scores.** `R.scoresFile` contains one row per scored origin, model, and horizon. `R.summaryFile` reports performance across origins, including WIS and coverage for lead *h* alone as well as leads 1 through *h*. The ratio of mean WIS uses paired origins. The typical ratio is the geometric mean of positive paired ratios. A tie contributes half to the share of origins won. Check `R.status`, `R.notes`, and the number of scored dates per model before comparing ranks. Nearby origins can share forecast targets. [Rolling forecast][rolling] · [Summary calculations][rolling-summary]
+- **Which data entered the fit?** For the selected column, snapshot code `2` means the existing file matches the later series through the origin, and `3` means it differs. Both use the existing file. Code `1` means the runner wrote a missing file by truncating the later snapshot. Such a file can include reporting revisions made after the origin. The three supplied snapshots above match the later series in column 52.
+- **Which fits were reused?** The runner checks fit revision, settings and completeness. If observations are replaced under the same filename, or the evaluation date changes, pass `'refit', true`. By default the first replaced fit files are backed up in `output/replaced-by-rolling/`. With `'quiet', true`, per-origin logs are written to `output/`.
+- **How should scores be compared?** `R.scoresFile` contains one row per scored origin, model and horizon. `R.summaryFile` reports mean WIS for leads 1 through *h* and for lead *h* alone. The ratio of mean WIS compares paired origins. The typical ratio is the geometric mean of positive paired ratios. A tie counts as half a win in the share of origins with better WIS. Use the `dates` column to see how many origins contributed to each model and horizon. Nearby origins can share targets. [Rolling forecast][rolling] · [Summary calculations][rolling-summary]
 
 ## Parameter identifiability
 
-The toolbox generates `B` synthetic datasets for each retained configuration and refits its parameters with the component count and onset threshold held fixed. The resulting 95% bootstrap intervals describe **practical identifiability conditional on that configuration**. Inspect the fitted estimate, interval width, and frequency of hitting a bound together. Structural identifiability requires a separate analysis.
+For each ranked model, the toolbox refits `B` synthetic datasets with its component count and onset threshold fixed. Its 95% bootstrap intervals describe practical identifiability conditional on that configuration. Structural identifiability requires a separate analysis.
 
-After `plotFit_subepidemicFramework`, open `output/PII-topRanked-*.csv` to compare all ranks, or `PII-ranked(k)-*.csv` for rank *k*.
+Run the fit plotter to write one CSV per rank and a combined report. This example displays the estimated parameters for the best-ranked model in the quick start.
 
-| Columns | Interpretation |
+```matlab
+plotFit_subepidemicFramework(areaColumn, origin);
+file = ['PII-topRanked-onsetfixed-0-flag1-1-method-3-dist-3-' ...
+        'daily-coronavirus-deaths-USA-area-52-05-11-2020.csv'];
+D = readtable(fullfile('output', file));
+disp(D(D.ranked_model == 1 & D.fixed == 0, ...
+    {'parameter','estimate','CI_LB','CI_UB','PII_ratio','fracLB','fracUB'}))
+```
+
+| Columns | How to read them |
 |---|---|
-| `estimate`, `median`, `CI_LB`, `CI_UB` | Observed-data fit, bootstrap median, and 2.5th and 97.5th bootstrap percentiles |
-| `PII` | Parameter identifiability index, `log10(CI_UB / CI_LB)`. A value of 1 means a tenfold interval. A nonpositive lower limit gives `NaN` |
-| `PII_ratio` | Fraction of the search width occupied by the interval on the selected scale. For log scale, `PII / PII_box`. For linear scale, `PII_rangeFrac`. The default warning begins at 0.50 for a free parameter |
-| `PII_scale`, `PII_box`, `PII_rangeFrac` | Selected scale (`1` logarithmic, `0` linear), full log width of positive bounds, and interval width divided by the linear search width |
-| `fracLB`, `fracUB`, `bound_LB`, `bound_UB` | Fraction of refits near each bound and the bounds used. The default hit tolerance is 0.1% of the absolute bound value |
-| `MCSE_PII`, `MCSE_CI_LB`, `MCSE_CI_UB` | Monte Carlo standard errors for the PII and interval endpoints |
-| `fixed` | `1` identifies a parameter held fixed during fitting |
+| `estimate`, `median`, `CI_LB`, `CI_UB` | Observed-data estimate, bootstrap median, and 2.5th and 97.5th bootstrap percentiles |
+| `PII` | Parameter identifiability index, `log10(CI_UB / CI_LB)`. A value of 1 means a tenfold interval. A nonpositive lower limit gives `NaN`. |
+| `PII_ratio`, `PII_scale`, `PII_box`, `PII_rangeFrac` | Fraction of the search width covered by the interval. On the log scale (`PII_scale = 1`), use `PII / PII_box`. On the linear scale (`0`), use `PII_rangeFrac`. The default warning starts at 0.50 for free parameters. |
+| `fracLB`, `fracUB`, `bound_LB`, `bound_UB` | Fraction of refits near each search bound and the bounds themselves. The tolerance is 0.1% of the absolute bound value, so a zero bound requires an exact hit. |
+| `MCSE_CI_LB`, `MCSE_CI_UB`, `MCSE_PII` | Monte Carlo standard errors of the two endpoints and PII due to the finite number of refits |
+| `fixed` | `1` for a parameter held fixed during fitting |
 
-For example, `PII_ratio = 0.60` means the interval spans 60% of the allowed width on the selected scale. A large `fracUB` can flag a bound-sensitive estimate even with a small `PII_ratio`. Interchangeable components are ordered by increasing `r`, with ties broken by `K`. [Diagnostic definitions][pii]
+For example, `PII_ratio = 0.60` means the interval spans 60% of the allowed width on the selected scale. Even with a narrow interval, a high `fracUB` means many estimates reached the upper bound. Interchangeable components are ordered by increasing growth rate `r`, with carrying capacity `K` breaking ties. [Diagnostic definitions][pii]
 
-The bundled example uses 40 refits to illustrate the workflow. For reported intervals, increase `B` and check the Monte Carlo errors of the endpoints. Review the reported counts of unresolved refits and inactive bootstrap components. An unresolved fit can contribute its best valid endpoint to the bootstrap sample.
+The bundled `B = 40` illustrates the workflow. For reported intervals, increase `B` and check whether endpoint estimates stabilize. The ranked MAT file's `bootstrapDiagnostics` records convergence, fallback use, and the number of active components per refit. An unresolved refit can still contribute its best valid endpoint.
 
 ## Output files
 
-All files below are written under the code folder's `output/`. Here `k` denotes a rank or an ensemble size.
+Look in the code folder's `output/`. In the patterns below, `k` is the rank of an individual fit or the number of models in an ensemble. Use the filename for your origin and settings. Some bundled examples use older filenames.
 
 | What to find | Filename pattern | Created by |
 |---|---|---|
 | Candidate search and saved ranked fits | `ABC-ensem-*.mat`, `modifiedLogisticPatch-ensem-*-rank-k.mat` | Fit driver |
+| AICc and relative likelihood for each rank | `AICc-topRanked-*.csv` | Rankings plotter |
 | Parameter summaries and identifiability | `param-*-ranked(k)-*.csv`, `PII-ranked(k)-*.csv`, `PII-topRanked-*.csv` | Fit plotter |
 | Observations, predictive median, 95% limits | `ranked(k)-*.csv`, `Ensemble(k)-*.csv` | Forecast plotter |
 | 23 predictive quantiles from 0.01 through 0.99 | `quantile-ranked(k)-*.csv`, `quantileTimes-Ensemble(k)-*.csv` | Forecast plotter |
@@ -216,7 +245,9 @@ All files below are written under the code folder's `output/`. Here `k` denotes 
 | Performance across origins | `rolling-forecast-scores-*.csv`, `rolling-forecast-summary-*.csv` | Rolling forecast |
 | Sequential doubling times and effective reproduction number | `doublingTimes-*.csv`, `Rt-ranked(k)-*.csv` | Fit or forecast plotter for doubling times, `plotReproductionNumber` for reproduction numbers |
 
-The point-forecast and quantile CSVs contain calibration rows followed by forecast rows. Their last `horizon` rows are the forecasts. Align the quantile files with the corresponding point-forecast file by row. Daily and weekly point-forecast files include calendar dates. In the annual ranked export, `year` is a sequential observation index.
+The point-forecast and quantile CSVs contain calibration rows followed by forecast rows. Their last `horizon` rows are the forecasts. Align the quantile files with the corresponding point-forecast file by row. Daily and weekly point-forecast files include calendar dates. For annual data, the ranked file's `year` column is a sequential index. In particular, the first forecast row after a fit through 2020 represents 2021.
+
+With `getperformance = 0`, the ranked point-forecast filename omits the horizon. Save a copy before forecasting the same series at another horizon. The ranked quantile filename includes the horizon in both modes.
 
 <details>
 <summary>Saved arrays and the effective reproduction number</summary>
@@ -234,7 +265,7 @@ To estimate the effective reproduction number, choose a gamma, exponential, or f
 
 ## Regenerating the figures
 
-The [figure settings](docs/images/README_figures_info.txt) identify the MATLAB release, seed, fit configuration, forecast horizon, and figure numbers used for the six bundled figures (fit revision `m1`, seed `1`). After running the quick start, the following commands export those views to `output/`. Each plotting routine closes existing figures, so save its panels before calling the next one.
+The six reference figures use fit revision `m1`, seed `1`, four ranked models, and a 30-day forecast. The four-day quick start uses the same fit. To export the six panels from that fit, run these commands in order. Each plotter closes the previous figures. [Figure settings](docs/images/README_figures_info.txt)
 
 ```matlab
 plotFit_subepidemicFramework(areaColumn, origin);
@@ -254,12 +285,15 @@ print(figure(500), fullfile('output','ensembles.png'), '-dpng');
 
 ## Reproducibility and troubleshooting
 
-Record the Git commit, MATLAB and toolbox versions, input snapshots, options files, random seed, `B`, and forecast horizon and weights. Ranked-fit MAT files include `fitSignature`. The default `rngSeed = 1` resets the generator on entry to fitting (once per area), fit plotting, forecasting, and reproduction-number estimation. Set `U.rngSeed = [];` in [options_fit_settings.m][overrides] to manage the random stream yourself. Archive outputs for each analysis, since some filenames omit settings and the fit and forecast plotters can write different columns to the same ranked calibration-score CSV.
+For a reproducible run, keep the input snapshots and options files with the outputs. Record the Git commit, MATLAB and toolbox versions, seed, `B`, horizon, and weighting scheme. The ranked MAT file stores the fit revision and settings in `fitSignature`. The default seed (`1`) resets the generator at the start of each area's fit and when plotting fits, forecasting, or estimating the reproduction number. Set `U.rngSeed = [];` to manage the stream yourself. [Fit settings][overrides]
+
+The fit and forecast plotters write to the same ranked calibration-score CSV. To retain a calibration table with AICc and relative likelihood, save the fit plotter's output or use the separate `AICc-topRanked-*.csv` from the rankings plotter.
 
 | Symptom | What to check |
 |---|---|
 | MATLAB cannot find an input file or a saved rank | Check the current folder, snapshot date, column, and `cumulative-` prefix. Fit the same series and settings before plotting |
 | The fitter skips a series or retains fewer ranks than requested | Check the retained observations and the candidate diagnostics for inactive components or insufficient data for AICc |
+| An older fit warns that its parameter bounds were rebuilt | The identifiability report uses the current bounds when the saved fit lacks them. Rerun the fit with the intended bounds before interpreting bound-relative diagnostics. |
 | Ranks change with the seed | Increase `numstartpoints` and compare AICc differences across fits. Increase `B` when the bootstrap interval endpoints vary |
 | A rolling origin was skipped or refitted | Read `R.notes` and the per-origin log (`'quiet', true`). Check snapshot dimensions, available follow-up, and fit signature |
 | Forecast propagation skips refits | Inspect the warnings for the affected rank. The default stops when more than 5% of its refits cannot be propagated |
@@ -312,3 +346,8 @@ SubEpiPredict is distributed under the [GNU General Public License v3.0](LICENSE
 [performance]: ensemble%20n-subepidemic%20code%20v1.0/computeforecastperformance.m
 [rolling]: ensemble%20n-subepidemic%20code%20v1.0/subepidemicRollingForecast.m
 [rolling-summary]: ensemble%20n-subepidemic%20code%20v1.0/subepidemicRollingSummary.m
+[fit-driver]: ensemble%20n-subepidemic%20code%20v1.0/Run_Fit_subepidemicFramework.m
+[rank-driver]: ensemble%20n-subepidemic%20code%20v1.0/plotRankings_subepidemicFramework.m
+[baseline-code]: ensemble%20n-subepidemic%20code%20v1.0/subepidemicBaselineForecast.m
+[copd-options]: ensemble%20n-subepidemic%20code%20v1.0/options_copd.m
+[copd-data]: ensemble%20n-subepidemic%20code%20v1.0/input/yearly-copd-deaths-CHATHAM-12-31-2020.txt
