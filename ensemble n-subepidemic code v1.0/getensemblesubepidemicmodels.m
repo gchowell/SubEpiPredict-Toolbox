@@ -42,12 +42,19 @@ weights1=subepidemicEnsembleWeights(weight_type1,RMSES(topmodels1,3),scoresC,sco
 
 %%
 
-curvesforecasts1ens=[];
-curvesforecasts2ens=[];
-
-% Member with the largest weight (revision h; see the loop below).
-[~,bestMember]=max(weights1(1:numel(topmodels1)));
-bestMember=topmodels1(bestMember);
+% Revision of 2026-11-24. The ensemble is the mixture of its members. Member k
+% with weight weights1(k) gives ALL its curves, and each of its M curves
+% carries the weight weights1(k)/M; medians, intervals, quantiles and scores
+% of the ensemble are weighted quantiles (subepidemicWeightedQuantile.m).
+% Before, member k gave round(M*weights1(k)) curves drawn at random, so
+% Ensemble(4) with equal weights used a quarter of the curves of each member,
+% the rounding changed the weights (a member below 1/(2M) gave no curve), and
+% the ensemble changed with the random seed. With equal weights and the same
+% number of curves per member, the ensemble is now simply all curves together.
+ensCurves1=[];   % model trajectories of the members, side by side
+ensCurves2=[];   % predictive curves (trajectory plus noise) of the members
+ensWeights1=[];  % one weight per column of ensCurves1
+ensWeights2=[];  % one weight per column of ensCurves2
 
 'ensemble';
 topmodels1;
@@ -61,52 +68,46 @@ for rank1=topmodels1
 
     M1=length(curvesforecasts1(1,:));
 
-    % Revision h. Each member gives round(number of its curves * weight)
-    % curves. When the refits are few against the number of members, every
-    % such number can round to 0 and the ensemble was empty (index error
-    % further down). The member with the largest weight now gives at least
-    % one curve; nothing changes whenever it already did.
-    nFromMember1=round(M1*weights1(rank1));
-    if rank1==bestMember && nFromMember1<1
-        nFromMember1=1;
-        subepidemicWarning('SubEpiPredict:EnsembleTooFewRefits', ...
-            ['Ensemble of %d models: no member has enough refits for its weight (%d refits, largest weight %.3g). ', ...
-             'One curve of the member with the largest weight is used. Raise B.'], ...
-            numel(topmodels1),M1,weights1(bestMember));
-    end
-
-    index1=datasample(1:M1,nFromMember1,'Replace',false);
-
-    if length(index1)>0
-        curvesforecasts1ens=[curvesforecasts1ens curvesforecasts1(:,index1)];
-    end
-
-    %
-
     M2=length(curvesforecasts2(1,:));
 
-    nFromMember2=round(M2*weights1(rank1));
-    if rank1==bestMember && nFromMember2<1
-        nFromMember2=1;
-    end
+    if weights1(rank1)>0 && M1>0 && M2>0
+        ensCurves1=[ensCurves1 curvesforecasts1];
+        ensWeights1=[ensWeights1 repmat(weights1(rank1)/M1,1,M1)];
 
-    index2=datasample(1:M2,nFromMember2,'Replace',false);
-
-    if length(index2)>0
-        curvesforecasts2ens=[curvesforecasts2ens curvesforecasts2(:,index2)];
+        ensCurves2=[ensCurves2 curvesforecasts2];
+        ensWeights2=[ensWeights2 repmat(weights1(rank1)/M2,1,M2)];
     end
 
 end
 
+if isempty(ensCurves1) || isempty(ensCurves2)
+    error('SubEpiPredict:EnsembleEmpty', ...
+        'Ensemble of %d models: no member with a positive weight has forecast curves.',numel(topmodels1));
+end
 
-curvesforecasts1=curvesforecasts1ens;
+curvesforecasts1=ensCurves1;
 
-curvesforecasts2=curvesforecasts2ens;
+curvesforecasts2=ensCurves2;
+
+% the weights sum to 1 (they already do unless a member was left out above)
+ensWeights1=ensWeights1/sum(ensWeights1);
+ensWeights2=ensWeights2/sum(ensWeights2);
+
+% Median and 95% limits of the ensemble. They are computed here, not in the
+% plot section, because the forecast files below need them with or without plots.
+ensLimits=subepidemicWeightedQuantile(curvesforecasts2,[0.025 0.5 0.975],ensWeights2);
+ensMedian=ensLimits(:,2);
+
+LB1=ensLimits(:,1)';
+LB1=(LB1>=0).*LB1;
+
+UB1=ensLimits(:,3)';
+UB1=(UB1>=0).*UB1;
 
 % store forecast curves
-forecast1=[median(curvesforecasts2,2) quantile(curvesforecasts2',0.975)' quantile(curvesforecasts2',0.025)'];
+forecast1=[ensMedian ensLimits(:,3) ensLimits(:,1)];
 
-[quantilesc,quantilesf]=computeQuantiles(data1,curvesforecasts2,forecastingperiod);
+[quantilesc,quantilesf]=computeQuantiles(data1,curvesforecasts2,forecastingperiod,ensWeights2);
 
 % Names for quantile forecast table
 quantNamesRanked = {'Q_0.010', 'Q_0.025', 'Q_0.050', 'Q_0.100', 'Q_0.150', 'Q_0.200', 'Q_0.250', 'Q_0.300', 'Q_0.350', 'Q_0.400', 'Q_0.450', 'Q_0.500', 'Q_0.550', 'Q_0.600', 'Q_0.650', 'Q_0.700', 'Q_0.750', 'Q_0.800', 'Q_0.850', 'Q_0.900', 'Q_0.950', 'Q_0.975', 'Q_0.990'};
@@ -145,14 +146,6 @@ if printscreen1
 
     hold on
 
-    quantile(curvesforecasts2',0.025);
-
-    LB1=quantile(curvesforecasts2',0.025);
-    LB1=(LB1>=0).*LB1;
-
-    UB1=quantile(curvesforecasts2',0.975);
-    UB1=(UB1>=0).*UB1;
-
     size(LB1);
     size(timevect2);
 
@@ -164,7 +157,7 @@ if printscreen1
 
     %line1=plot(timevect2,quantile(curvesforecasts2',0.5),'r-')
 
-    line1=plot(timevect2,median(curvesforecasts2,2),'r-');
+    line1=plot(timevect2,ensMedian,'r-');
 
     set(line1,'LineWidth',2)
 
@@ -183,9 +176,9 @@ if printscreen1
     set(line1,'LineWidth',2)
 
 
-    axis([0 length(timevect2)-1 0 max(quantile(curvesforecasts2',0.975))*1.2])
+    axis([0 length(timevect2)-1 0 max(UB1)*1.2])
 
-    line2=[timevect(end) 0;timevect(end) max(quantile(curvesforecasts2',0.975))*1.20];
+    line2=[timevect(end) 0;timevect(end) max(UB1)*1.20];
 
     box on
 
@@ -240,13 +233,17 @@ end
 % Revision 2026-11-16: meandoublingtime starts empty. It used to start as M zeros
 % and the M values were appended after them, which halved the mean and put the
 % lower limit at 0. Curves with no doubling give NaN and are left out.
-meandoublingtime=[];
+% Revision of 2026-11-24: every curve of every member enters with its weight
+% (ensWeights1), so the mean, the limits and the probability of the i-th
+% doubling are weighted. The arrays are sized after the number of curves of
+% the ensemble; they were sized after the last member loaded.
+M1=length(curvesforecasts1(1,:));
+
+meandoublingtime=zeros(M1,1)+NaN;
 
 doublingtimess=zeros(30,M1)+NaN;
 
 maxd=1;
-
-M1=length(curvesforecasts1(1,:));
 
 for j=1:M1
 
@@ -258,7 +255,7 @@ for j=1:M1
         maxd=length(doublingtimes);
     end
 
-    meandoublingtime=[meandoublingtime;mean(doublingtimes)];
+    meandoublingtime(j)=mean(doublingtimes);
 end
 
 doublingtimess=doublingtimess(1:maxd,1:M1);
@@ -269,22 +266,30 @@ for j=1:maxd
 
     index1=find(~isnan(doublingtimess(j,:)));
 
-    seq_doublingtimes=[seq_doublingtimes;[j mean(doublingtimess(j,index1)) quantile(doublingtimess(j,index1),0.025) quantile(doublingtimess(j,index1),0.975) length(index1)./M1]];
+    if isempty(index1)
+        seq_doublingtimes=[seq_doublingtimes;[j NaN NaN NaN 0]];
+    else
+        weightsj=ensWeights1(index1);
+        limitsj=subepidemicWeightedQuantile(doublingtimess(j,index1),[0.025 0.975],weightsj);
+        seq_doublingtimes=[seq_doublingtimes;[j sum(weightsj.*doublingtimess(j,index1))/sum(weightsj) limitsj(1) limitsj(2) sum(weightsj)/sum(ensWeights1)]];
+    end
 
 end
 
 seq_doublingtimes; % [ith doubling, mean, 95%CI LB, 95%CI UB, prob. i_th doubling]
 
 % Mean doubling times
-meandoublingtime=meandoublingtime(~isnan(meandoublingtime));
-if isempty(meandoublingtime) % no curve doubled
+index1=find(~isnan(meandoublingtime));
+if isempty(index1) % no curve doubled
     dmean=NaN;
     dLB=NaN;
     dUB=NaN;
 else
-    dmean=mean(meandoublingtime);
-    dLB=quantile(meandoublingtime,0.025);
-    dUB=quantile(meandoublingtime,0.975);
+    weightsj=ensWeights1(index1);
+    dmean=sum(weightsj.*meandoublingtime(index1)')/sum(weightsj);
+    limitsj=subepidemicWeightedQuantile(meandoublingtime(index1)',[0.025 0.975],weightsj);
+    dLB=limitsj(1);
+    dUB=limitsj(2);
 end
 
 param_doubling=[dmean dLB dUB]
@@ -325,7 +330,7 @@ if getperformance
         % <=============================================================================================>
         % <============================== Save file with forecast ======================================>
         % <=============================================================================================>
-        forecastdata=[str2num(datestr((datenumIni:DT:datenumEnd)','yyyy')) str2num(datestr((datenumIni:DT:datenumEnd)','mm')) str2num(datestr((datenumIni:DT:datenumEnd)','dd')) [data1(:,2);data2] median(curvesforecasts2,2) LB1' UB1'];
+        forecastdata=[str2num(datestr((datenumIni:DT:datenumEnd)','yyyy')) str2num(datestr((datenumIni:DT:datenumEnd)','mm')) str2num(datestr((datenumIni:DT:datenumEnd)','dd')) [data1(:,2);data2] ensMedian LB1' UB1'];
 
         T = array2table(forecastdata);
         T.Properties.VariableNames(1:7) = {'year','month','day','data','median','LB','UB'};
@@ -339,9 +344,9 @@ if getperformance
 
     %%  compute performance metrics
 
-    [RMSECS_model1 MSECS_model1 MAECS_model1  PICS_model1 MISCS_model1 RMSEFS_model1 MSEFS_model1 MAEFS_model1 PIFS_model1 MISFS_model1]=computeforecastperformance(data1,datalatest2,curvesforecasts1,curvesforecasts2,forecastingperiod*getperformance);
+    [RMSECS_model1 MSECS_model1 MAECS_model1  PICS_model1 MISCS_model1 RMSEFS_model1 MSEFS_model1 MAEFS_model1 PIFS_model1 MISFS_model1]=computeforecastperformance(data1,datalatest2,curvesforecasts1,curvesforecasts2,forecastingperiod*getperformance,ensWeights1,ensWeights2);
 
-    [WISC,WISFS]=computeWIS(data1,datalatest2,curvesforecasts2,forecastingperiod*getperformance);
+    [WISC,WISFS]=computeWIS(data1,datalatest2,curvesforecasts2,forecastingperiod*getperformance,ensWeights2);
 
 else
 
@@ -365,7 +370,7 @@ else
     % <=============================================================================================>
     % <============================== Save file with forecast ======================================>
     % <=============================================================================================>
-    forecastdata=[str2num(datestr((datenumIni:DT:datenumEnd)','yyyy')) str2num(datestr((datenumIni:DT:datenumEnd)','mm')) str2num(datestr((datenumIni:DT:datenumEnd)','dd')) [data1(:,2);zeros(forecastingperiod,1)+NaN] median(curvesforecasts2,2) LB1' UB1'];
+    forecastdata=[str2num(datestr((datenumIni:DT:datenumEnd)','yyyy')) str2num(datestr((datenumIni:DT:datenumEnd)','mm')) str2num(datestr((datenumIni:DT:datenumEnd)','dd')) [data1(:,2);zeros(forecastingperiod,1)+NaN] ensMedian LB1' UB1'];
 
 
     T = array2table(forecastdata);

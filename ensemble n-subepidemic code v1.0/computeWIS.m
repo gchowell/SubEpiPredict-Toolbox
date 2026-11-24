@@ -1,4 +1,11 @@
-function [WISC,WISFS,quantilesc1,quantilesf1]=computeWIS(data1,datalatest,curvesforecasts2,forecastingperiod)
+function [WISC,WISFS,quantilesc1,quantilesf1]=computeWIS(data1,datalatest,curvesforecasts2,forecastingperiod,weights2)
+
+% weights2 (optional, revision of 2026-11-24): one weight per column of
+% curvesforecasts2, for the ensembles (subepidemicWeightedQuantile.m).
+% Omitted or []: every curve weighs the same and quantile() is used, as before.
+if nargin<5
+    weights2=[];
+end
 
 %What is Alpha quantile?
 %More precisely, an α-quantile is a real number Xα such that the random variable is less or equal to it with probability at least α, and greater or equal to it with probability at least (1–α). It is not possible to require equality because the probability of the value Xα may be positive.May 18, 2011
@@ -44,11 +51,11 @@ for i=1:length(datac)
         
         % (1-lpha)x100 % prediction coverage
         
-        Lt=quantile(curvesforecasts2(i,:)',alpha/2)';
+        Lt=localRowQuantile(curvesforecasts2(i,:),alpha/2,weights2);
 
         Lt=(Lt>=0).*Lt;
         
-        Ut=quantile(curvesforecasts2(i,:)',1-alpha/2)';
+        Ut=localRowQuantile(curvesforecasts2(i,:),1-alpha/2,weights2);
 
         Ut=(Ut>=0).*Ut;
 
@@ -62,11 +69,15 @@ for i=1:length(datac)
     end
     
     %median prediction, m
-    m=quantile(curvesforecasts2(i,:)',0.5)';
+    m=localRowQuantile(curvesforecasts2(i,:),0.5,weights2);
     
     WISC(i)=(1/(K+1/2))*(w0*abs(y-m) + sum1);
     
-    quantilesc1(i,:)=quantile(curvesforecasts2(i,:),alphaquantiles);
+    if isempty(weights2)
+        quantilesc1(i,:)=quantile(curvesforecasts2(i,:),alphaquantiles);
+    else
+        quantilesc1(i,:)=subepidemicWeightedQuantile(curvesforecasts2(i,:),alphaquantiles,weights2);
+    end
     quantilesc1(i,:)=(quantilesc1(i,:)>=0).*quantilesc1(i,:);
 
 end %y
@@ -126,10 +137,10 @@ if forecastingperiod>0
                 
                 % (1-lpha)x100 % prediction coverage
                 
-                Lt=quantile(curvesforecasts2(dataFperiod(i),:)',alpha/2)';
+                Lt=localRowQuantile(curvesforecasts2(dataFperiod(i),:),alpha/2,weights2);
                 Lt=(Lt>=0).*Lt;
 
-                Ut=quantile(curvesforecasts2(dataFperiod(i),:)',1-alpha/2)';
+                Ut=localRowQuantile(curvesforecasts2(dataFperiod(i),:),1-alpha/2,weights2);
                 Ut=(Ut>=0).*Ut;
 
                 coverage1=find(y>=Lt & y<=Ut);
@@ -142,11 +153,15 @@ if forecastingperiod>0
             end
 
             %median prediction, m
-            m=quantile(curvesforecasts2(dataFperiod(i),:)',0.5)';
+            m=localRowQuantile(curvesforecasts2(dataFperiod(i),:),0.5,weights2);
 
             WISF(i)=(1/(K+1/2))*(w0*abs(y-m) + sum1);
 
-           quantilesf1(i,:)=quantile(curvesforecasts2(dataFperiod(i),:),alphaquantiles);
+           if isempty(weights2)
+               quantilesf1(i,:)=quantile(curvesforecasts2(dataFperiod(i),:),alphaquantiles);
+           else
+               quantilesf1(i,:)=subepidemicWeightedQuantile(curvesforecasts2(dataFperiod(i),:),alphaquantiles,weights2);
+           end
            quantilesf1(i,:)=(quantilesf1(i,:)>=0).*quantilesf1(i,:);
 
 
@@ -158,6 +173,13 @@ if forecastingperiod>0
     
 end
 
-
-
-
+% -----------------------------------------------------------------------------
+function q=localRowQuantile(curves,p,weights)
+% Quantile p of the curves (columns) at each time point (row). Without weights
+% this is the call made before the revision of 2026-11-24; with weights, the
+% weighted quantile of the ensembles (subepidemicWeightedQuantile.m).
+if isempty(weights)
+    q=quantile(curves',p)';
+else
+    q=subepidemicWeightedQuantile(curves,p,weights);
+end

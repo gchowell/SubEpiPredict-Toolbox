@@ -1,4 +1,15 @@
-function [RMSECS MSECS MAECS  PICS MISCS RMSEFS MSEFS MAEFS PIFS MISFS]=computeforecastperformance(data1,datalatest,curvesforecasts1,curvesforecasts2,forecastingperiod)
+function [RMSECS MSECS MAECS  PICS MISCS RMSEFS MSEFS MAEFS PIFS MISFS]=computeforecastperformance(data1,datalatest,curvesforecasts1,curvesforecasts2,forecastingperiod,weights1,weights2)
+
+% weights1, weights2 (optional, revision of 2026-11-24): one weight per column
+% of curvesforecasts1 and of curvesforecasts2, for the ensembles
+% (subepidemicWeightedQuantile.m). Omitted or []: every curve weighs the same
+% and median() and quantile() are used, as before.
+if nargin<6
+    weights1=[];
+end
+if nargin<7
+    weights2=[];
+end
 
 RMSECS=[];
 MSECS=[];
@@ -21,7 +32,11 @@ tf2=length(data1(:,1));
 dataCperiod=1:tf2;
 
 %ycmean=plims(curvesforecasts1(1:tf2,:)',0.5)';
-ycmean=median(curvesforecasts1(1:tf2,:),2);
+if isempty(weights1)
+    ycmean=median(curvesforecasts1(1:tf2,:),2);
+else
+    ycmean=subepidemicWeightedQuantile(curvesforecasts1(1:tf2,:),0.5,weights1);
+end
 
 datac=datalatest(dataCperiod,2);
 
@@ -31,10 +46,10 @@ MSEc=mean((datac-ycmean).^2);
 MAEc=mean(abs(datac-ycmean));
 
 % 95% prediction coverage
-Lt=quantile(curvesforecasts2(1:tf2,:)',0.025)';
+Lt=localRowQuantile(curvesforecasts2(1:tf2,:),0.025,weights2);
 Lt=(Lt>=0).*Lt;
 
-Ut=quantile(curvesforecasts2(1:tf2,:)',0.975)';
+Ut=localRowQuantile(curvesforecasts2(1:tf2,:),0.975,weights2);
 Ut=(Ut>=0).*Ut;
 
 coverage1=find(datac>=Lt & datac<=Ut);
@@ -73,7 +88,11 @@ if forecastingperiod>0
         
         %yfmean=plims(curvesforecasts1(tf2+1:end,:)',0.5)';
         %yfmean=mean(curvesforecasts1(tf2+1:end,:),2);
-        yfmean=median(curvesforecasts1(dataFperiod,:),2);
+        if isempty(weights1)
+            yfmean=median(curvesforecasts1(dataFperiod,:),2);
+        else
+            yfmean=subepidemicWeightedQuantile(curvesforecasts1(dataFperiod,:),0.5,weights1);
+        end
         
         %yf=curvesforecasts2(tf2+1:end,:);
         
@@ -97,10 +116,10 @@ if forecastingperiod>0
         MAEf=mean(abs(dataf-yfmean));
         
         % 95% prediction coverage
-        Lt=quantile(curvesforecasts2(dataFperiod,:)',0.025)';
+        Lt=localRowQuantile(curvesforecasts2(dataFperiod,:),0.025,weights2);
         Lt=(Lt>=0).*Lt;
 
-        Ut=quantile(curvesforecasts2(dataFperiod,:)',0.975)';
+        Ut=localRowQuantile(curvesforecasts2(dataFperiod,:),0.975,weights2);
         Ut=(Ut>=0).*Ut;
 
         coverage1=find(dataf>=Lt & dataf<=Ut);
@@ -125,3 +144,13 @@ if forecastingperiod>0
     
 end
 
+% -----------------------------------------------------------------------------
+function q=localRowQuantile(curves,p,weights)
+% Quantile p of the curves (columns) at each time point (row). Without weights
+% this is the call made before the revision of 2026-11-24; with weights, the
+% weighted quantile of the ensembles (subepidemicWeightedQuantile.m).
+if isempty(weights)
+    q=quantile(curves',p)';
+else
+    q=subepidemicWeightedQuantile(curves,p,weights);
+end

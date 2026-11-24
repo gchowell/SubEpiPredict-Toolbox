@@ -759,8 +759,13 @@ if 0
 
         weights1=subepidemicEnsembleWeights(1,AICc_bests,[],[]); % Akaike weights; (1/AICc)/sum(1/AICc) is not a weight
 
+        % Revision of 2026-11-24: every curve of every member enters the ensemble
+        % with the weight (weight of the member)/(its number of curves), as in
+        % getensemblesubepidemicmodels.m; no curves are drawn at random.
         curvesforecasts1ens=[];
         curvesforecasts2ens=[];
+        ensWeights1=[];
+        ensWeights2=[];
 
 
         for rank1=topmodels1
@@ -809,16 +814,15 @@ if 0
 
             M1=length(curvesforecasts1(1,:));
 
-            index1=datasample(1:M1,round(M1*weights1(rank1)),'Replace',false);
-
-            curvesforecasts1ens=[curvesforecasts1ens curvesforecasts1(:,index1)];
-
-
             M2=length(curvesforecasts2(1,:));
 
-            index2=datasample(1:M2,round(M2*weights1(rank1)),'Replace',false);
+            if weights1(rank1)>0 && M1>0 && M2>0
+                curvesforecasts1ens=[curvesforecasts1ens curvesforecasts1];
+                ensWeights1=[ensWeights1 repmat(weights1(rank1)/M1,1,M1)];
 
-            curvesforecasts2ens=[curvesforecasts2ens curvesforecasts2(:,index2)];
+                curvesforecasts2ens=[curvesforecasts2ens curvesforecasts2];
+                ensWeights2=[ensWeights2 repmat(weights1(rank1)/M2,1,M2)];
+            end
 
 
         end
@@ -826,6 +830,9 @@ if 0
         curvesforecasts1=curvesforecasts1ens;
 
         curvesforecasts2=curvesforecasts2ens;
+
+        ensWeights1=ensWeights1/sum(ensWeights1);
+        ensWeights2=ensWeights2/sum(ensWeights2);
 
 
         timevect=data1(:,1);
@@ -845,10 +852,10 @@ if 0
 
         hold on
 
-        quantile(curvesforecasts2',0.025)
+        ensLimits=subepidemicWeightedQuantile(curvesforecasts2,[0.025 0.5 0.975],ensWeights2);
 
-        LB1=quantile(curvesforecasts2',0.025);
-        UB1=quantile(curvesforecasts2',0.975);
+        LB1=ensLimits(:,1)';
+        UB1=ensLimits(:,3)';
 
         size(LB1)
         size(timevect)
@@ -859,7 +866,7 @@ if 0
         h(1).FaceColor = [1 1 1];
         h(2).FaceColor = [0.8 0.8 0.8];
 
-        line1=plot(timevect,median(curvesforecasts2,2),'r-');
+        line1=plot(timevect,ensLimits(:,2),'r-');
 
         set(line1,'LineWidth',2)
 
@@ -930,9 +937,9 @@ if 0
 
         if getperformance
 
-            [RMSECS_model1 MSECS_model1 MAECS_model1  PICS_model1 MISCS_model1, RMSEFS_model1 MSEFS_model1 MAEFS_model1 PIFS_model1 MISFS_model1]=computeforecastperformance(data1,data1,curvesforecasts1,curvesforecasts2,forecastingperiod);
+            [RMSECS_model1 MSECS_model1 MAECS_model1  PICS_model1 MISCS_model1, RMSEFS_model1 MSEFS_model1 MAEFS_model1 PIFS_model1 MISFS_model1]=computeforecastperformance(data1,data1,curvesforecasts1,curvesforecasts2,forecastingperiod,ensWeights1,ensWeights2);
 
-            [WISC,WISFS]=computeWIS(data1,data1,curvesforecasts2,forecastingperiod)
+            [WISC,WISFS]=computeWIS(data1,data1,curvesforecasts2,forecastingperiod,ensWeights2)
 
             % <=============================================================================================>
             % <============================== Save file with ensemble performance metrics ==============================>

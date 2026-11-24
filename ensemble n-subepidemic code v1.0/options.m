@@ -2,6 +2,17 @@
 % < Author: Gerardo Chowell  ==================================================>
 % <============================================================================>
 
+% README FIGURES. Settings of the six reference figures in docs/images
+% (docs/images/README_figures_info.txt): U.S. daily COVID-19 deaths, column 52,
+% data to 05-11-2020; method1 = 3, dist1 = 3, flag1 = 1 (GLM), up to 2
+% sub-epidemics, onset_fixed = 0, smoothfactor1 = 7, calibrationperiod1 = 90,
+% 20 start points, 4 top models, B = 40. These are the settings of the options.m
+% shipped at commit a185cb3; nothing below this note differs from that file.
+%
+% To use: copy this file over options.m in the code folder. Keep the shipped
+% options_fit_settings.m (random seed 1). Call the forecast with a horizon of 30
+% and weight code -1, as in the README section "Regenerating the figures".
+
 function [cumulative1, outbreakx, caddate1, cadregion, caddisease, datatype, DT, datevecfirst1, datevecend1, numstartpoints, topmodelsx, B, flag1] = options
 
 % OPTIONS  SubEpiPredict configuration for fitting n-sub-epidemic models

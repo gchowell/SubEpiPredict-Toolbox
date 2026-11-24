@@ -1,4 +1,11 @@
-function [quantilesc1,quantilesf1, alphaquantiles]=computeWIS(data1,curvesforecasts2,forecastingperiod)
+function [quantilesc1,quantilesf1, alphaquantiles]=computeWIS(data1,curvesforecasts2,forecastingperiod,weights2)
+
+% weights2 (optional, revision of 2026-11-24): one weight per column of
+% curvesforecasts2, for the ensembles (subepidemicWeightedQuantile.m).
+% Omitted or []: every curve weighs the same and quantile() is used, as before.
+if nargin<4
+    weights2=[];
+end
 
 %What is Alpha quantile?
 %More precisely, an α-quantile is a real number Xα such that the random variable is less or equal to it with probability at least α, and greater or equal to it with probability at least (1–α). It is not possible to require equality because the probability of the value Xα may be positive.May 18, 2011
@@ -17,7 +24,11 @@ quantilesc1=zeros(length(dataCperiod),length(alphaquantiles));
 for i=1:length(dataCperiod)
     
  
-    quantilesc1(i,:)=quantile(curvesforecasts2(i,:),alphaquantiles);
+    if isempty(weights2)
+        quantilesc1(i,:)=quantile(curvesforecasts2(i,:),alphaquantiles);
+    else
+        quantilesc1(i,:)=subepidemicWeightedQuantile(curvesforecasts2(i,:),alphaquantiles,weights2);
+    end
     quantilesc1(i,:)=(quantilesc1(i,:)>=0).*quantilesc1(i,:);
 
 end 
@@ -35,7 +46,11 @@ if forecastingperiod>0
  
         for i=1:length(dataFperiod)
 
-           quantilesf1(i,:)=quantile(curvesforecasts2(dataFperiod(i),:),alphaquantiles);
+           if isempty(weights2)
+               quantilesf1(i,:)=quantile(curvesforecasts2(dataFperiod(i),:),alphaquantiles);
+           else
+               quantilesf1(i,:)=subepidemicWeightedQuantile(curvesforecasts2(dataFperiod(i),:),alphaquantiles,weights2);
+           end
            quantilesf1(i,:)=(quantilesf1(i,:)>=0).*quantilesf1(i,:);
 
 
