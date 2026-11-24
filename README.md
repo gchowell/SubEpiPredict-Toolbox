@@ -167,7 +167,7 @@ The daily baseline repeats the last seven observations' mean. The weekly and ann
 
 ### Ensemble weights
 
-`Ensemble(k)` pools sampled trajectories from ranks 1 through *k*. The number drawn from each member is rounded, so a low-weight member can contribute zero trajectories in a small sample.
+`Ensemble(k)` pools every trajectory of ranks 1 through *k*. Each trajectory of a member carries that member's weight divided by the member's number of trajectories, and the ensemble's medians, intervals, quantiles and scores are weighted quantiles. No trajectories are drawn at random, so an ensemble does not depend on the random seed beyond its members. [Weighted quantile][weighted-quantile]
 
 | `weight_type1` | Weight used by the forecast driver |
 |---:|---|
@@ -342,6 +342,7 @@ SubEpiPredict is distributed under the [GNU General Public License v3.0](LICENSE
 [simulator]: ensemble%20n-subepidemic%20code%20v1.0/simulateSubepidemic.m
 [pii]: ensemble%20n-subepidemic%20code%20v1.0/subepidemicIdentifiability.m
 [weights]: ensemble%20n-subepidemic%20code%20v1.0/subepidemicEnsembleWeights.m
+[weighted-quantile]: ensemble%20n-subepidemic%20code%20v1.0/subepidemicWeightedQuantile.m
 [forecast-driver]: ensemble%20n-subepidemic%20code%20v1.0/plotForecast_subepidemicFramework.m
 [performance]: ensemble%20n-subepidemic%20code%20v1.0/computeforecastperformance.m
 [rolling]: ensemble%20n-subepidemic%20code%20v1.0/subepidemicRollingForecast.m
