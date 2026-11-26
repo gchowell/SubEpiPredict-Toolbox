@@ -1,0 +1,56 @@
+cff-version: 1.2.0
+message: "If you use SubEpiPredict, please cite the tutorial paper below (preferred citation). To cite the exact software version you used, cite this release."
+title: "SubEpiPredict: a MATLAB toolbox for fitting and forecasting epidemic trajectories using the ensemble n-sub-epidemic framework"
+type: software
+version: "2.0.0"
+date-released: "2026-11-26"
+license: GPL-3.0
+repository-code: "https://github.com/gchowell/SubEpiPredict-Toolbox"
+keywords:
+  - epidemic forecasting
+  - sub-epidemic model
+  - ensemble forecasting
+  - growth models
+  - weighted interval score
+  - MATLAB
+authors:
+  - family-names: Chowell
+    given-names: Gerardo
+    email: gchowell@gsu.edu
+    affiliation: "Department of Population Health Sciences, School of Public Health, Georgia State University"
+  - family-names: Dahal
+    given-names: Sushma
+    affiliation: "Department of Population Health Sciences, School of Public Health, Georgia State University"
+  - family-names: Bleichrodt
+    given-names: Amanda
+    affiliation: "Department of Population Health Sciences, School of Public Health, Georgia State University"
+  - family-names: Tariq
+    given-names: Amna
+  - family-names: Hyman
+    given-names: James M.
+  - family-names: Luo
+    given-names: Ruiyan
+    affiliation: "Department of Population Health Sciences, School of Public Health, Georgia State University"
+preferred-citation:
+  type: article
+  title: "SubEpiPredict: A tutorial-based primer and toolbox for fitting and forecasting growth trajectories using the ensemble n-sub-epidemic modeling framework"
+  authors:
+    - family-names: Chowell
+      given-names: Gerardo
+    - family-names: Dahal
+      given-names: Sushma
+    - family-names: Bleichrodt
+      given-names: Amanda
+    - family-names: Tariq
+      given-names: Amna
+    - family-names: Hyman
+      given-names: James M.
+    - family-names: Luo
+      given-names: Ruiyan
+  journal: "Infectious Disease Modelling"
+  volume: 9
+  issue: 2
+  start: 411
+  end: 436
+  year: 2024
+  doi: "10.1016/j.idm.2024.02.001"
