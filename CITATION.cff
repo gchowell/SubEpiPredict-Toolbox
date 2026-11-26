@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: "If you use SubEpiPredict, please cite the tutorial paper below (preferred citation). To cite the exact software version you used, cite this release."
 title: "SubEpiPredict: a MATLAB toolbox for fitting and forecasting epidemic trajectories using the ensemble n-sub-epidemic framework"
 type: software
-version: "2.0.0"
+version: "2.0.1"
 date-released: "2026-11-26"
 license: GPL-3.0
 repository-code: "https://github.com/gchowell/SubEpiPredict-Toolbox"
