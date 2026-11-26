@@ -39,7 +39,7 @@ Run_Fit_subepidemicFramework(areaColumn, origin);
     plotForecast_subepidemicFramework(areaColumn, origin, horizon, weightCode);
 ```
 
-Run the fit on the first pass. The repository's `output/` folder also contains examples from earlier configurations. Once the current ranked fits exist, you can repeat the forecast call with a different horizon or weighting scheme. [Fit driver][fit-driver] · [Forecast driver][forecast-driver]
+Run the fit on the first pass; the repository's `output/` folder ships empty. Once the current ranked fits exist, you can repeat the forecast call with a different horizon or weighting scheme. [Fit driver][fit-driver] · [Forecast driver][forecast-driver]
 
 ### 3. Check the forecast
 
@@ -93,7 +93,7 @@ For cumulative data, the fitter uses `[C(1); diff(C)]`. If the first total inclu
 
 With these settings in place, call `Run_Fit_subepidemicFramework()` and then `plotForecast_subepidemicFramework()`. A vector of columns can be passed to the fit driver to fit each series independently. Forecast one column at a time. If you change the evaluation snapshot date after fitting, rerun the fit so the saved ranks carry the new date.
 
-**Example using annual data.** The repository includes 21 annual COPD death counts for CHATHAM, 2000–2020. The matching settings use `DT = 365`, `outbreakx = 1`, and `cumulative1 = 0`. To try this example in a working copy, use the contents of `options_copd.m` as `options.m` and set `getperformance = 0` in `options_forecast.m` to forecast beyond 2020. The drivers read the active files named `options.m` and `options_forecast.m`. [COPD settings][copd-options] · [Annual data][copd-data]
+**Example using annual data.** The repository includes 21 annual COPD death counts for CHATHAM, 2000–2020. The matching settings use `DT = 365`, `outbreakx = 1`, and `cumulative1 = 0`. To try this example in a working copy, use the contents of `examples/options_copd.m` as `options.m` and set `getperformance = 0` in `options_forecast.m` to forecast beyond 2020. The drivers read the active files named `options.m` and `options_forecast.m`. Settings for the other bundled datasets are in the code folder's [examples][examples] folder. [COPD settings][copd-options] · [Annual data][copd-data]
 
 **Calibration window.** The fitter uses up to the last `calibrationperiod1` rows, starting at the first positive count in that window. The default example requests 90 observations and uses all 75 available. A multi-component search needs at least 10 retained observations. A candidate with `k` parameters needs more than `k + 1` observations for a finite AICc.
 
@@ -231,7 +231,7 @@ The bundled `B = 40` illustrates the workflow. For reported intervals, increase 
 
 ## Output files
 
-Look in the code folder's `output/`. In the patterns below, `k` is the rank of an individual fit or the number of models in an ensemble. Use the filename for your origin and settings. Some bundled examples use older filenames.
+Look in the code folder's `output/`. In the patterns below, `k` is the rank of an individual fit or the number of models in an ensemble. Use the filename for your origin and settings.
 
 | What to find | Filename pattern | Created by |
 |---|---|---|
@@ -350,5 +350,6 @@ SubEpiPredict is distributed under the [GNU General Public License v3.0](LICENSE
 [fit-driver]: ensemble%20n-subepidemic%20code%20v1.0/Run_Fit_subepidemicFramework.m
 [rank-driver]: ensemble%20n-subepidemic%20code%20v1.0/plotRankings_subepidemicFramework.m
 [baseline-code]: ensemble%20n-subepidemic%20code%20v1.0/subepidemicBaselineForecast.m
-[copd-options]: ensemble%20n-subepidemic%20code%20v1.0/options_copd.m
+[copd-options]: ensemble%20n-subepidemic%20code%20v1.0/examples/options_copd.m
+[examples]: ensemble%20n-subepidemic%20code%20v1.0/examples/README.md
 [copd-data]: ensemble%20n-subepidemic%20code%20v1.0/input/yearly-copd-deaths-CHATHAM-12-31-2020.txt
