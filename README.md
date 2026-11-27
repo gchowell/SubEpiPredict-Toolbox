@@ -287,6 +287,8 @@ print(figure(500), fullfile('output','ensembles.png'), '-dpng');
 
 For a reproducible run, keep the input snapshots and options files with the outputs. Record the Git commit, MATLAB and toolbox versions, seed, `B`, horizon, and weighting scheme. The ranked MAT file stores the fit revision and settings in `fitSignature`. The default seed (`1`) resets the generator at the start of each area's fit and when plotting fits, forecasting, or estimating the reproduction number. Set `U.rngSeed = [];` to manage the stream yourself. [Fit settings][overrides]
 
+When comparing calibration windows or smoothing spans for the same area, origin and horizon, copy the ranked trajectory CSVs to a separate results folder after each run. Their filenames omit `calibrationperiod1` and `smoothfactor1`, so the next run can overwrite the earlier forecasts.
+
 The fit and forecast plotters write to the same ranked calibration-score CSV. To retain a calibration table with AICc and relative likelihood, save the fit plotter's output or use the separate `AICc-topRanked-*.csv` from the rankings plotter.
 
 | Symptom | What to check |
