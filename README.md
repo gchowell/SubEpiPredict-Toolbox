@@ -2,7 +2,7 @@
 
 SubEpiPredict fits epidemic curves and produces short-term probabilistic forecasts in MATLAB. It models incidence as the sum of overlapping sub-epidemics. Candidate models can fit the same observed curve with different component trajectories. The toolbox ranks these models by the corrected Akaike information criterion (AICc), forecasts from each retained fit, and combines their forecasts in ensembles.
 
-[Quick start](#quick-start) · [Use your own data](#use-your-own-data) · [Model settings](#model-settings) · [Forecast evaluation](#forecast-evaluation) · [Rolling origins](#rolling-origin-evaluation) · [Parameter identifiability](#parameter-identifiability) · [Output files](#output-files) · [Tutorial paper](https://doi.org/10.1016/j.idm.2024.02.001) · [Video tutorial](https://www.youtube.com/watch?v=lj_-2Kre1qw)
+[Quick start](#quick-start) · [Use your own data](#use-your-own-data) · [Model settings](#model-settings) · [Forecast evaluation](#forecast-evaluation) · [Rolling origins](#rolling-origin-evaluation) · [Parameter identifiability](#parameter-identifiability) · [Output files](#output-files) · [Python version](#python-version) · [Tutorial paper](https://doi.org/10.1016/j.idm.2024.02.001) · [Video tutorial](https://www.youtube.com/watch?v=lj_-2Kre1qw)
 
 ## Quick start
 
@@ -299,6 +299,19 @@ The fit and forecast plotters write to the same ranked calibration-score CSV. To
 | Ranks change with the seed | Increase `numstartpoints` and compare AICc differences across fits. Increase `B` when the bootstrap interval endpoints vary |
 | A rolling origin was skipped or refitted | Read `R.notes` and the per-origin log (`'quiet', true`). Check snapshot dimensions, available follow-up, and fit signature |
 | Forecast propagation skips refits | Inspect the warnings for the affected rank. The default stops when more than 5% of its refits cannot be propagated |
+
+## Python version
+
+The folder [`python`](python) holds a Python port of the toolbox (NumPy, SciPy and Matplotlib; no MATLAB needed). The functions keep their MATLAB names and argument order, and the output files keep their names and layouts:
+
+```python
+import subepipredict as sp
+
+sp.Run_Fit_subepidemicFramework(52, '05-11-2020')
+ranked, ensembles, baseline, byHorizon = sp.plotForecast_subepidemicFramework(52, '05-11-2020', 4, -1)
+```
+
+Install it from the repository root with `pip install -e python`. For the quick start, the port ranks the same four models as the MATLAB reference figures, and its estimates of ranked model 1 agree with those figures in the three digits shown, except that p₁ reads 0.825 instead of 0.826. Bootstrap intervals and forecast scores differ from MATLAB's as two random seeds do. The [Python README](python/README.md) lists the differences and how the port was tested.
 
 ## Citation
 

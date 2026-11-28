@@ -1,0 +1,22 @@
+Quick start (U.S. daily COVID-19 deaths, column 52, data to 05-11-2020; method1 = 3, flag1 = 1,
+up to 2 sub-epidemics, 20 start points, random seed 1): MATLAB reference figures against the Python port.
+
+Ranked models
+  rank  sub-epidemics   C_thr MATLAB   C_thr Python     AICc MATLAB    AICc Python   AICc Python (full)
+     1              2      1140.5536      1140.5536    -1.09196e+06   -1.09196e+06   -1091961.0814   same
+     2              2              0              0    -1.09196e+06   -1.09196e+06   -1091959.6167   same
+     3              2     27361.7865     27361.7865    -1.09196e+06   -1.09196e+06   -1091957.9187   same
+     4              2     28501.8401     28501.8401    -1.09196e+06   -1.09196e+06   -1091957.8486   same
+
+Estimates of ranked model 1 (three significant digits, as in the titles of the parameter figure)
+  parameter      MATLAB      Python   Python (full)
+  r_1             0.561       0.561   0.56090479     same
+  r_2              4.63        4.63   4.627441       same
+  p_1             0.826       0.825   0.82549525     differs by 0.061% (last digit shown)
+  p_2             0.659       0.659   0.65853203     same
+  a_1                 1           1   1              same
+  a_2                 1           1   1              same
+  K_1             80400       80400   80352.135      same
+  K_2             24800       24800   24775.552      same
+
+Result: the ranking and the estimates agree with the MATLAB figures.
