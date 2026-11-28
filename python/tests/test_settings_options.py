@@ -49,7 +49,7 @@ def test_invalid_fit_settings_are_refused(override):
 
 def test_fit_signature_ignores_report_only_settings():
     base = sp.subepidemicFitSignature()
-    assert base.fitRevision == "m1" and "PIIscale" not in base.settings and "rngSeed" in base.settings
+    assert base.fitRevision == "m2" and "PIIscale" not in base.settings and "rngSeed" in base.settings
     same, differences = sp.subepidemicFitSignature(base, compare=True)
     assert same and differences == []
     same, _ = sp.subepidemicFitSignature(base, settings=dict(evidenceRatioLimit=1000, baselineWindow=14), compare=True)

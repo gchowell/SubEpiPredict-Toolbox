@@ -75,7 +75,7 @@ def test_fit_returns_and_saves_the_ranked_models(fitted):
         assert np.allclose(saved.P0.ravel(), ranked.P0) and float(saved.AICc_best[0, 0]) == r.RMSES[k - 1, 2]
         assert int(saved.timelags[0, 0]) == 24 and int(saved.M[0, 0]) == 6 and saved.caddate1 == DATE
         assert np.allclose(saved.bootstrapDiagnostics.searchLB.ravel(), ranked.bootstrapDiagnostics.searchLB)
-        assert saved.fitSignature.fitRevision == "m1"
+        assert saved.fitSignature.fitRevision == "m2"
     assert not files(out, "*.csv")  # the fit writes MAT files only
 
 

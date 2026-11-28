@@ -189,3 +189,43 @@ def test_order_labels_keeps_the_curve_and_handles_matrices():
     assert changed.tolist() == [True, False, False] and np.array_equal(out[0], out[1])
     with pytest.raises(SubEpiPredictError):
         sp.subepidemicOrderLabels(np.zeros(7), 2, 1, 0, 6)
+
+
+# ---- r bounds by kernel (rBoundsByKernel, rRateBounds) ------------------------
+
+
+def test_rate_bounds_for_p1_kernels():
+    from subepipredict.search import subepidemicSearchSpace
+
+    y = np.array([1946.0, 2010.0, 2300.0, 2500.0])
+    for flag1 in (3, 5):  # logistic, Gompertz: both ends from rRateBounds
+        LB, UB, isLog, z0 = subepidemicSearchSpace(2, y, flag1, 1)
+        assert np.allclose(LB[:2], 1e-3) and np.allclose(UB[:2], 10)
+        assert np.all(isLog[:2]) and np.all((z0[:2] >= LB[:2]) & (z0[:2] <= UB[:2]))
+    LB, UB, _, _ = subepidemicSearchSpace(1, y, 4, 1)  # Richards: lower end only
+    assert LB[0] == 1e-3 and UB[0] == max(50 * 2010.0, 10 * 2500.0)
+
+
+def test_p_free_kernels_keep_count_bounds():
+    from subepipredict.search import subepidemicSearchSpace
+
+    y = np.array([1946.0, 2010.0, 2300.0, 2500.0])
+    for flag1 in (0, 1, 2):
+        LB, UB, _, _ = subepidemicSearchSpace(1, y, flag1, 1)
+        assert LB[0] == np.mean(y[:2]) / 200 and UB[0] == max(50 * 2010.0, 10 * 2500.0)
+
+
+def test_rate_bounds_settings():
+    from subepipredict.search import subepidemicSearchSpace
+    from subepipredict.settings import subepidemicFitSettings
+
+    y = np.array([1946.0, 2010.0, 2300.0, 2500.0])
+    legacy = subepidemicSearchSpace(1, y, 3, 1, subepidemicFitSettings({"rBoundsByKernel": False}))
+    assert legacy[0][0] == np.mean(y[:2]) / 200
+    custom = subepidemicSearchSpace(1, y, 3, 1, subepidemicFitSettings({"rRateBounds": [1e-4, 20]}))
+    assert custom[0][0] == 1e-4 and custom[1][0] == 20
+    explicit = subepidemicSearchSpace(1, y, 3, 1, subepidemicFitSettings({"rLB": 0.05, "rUB": 2}))
+    assert explicit[0][0] == 0.05 and explicit[1][0] == 2  # rLB/rUB take precedence
+    for bad in ([0, 1], [2, 1], [1], [1e-3, np.inf]):
+        with pytest.raises(SubEpiPredictError):
+            subepidemicFitSettings({"rRateBounds": bad})

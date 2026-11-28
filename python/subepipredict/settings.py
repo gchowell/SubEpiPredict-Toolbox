@@ -21,12 +21,14 @@ from .utils import Struct, get_rng, mat2str, movmean
 from .utils import rng as _seed_rng
 
 # fit revision of the MATLAB toolbox this port follows (subepidemicFitSignature.m)
-FIT_REVISION = "m1"
+# m2: bounds of r by kernel (rBoundsByKernel, rRateBounds); GGM, GLM and GRM fits are unchanged
+FIT_REVISION = "m2"
 
 _DEFAULTS = dict(
     logScaleR=True, logScaleK=True, logScaleAlpha=True,
     rLB=None, rUB=None, pLB=None, pUB=None, aLB=None, aUB=None, KLB=None, KUB=None,
     rUpperBoundFactor=10,
+    rBoundsByKernel=True, rRateBounds=(1e-3, 10),
     countLikelihoodOnRawData=True,
     optimOptions=None,
     fitMaxAttempts=3,
@@ -60,6 +62,8 @@ def options_fit_settings():
         U['rLB'] = 1e-3                 # fixed floor for r
         U['rUB'] = 500                  # fixed ceiling for r
         U['rUpperBoundFactor'] = 0      # the legacy upper bound of r alone
+        U['rBoundsByKernel'] = False    # count-based r bounds for every kernel, as before
+        U['rRateBounds'] = (1e-4, 20)   # rate interval of r for logistic/Richards/Gompertz
         U['KUB'] = 5e6                  # carrying capacity at most 5e6
         U['pLB'] = 1; U['pUB'] = 1      # fix p of every sub-epidemic at 1
         U['KUB'] = [2e6, 5e6]           # one value per sub-epidemic
@@ -104,6 +108,13 @@ def subepidemicFitSettings(overrides=None):
       ``rUpperBoundFactor``  10: the default upper bound of r is the larger of
           50*max(first two observations) and 10 times the largest count.
           0 gives the legacy bound alone.
+      ``rBoundsByKernel``  True: the kernels with p = 1 (logistic, Richards,
+          Gompertz), whose r is a rate per time step, take the bounds of r
+          from ``rRateBounds`` instead of the counts: both ends for logistic
+          and Gompertz, the lower end for Richards (r trades off against a).
+          False gives the count-based bounds for every kernel, as before.
+      ``rRateBounds``  (1e-3, 10): [lower, upper] rate per time step,
+          0 < lower <= upper. ``rLB`` and ``rUB`` still take precedence.
 
     FITTED SERIES (:func:`subepidemicFitSeries`)
       ``countLikelihoodOnRawData``  True: Poisson and negative-binomial fits
@@ -156,7 +167,7 @@ def subepidemicFitSettings(overrides=None):
 
     # ---- validation -------------------------------------------------------------
     for name in ("logScaleR", "logScaleK", "logScaleAlpha", "countLikelihoodOnRawData", "useParallel", "polish",
-                 "continuationStart"):  # fmt: skip
+                 "continuationStart", "rBoundsByKernel"):  # fmt: skip
         v = S[name]
         if not ((isinstance(v, (bool, np.bool_)) or _is_number(v)) and (v == 0 or v == 1)):
             raise SubEpiPredictError("SubEpiPredict:FitSettings", "Setting %s must be true or false." % name)
@@ -170,6 +181,16 @@ def subepidemicFitSettings(overrides=None):
         raise SubEpiPredictError(
             "SubEpiPredict:FitSettings", "Setting rUpperBoundFactor must be a number of at least 0."
         )
+    try:
+        rb = np.asarray(S.rRateBounds, dtype=float).ravel()
+        ok = rb.size == 2 and bool(np.all(np.isfinite(rb))) and 0 < rb[0] <= rb[1]
+    except (TypeError, ValueError):
+        ok = False
+    if not ok:
+        raise SubEpiPredictError(
+            "SubEpiPredict:FitSettings", "Setting rRateBounds must be [lower upper] with 0 < lower <= upper."
+        )
+    S.rRateBounds = (float(rb[0]), float(rb[1]))
     for name, minimum in (("fitMaxAttempts", 1), ("bootstrapStarts", 0)):
         v = S[name]
         if not (_is_number(v) and math.isfinite(v) and v == int(v) and v >= minimum):

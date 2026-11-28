@@ -1,0 +1,79 @@
+Bounds of r by kernel (rBoundsByKernel, rRateBounds): legacy against new bounds
+================================================================================
+Made with r_bounds_by_kernel.py and r_bounds_by_kernel_summary.py (this folder),
+Python port, Poisson likelihood (method1 = 1), 10 start points, seed 1.
+"legacy" = rBoundsByKernel False: r from mean(first two counts)/200 for every kernel.
+"new"    = default: logistic and Gompertz r in [1e-3, 10] per time step,
+           Richards r from 1e-3 to the count-based upper bound.
+GGM, GLM and GRM have the same bounds in both, so their fits do not change.
+
+Windows (44): US COVID-19 deaths, 4 columns (USA and the 3 largest states) x 8
+90-day windows ending on day 150, 230, ..., 710; weekly mpox USA, 5 windows;
+Ebola Uganda and SARS Singapore, 3 windows each; yearly HIV, 1 window.
+Forecast MAE: mean absolute error of the best-fit curve over the next 14 days
+(4 weeks for mpox, 10 days for Ebola and SARS, 3 years for HIV), raw counts.
+"K<0.5*cum": the fitted carrying capacities add up to less than half of the
+cases already observed in the window (the fit ran away to a huge r).
+AICc "same": within 2 units.
+
+One sub-epidemic, 44 windows per kernel (264 fits, no errors)
+--------------------------------------------------------------------------------
+
+logistic  windows=44  AICc lower/same/higher with new bounds: 35/9/0   K<0.5*cum (legacy/new): 26/0   r on bound legacy LB/UB 10/0, new LB/UB 0/0   forecast MAE better/worse: 30/4 of 44
+Richards  windows=44  AICc lower/same/higher with new bounds: 18/23/3   K<0.5*cum (legacy/new): 18/0   r on bound legacy LB/UB 1/0, new LB/UB 0/0   forecast MAE better/worse: 16/1 of 44
+Gompertz  windows=44  AICc lower/same/higher with new bounds: 35/9/0   K<0.5*cum (legacy/new): 28/0   r on bound legacy LB/UB 7/1, new LB/UB 0/0   forecast MAE better/worse: 30/5 of 44
+
+Median forecast MAE, new / legacy, over the windows whose AICc changed:
+logistic 0.84 (35 windows), Richards 0.69 (21), Gompertz 0.66 (35).
+Largest and smallest r with the new bounds: logistic 0.050 to 0.71, Gompertz
+0.0042 to 0.77 per time step; neither end of [1e-3, 10] was reached.
+The 9 logistic and 9 Gompertz windows with the same AICc start with counts of
+1 to 12, where the legacy lower bound was at most 0.07 and did not bind.
+
+Richards, 3 windows with a higher AICc (USA deaths, ending on day 150, 310 and
+390: +4.6, +23.8, +19.8 on AICc values near -1e6 to -3e6; forecast MAE equal
+to 0.1%). All six fits have a < 1e-3: the Richards curve is approaching its
+Gompertz limit and the likelihood keeps creeping up along the r-a ridge, so
+neither end point is a minimum. With 30 start points the new bounds gave
+-1023682.7, -1848548.3, -2901998.8 and the legacy bounds +1132858.2,
+-1848564.7, +2772661.6: the legacy fit ran away in 2 of the 3 windows.
+
+Forecast MAE higher with the new bounds (more than 2%): 10 of 132 window-kernel
+pairs: one state (column 10) on 4 windows, and mpox ending on week 28. In 7 of
+them the legacy fit had run away and its forecast was close to zero, which
+scored well where the counts were falling.
+
+Full screen, up to 2 sub-epidemics, 8 windows per kernel (32 fits, no errors)
+--------------------------------------------------------------------------------
+
+logistic  windows=8  AICc lower/same/higher with new bounds: 4/4/0   K<0.5*cum (legacy/new): 4/0   r on bound legacy LB/UB 0/0, new LB/UB 0/0   forecast MAE better/worse: 4/0 of 8
+Gompertz  windows=8  AICc lower/same/higher with new bounds: 5/3/0   K<0.5*cum (legacy/new): 4/0   r on bound legacy LB/UB 1/0, new LB/UB 0/0   forecast MAE better/worse: 5/0 of 8
+
+logistic SARS Singapore       end= 45 y0=       2 legacy rLB=0.005    | dAICc=         0.0 | r 0.2177;0.4699 -> 0.2177;0.4699 | K/cum 1.06 -> 1.06 | fcMAE 3.108 -> 3.108 | n 2->2
+logistic covid-deaths col44   end=470 y0=     137 legacy rLB=0.485    | dAICc=   -108337.5 | r 3630 -> 0.1777;0.1232 | K/cum 0.03 -> 0.91 | fcMAE 26.5 -> 22.03 | n 1->2
+logistic covid-deaths col5    end=310 y0=      19 legacy rLB=0.113    | dAICc=        -0.0 | r 0.2087;0.1155 -> 0.2087;0.1155 | K/cum 1.23 -> 1.23 | fcMAE 301.3 -> 301.3 | n 2->2
+logistic covid-deaths col52   end=150 y0=    1480 legacy rLB=9.31     | dAICc=  -2160277.4 | r 7.24e+04 -> 0.1573;0.1378 | K/cum 0.03 -> 0.91 | fcMAE 1083 -> 841.5 | n 1->2
+logistic covid-deaths col52   end=390 y0=    3382 legacy rLB=15.8     | dAICc=  -5649263.7 | r 5281;1.613e+04 -> 0.1283;0.1601 | K/cum 0.03 -> 0.93 | fcMAE 875.6 -> 751.5 | n 2->2
+logistic covid-deaths col52   end=630 y0=    1464 legacy rLB=5.05     | dAICc=  -3703093.8 | r 686.6 -> 0.1273;0.149 | K/cum 0.01 -> 0.95 | fcMAE 1085 -> 873.9 | n 1->2
+logistic ebola Uganda         end= 60 y0=       1 legacy rLB=0.0025   | dAICc=        -0.0 | r 0.09776;0.5528 -> 0.09776;0.5528 | K/cum 1.19 -> 1.19 | fcMAE 1.033 -> 1.033 | n 2->2
+logistic mpox weekly USA      end= 20 y0=      12 legacy rLB=0.0625   | dAICc=         0.0 | r 0.6937;0.5979 -> 0.6937;0.5979 | K/cum 1.04 -> 1.04 | fcMAE 246 -> 246 | n 2->2
+Gompertz SARS Singapore       end= 45 y0=       2 legacy rLB=0.005    | dAICc=        -0.0 | r 0.03813;0.7666 -> 0.03813;0.7665 | K/cum 2.32 -> 2.32 | fcMAE 2.535 -> 2.535 | n 2->2
+Gompertz covid-deaths col44   end=470 y0=     137 legacy rLB=0.485    | dAICc=   -109751.6 | r 3083 -> 0.1329;0.04196 | K/cum 0.03 -> 1.10 | fcMAE 26.5 -> 12.35 | n 1->2
+Gompertz covid-deaths col5    end=310 y0=      19 legacy rLB=0.113    | dAICc=     -4951.8 | r 0.1125;0.1125 -> 0.1209;0.01774 | K/cum 1.12 -> 8.71 | fcMAE 378.8 -> 130 | n 2->2
+Gompertz covid-deaths col52   end=150 y0=    1480 legacy rLB=9.31     | dAICc=  -2192449.5 | r 7.24e+04 -> 0.1102;0.03316 | K/cum 0.04 -> 1.29 | fcMAE 1083 -> 512.5 | n 1->2
+Gompertz covid-deaths col52   end=390 y0=    3382 legacy rLB=15.8     | dAICc=  -5686256.4 | r 5282;1.505e+04 -> 0.08778;0.05049 | K/cum 0.03 -> 1.06 | fcMAE 875.6 -> 373.2 | n 2->2
+Gompertz covid-deaths col52   end=630 y0=    1464 legacy rLB=5.05     | dAICc=  -3727607.5 | r 4.683e+04 -> 0.07157;0.03944 | K/cum 0.01 -> 1.19 | fcMAE 1085 -> 677.4 | n 1->2
+Gompertz ebola Uganda         end= 60 y0=       1 legacy rLB=0.0025   | dAICc=        -0.0 | r 0.02865;0.3117 -> 0.02865;0.3117 | K/cum 2.04 -> 2.04 | fcMAE 0.8727 -> 0.8727 | n 2->2
+Gompertz mpox weekly USA      end= 20 y0=      12 legacy rLB=0.0625   | dAICc=        -0.0 | r 0.1658;0.4719 -> 0.1658;0.4719 | K/cum 1.25 -> 1.25 | fcMAE 226 -> 225.9 | n 2->2
+
+One window in detail (USA deaths, file of 05-09-2022, 90 days ending on day 230), full screen
+--------------------------------------------------------------------------------
+kernel    bounds  n  AICc      r                K                 fit MAE  forecast MAE
+logistic  legacy  1  +1016881  3874             1883              836      804
+logistic  new     2  -869525   0.137; 0.144     43250; 29000      365      677
+Richards  legacy  1  +1016896  7016             2003              837      804
+Richards  new     2  -887276   172; 26.7        36860; 55970      246      359   (a = 5e-4; 1.5e-3)
+Gompertz  legacy  1  +1016934  3876             1684              838      804
+Gompertz  new     2  -887288   0.0908; 0.0386   36830; 56110      246      359
+GLM       legacy  2  -889155   4.72; 978        3586; 166400      227      266
+GLM       new     2  -889155   4.72; 978        3586; 166400      227      266   (identical)

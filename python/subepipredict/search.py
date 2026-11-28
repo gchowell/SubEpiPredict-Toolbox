@@ -55,7 +55,11 @@ def subepidemicSearchSpace(npatches, data, flag1, method1, settings=None):
 
     ``LB``, ``UB``  bounds. r: from ``mean(|first two observations|)/200`` to
         the larger of ``50*max(|first two observations|)`` and
-        ``settings.rUpperBoundFactor`` (10) times the largest count. p: 0 to 1
+        ``settings.rUpperBoundFactor`` (10) times the largest count, for the
+        kernels with p free (GGM, GLM, GRM). With ``settings.rBoundsByKernel``
+        (default True) the kernels with p = 1 use ``settings.rRateBounds``
+        (default 1e-3 to 10 per time step) instead: logistic and Gompertz
+        both ends, Richards the lower end only. p: 0 to 1
         (GGM, GLM, GRM), fixed at 1 otherwise. a: 0 to 10 for GRM and
         Richards, fixed at 1 otherwise (also for Gompertz, whose equation does
         not contain a). K: 20 to 1e10 (fixed at 20 for GGM, which has no K).
@@ -97,6 +101,19 @@ def subepidemicSearchSpace(npatches, data, flag1, method1, settings=None):
     # a sensible fit.
     if settings.get("rUpperBoundFactor") is not None:
         rub = max(rub, settings.rUpperBoundFactor * float(np.max(np.abs(data))))
+    # Kernels with p fixed at 1 (logistic, Richards, Gompertz): r is a rate per
+    # time step, while the bounds above are counts (r has units
+    # cases^(1-p)/time only when p is free). For a window that starts with
+    # large counts the count-based lower bound excludes every plausible rate
+    # (r >= 10 per step for first counts near 2000), and the fit escapes to a
+    # curve that saturates below the counts already observed. With
+    # rBoundsByKernel these kernels get rRateBounds instead: both ends for the
+    # logistic and Gompertz kernels, the lower end only for Richards, whose r
+    # trades off against a as a -> 0 and can exceed any per-step rate.
+    if settings.rBoundsByKernel and flag1 in (3, 4, 5):
+        rlb = float(settings.rRateBounds[0])
+        if flag1 != 4:
+            rub = float(settings.rRateBounds[1])
     Kmax = 10000000000.0
     if flag1 == 0:  # GGM
         pb, ab, Kb = (0, 1), (1, 1), (20, 20)
