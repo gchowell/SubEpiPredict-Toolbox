@@ -122,6 +122,8 @@ The `legacy` folder and `xticklabel_rotate.m` are not ported: nothing calls the 
 
 `fit_settings` takes the settings of `options_fit_settings.m` as a dict (bounds, log scales, optimizer options, random seed, parallel use, report limits; `help(sp.subepidemicFitSettings)` lists them). Unknown names are an error.
 
+**Bounds of `r`.** For the logistic and Gompertz models (`flag1` 3 and 5), `r` is searched in `rRateBounds`, by default `(1e-3, 10)` per time step; the Richards model (4) takes the lower end only. The models with `p` estimated (0, 1, 2) keep the count-scaled bounds. `fit_settings={'rRateBounds': (1e-4, 20)}` changes the interval and `fit_settings={'rBoundsByKernel': False}` restores the count-scaled bounds for every model, as before fit revision `m2`. The main README explains why.
+
 **Parallel runs.** `fit_settings={'useParallel': True}` runs the local solves of each multi-start on a pool of worker processes. The numbers are the same as in a serial run. It is off by default (the MATLAB file switches it on) because on Windows and macOS a script that starts worker processes must protect its entry point:
 
 ```python
@@ -154,8 +156,8 @@ The drivers also return their results: `Run_Fit_subepidemicFramework` a list wit
 
 ```bash
 cd python
-python -m pytest -m "not slow"     # 234 tests, a few seconds
-python -m pytest                   # 260 tests, about 2 minutes
+python -m pytest -m "not slow"     # 237 tests, a few seconds
+python -m pytest                   # 263 tests, about 2 minutes
 ```
 
 The MATLAB repository has no test files, so the tests were written for the port. They check each function against an independent calculation (closed-form growth curves, the negative binomial of `scipy.stats`, hand-computed AICc, WIS and rolling summaries, the moments of every error structure), the simulation against an event-driven solve of the coupled system, the error identifiers, and whole runs with small settings: fit, plots, forecasts with every weight code, ensembles, Rt, every estimation method and growth model, synchronous onsets, weekly and yearly data, several areas, repeatability with a seed, parallel against serial, and the rolling forecast with reuse of saved fits.
@@ -176,6 +178,10 @@ No MATLAB was available where the port was written. The comparison rests on the 
 [`docs/validation/quickstart_vs_matlab.py`](docs/validation/quickstart_vs_matlab.py) repeats the comparison; its output is in [`quickstart_vs_matlab.txt`](docs/validation/quickstart_vs_matlab.txt). One test (`test_top_ranked_model_of_the_quick_start_matches_the_matlab_figures`) refits ranked model 1 and checks these numbers.
 
 Bootstrap intervals, forecast scores and figures that depend on random numbers were not compared number by number; they differ from MATLAB's as two seeds do. The examples other than the quick start were run with small settings only (few start points and bootstrap refits), not with the settings of their option files.
+
+### Bounds of `r` by model (fit revision `m2`)
+
+[`docs/validation/r_bounds_by_kernel.py`](docs/validation/r_bounds_by_kernel.py) fits the logistic, Richards and Gompertz models with the earlier count-scaled bounds and with the current ones, on 44 calibration windows of the bundled series (Poisson likelihood, 10 start points, seed 1). The results are in [`r_bounds_by_kernel.txt`](docs/validation/r_bounds_by_kernel.txt). With one sub-epidemic, the current bounds gave a lower AICc in 35 logistic and 35 Gompertz windows and the same AICc in the other 9 of each; the earlier bounds returned a carrying capacity below half of the events already observed in 26 and 28 windows, the current ones in none. For the Richards model the AICc was lower in 18 windows, the same in 23 and higher in 3, by 5 to 24 units with forecasts that agree to 0.1%. The quick start uses the generalized logistic model, whose bounds did not change, so the comparison with MATLAB above still holds.
 
 ## Citation and license
 
