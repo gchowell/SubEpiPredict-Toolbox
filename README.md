@@ -126,6 +126,16 @@ With `onset_fixed = 0`, a later component starts when its predecessor reaches a 
 | 4 | Richards | `r C (1 − (C/K)^a)` |
 | 5 | Gompertz | `r C log(K/C)` |
 
+**Search interval for `r`.** The units of `r` depend on the model, and so does its default interval. When `p` is estimated, `r` is in cases^(1 − p) per time step, so the interval scales with the counts. When `p = 1`, `r` is a rate per time step, so the interval is fixed. One time step is one observation: a day, a week, or a year, according to `DT`. [Search space][search-space]
+
+| `flag1` | Default interval for `r` |
+|---:|---|
+| 0, 1, 2 | Count-scaled: `mean(first two observations) / 200` to the larger of `50 × max(first two observations)` and `10 × max(observations)` |
+| 3, 5 | `rRateBounds`, by default `[1e-3 10]` per time step |
+| 4 | The lower end of `rRateBounds` to the count-scaled upper end |
+
+To change the rate interval, set `U.rRateBounds = [lower upper]` in [options_fit_settings.m][overrides]. `U.rLB` and `U.rUB` replace either end for any model. `U.rBoundsByKernel = false` restores the count-scaled interval for every model, as used before fit revision `m2`. With that interval, a logistic, Richards, or Gompertz fit to a window that starts mid-epidemic can return a very large `r` with `K` below the events already observed. In the Richards model, `r` and `a` trade off as `a` approaches 0, so read the two estimates together. [Comparison on the bundled series][r-bounds-validation]
+
 `method1` selects the fitting objective. `dist1` selects the noise model used to generate bootstrap observations and future observations. Here `μ` is the fitted mean, `α` is dispersion, and `d` is a fitted variance exponent.
 
 | `method1` | Objective | `dist1` and sampling model |
@@ -296,6 +306,8 @@ The fit and forecast plotters write to the same ranked calibration-score CSV. To
 | MATLAB cannot find an input file or a saved rank | Check the current folder, snapshot date, column, and `cumulative-` prefix. Fit the same series and settings before plotting |
 | The fitter skips a series or retains fewer ranks than requested | Check the retained observations and the candidate diagnostics for inactive components or insufficient data for AICc |
 | An older fit warns that its parameter bounds were rebuilt | The identifiability report uses the current bounds when the saved fit lacks them. Rerun the fit with the intended bounds before interpreting bound-relative diagnostics. |
+| A logistic, Richards, or Gompertz fit differs from one saved before fit revision `m2` | The default interval for `r` changed for these three models. Set `U.rBoundsByKernel = false` to reproduce the earlier fit. Fits with `flag1` 0, 1, or 2 are unaffected. |
+| `fracUB` is high for `r` in a logistic or Gompertz fit | The estimates reached the upper end of `rRateBounds`, 10 per time step by default. Widen it with `U.rRateBounds` and refit. |
 | Ranks change with the seed | Increase `numstartpoints` and compare AICc differences across fits. Increase `B` when the bootstrap interval endpoints vary |
 | A rolling origin was skipped or refitted | Read `R.notes` and the per-origin log (`'quiet', true`). Check snapshot dimensions, available follow-up, and fit signature |
 | Forecast propagation skips refits | Inspect the warnings for the affected rank. The default stops when more than 5% of its refits cannot be propagated |
@@ -351,6 +363,8 @@ SubEpiPredict is distributed under the [GNU General Public License v3.0](LICENSE
 [overrides]: ensemble%20n-subepidemic%20code%20v1.0/options_fit_settings.m
 [fit-settings]: ensemble%20n-subepidemic%20code%20v1.0/subepidemicFitSettings.m
 [settings-example]: ensemble%20n-subepidemic%20code%20v1.0/options_fit_settings_example.m
+[search-space]: ensemble%20n-subepidemic%20code%20v1.0/subepidemicSearchSpace.m
+[r-bounds-validation]: python/docs/validation/r_bounds_by_kernel.txt
 [fit-series]: ensemble%20n-subepidemic%20code%20v1.0/subepidemicFitSeries.m
 [rt-options]: ensemble%20n-subepidemic%20code%20v1.0/options_Rt.m
 [kernel]: ensemble%20n-subepidemic%20code%20v1.0/modifiedLogisticGrowthPatch.m
