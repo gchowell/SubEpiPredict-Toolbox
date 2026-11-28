@@ -31,7 +31,10 @@ function varargout = subepidemicFitSignature(saved)
 % FITREVISION: to be changed in every revision that can change a fit's numbers.
 %   'm1'  first signature; the fit code is that of revision m (extra start
 %         points at the first threshold, ordered labels).
-fitRevision = 'm1';
+%   'm2'  bounds of r by kernel (subepidemicSearchSpace.m, settings
+%         rBoundsByKernel and rRateBounds): logistic, Richards and Gompertz
+%         fits change; GGM, GLM and GRM fits do not.
+fitRevision = 'm2';
 
 reportOnly = {'PIIscale','evidenceRatioLimit','notIdentifiedRatio','baselineWindow','maxSkippedRefitFraction'};
 settings = subepidemicFitSettings();

@@ -21,6 +21,12 @@ U = struct();
 % The legacy bound alone, as before (50 for a series that starts with 1, 0):
 % U.rUpperBoundFactor = 0;
 %
+% Logistic, Richards and Gompertz (p = 1): r is a rate per time step and its
+% bounds come from rRateBounds, default [1e-3 10] (Richards: lower end only).
+% Another rate interval, or the count-based bounds of the other kernels:
+% U.rRateBounds = [1e-4 20];
+% U.rBoundsByKernel = false;
+%
 % Carrying capacity between 20 and 100 times the cumulative count, say 5e6:
 % U.KUB = 5e6;
 %

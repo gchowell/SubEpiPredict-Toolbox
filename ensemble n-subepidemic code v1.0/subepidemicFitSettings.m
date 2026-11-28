@@ -23,6 +23,15 @@ function S = subepidemicFitSettings()
 %         on how the series happens to start (50 when it starts with 1, 0)
 %         and was reached by fits and bootstrap refits. 0 gives the legacy
 %         bound alone. Has no effect where rUB is set.
+%     rBoundsByKernel   true: the kernels with p = 1 (logistic, Richards,
+%         Gompertz), whose r is a rate per time step, take the bounds of r
+%         from rRateBounds instead of the counts: both ends for logistic and
+%         Gompertz, the lower end for Richards (r trades off against a as
+%         a -> 0). The count-based bounds put the lower bound of r at 10 per
+%         step for a window that starts near 2000 cases. false: the
+%         count-based bounds for every kernel, as before.
+%     rRateBounds       [1e-3 10]: [lower upper] rate per time step, with
+%         0 < lower <= upper. rLB and rUB still take precedence.
 %
 %   FITTED SERIES (subepidemicFitSeries.m)
 %     countLikelihoodOnRawData   true: Poisson and negative-binomial fits
@@ -105,6 +114,7 @@ S = struct( ...
     'logScaleR',true,'logScaleK',true,'logScaleAlpha',true, ...
     'rLB',[],'rUB',[],'pLB',[],'pUB',[],'aLB',[],'aUB',[],'KLB',[],'KUB',[], ...
     'rUpperBoundFactor',10, ...
+    'rBoundsByKernel',true,'rRateBounds',[1e-3 10], ...
     'countLikelihoodOnRawData',true, ...
     'optimOptions',struct(), ...
     'fitMaxAttempts',3, ...
@@ -138,7 +148,7 @@ if exist('options_fit_settings','file')==2
 end
 
 % ---- validation -------------------------------------------------------------
-flags = {'logScaleR','logScaleK','logScaleAlpha','countLikelihoodOnRawData','useParallel','polish','continuationStart'};
+flags = {'logScaleR','logScaleK','logScaleAlpha','countLikelihoodOnRawData','useParallel','polish','continuationStart','rBoundsByKernel'};
 for k = 1:numel(flags)
     v = S.(flags{k});
     if ~((islogical(v) || isnumeric(v)) && isscalar(v) && (v==0 || v==1))
@@ -165,6 +175,11 @@ for k = 1:numel(counts)
         error('SubEpiPredict:FitSettings','Setting %s must be an integer of at least %d.',counts{k},minimum(k));
     end
 end
+v = S.rRateBounds;
+if ~(isnumeric(v) && isreal(v) && numel(v)==2 && all(isfinite(v(:))) && v(1)>0 && v(1)<=v(2))
+    error('SubEpiPredict:FitSettings','Setting rRateBounds must be [lower upper] with 0 < lower <= upper.');
+end
+S.rRateBounds = double(v(:).');
 bounds = {'rLB','rUB','pLB','pUB','aLB','aUB','KLB','KUB'};
 for k = 1:numel(bounds)
     v = S.(bounds{k});

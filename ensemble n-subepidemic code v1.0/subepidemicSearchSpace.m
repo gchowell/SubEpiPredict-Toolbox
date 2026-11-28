@@ -10,7 +10,11 @@ function [LB,UB,isLog,z0] = subepidemicSearchSpace(npatches,data,flag1,method1,s
 %           bounds of the fitting drivers), with one exception: the upper
 %           bound of r is never below settings.rUpperBoundFactor (default
 %           10) times the largest count. rUpperBoundFactor = 0 gives the
-%           legacy bounds exactly, apart from the Gompertz kernel (below).
+%           legacy bounds exactly, apart from the Gompertz kernel (below),
+%           when rBoundsByKernel is also false. With rBoundsByKernel (default
+%           true) the kernels with p = 1 take r from settings.rRateBounds
+%           (default [1e-3 10] per time step): logistic and Gompertz both
+%           ends, Richards the lower end only.
 %           A parameter with LB == UB is fixed. The
 %           fields rLB ... KUB of SETTINGS replace a bound (see
 %           subepidemicFitSettings.m). Reversed bounds are an error.
@@ -65,6 +69,21 @@ rub = max(abs(data(1:2)))*50;
 % bound that scales with the data and does not constrain a sensible fit.
 if isfield(settings,'rUpperBoundFactor') && ~isempty(settings.rUpperBoundFactor)
     rub = max(rub,settings.rUpperBoundFactor*max(abs(data)));
+end
+% Kernels with p fixed at 1 (logistic, Richards, Gompertz): r is a rate per
+% time step, while the bounds above are counts (r has units cases^(1-p)/time
+% only when p is free). For a window that starts with large counts the
+% count-based lower bound excludes every plausible rate (r >= 10 per step for
+% first counts near 2000), and the fit escapes to a curve that saturates
+% below the counts already observed. With settings.rBoundsByKernel these
+% kernels get settings.rRateBounds instead: both ends for the logistic and
+% Gompertz kernels, the lower end only for Richards, whose r trades off
+% against a as a -> 0 and can exceed any per-step rate.
+if isfield(settings,'rBoundsByKernel') && settings.rBoundsByKernel && any(flag1==[3 4 5])
+    rlb = settings.rRateBounds(1);
+    if flag1~=4
+        rub = settings.rRateBounds(2);
+    end
 end
 Kmax = 10000000000;
 switch flag1
